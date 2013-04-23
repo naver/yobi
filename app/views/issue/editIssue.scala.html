@@ -20,12 +20,14 @@
     
     <dl>
     	<dt>
+    	  <!-- 
 	      <div id="warning" class="n-alert hide">
 	        <div class="n-inner">
 	          <span class="msg">제목과 본문에 빈칸이 있습니다.</span>
 	          <a href="#" class="ico btn-delete"></a>
 	        </div>
 	      </div>
+	      -->
 	      <label for="title"><!-- <strong class="secondary-txt">#@issue.id</strong>-->@Messages("post.new.title")</label>
     	</dt>
     	<dd>
@@ -58,7 +60,7 @@
 		
 			<div class="btn-wrap">
 				<div class="ns-btn fake-file-wrap">
-					<i class="ico ico-plus-blue"></i>UPLOAD <input type="file" class="file" name="filePath">
+					<i class="ico ico-plus-blue"></i>@Messages("button.upload") <input type="file" class="file" name="filePath">
 				</div>
 			</div>
 		</div>
@@ -166,7 +168,7 @@
 
 	<div class="actions">
 		<button type="submit" class="btn-transparent n-btn orange med">@Messages("button.save")</button>
-		<a href="javascript:history.back(); return false;" class="n-btn gray med cancel">@Messages("button.cancel")</a>
+		<a href="javascript:history.back();" class="n-btn gray med cancel">@Messages("button.cancel")</a>
 		<!-- 
 			<a href="@routes.IssueApp.issues(project.owner, project.name, "all")" class="n-btn gray med">@Messages("button.cancel")</a>
 		-->
@@ -175,14 +177,13 @@
   } @** end of form **@
   </div>
 
-@board.postVaildate()
 @markdown()
 
 <script type="text/javascript">
 	$(document).ready(function(){
 		// hive.Label
 		var htOptLabel = {
-			"bEditable"    : false,
+			"bEditable"    : true,
 			"sURLLabels"   : "@routes.IssueLabelApp.labels(project.owner, project.name)", 
 			"sURLPost"     : "@routes.IssueLabelApp.newLabel(project.owner, project.name)",
 			"htActive"     : {@for(label <- issue.labels) { "@label.id":"@label.color", }"":""}
