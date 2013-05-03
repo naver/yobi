@@ -57,18 +57,20 @@
                 			<img src="@routes.Assets.at("images/default-avatar-34.png")" width="20" height="20">
                 		</span>
                 		@Messages("title.login")
-                	</a><!-- 
-                 --><a href="@routes.UserApp.signupForm()">@Messages("title.signup")</a>
-				</div>
-				}
-			
-				<div class="search-bar">
-	               	<form action="@routes.ProjectApp.projects()" class="form-searchbar">
-						<input type="text" class="text" name="filter" autocomplete="off" accesskey="S"><!-- 
-					 --><button type="submit" class="ico ico-search"></button>
+			</a>
+                </li>
+                <li class="sp-line">|</li>
+                <li class="d-link-wrap d-link-r">
+			<a href="@routes.UserApp.signupForm()" class="d-link signup">@Messages("title.signup")</a>
+                </li>
+		}
+		        <li class="search-bar">
+			        <form action="@routes.ProjectApp.projects()" class="form-searchbar">
+						<input type="text" class="text" name="filter" autocomplete="off" accesskey="S">
+					    <button type="submit" class="ico ico-search"></button>
 					</form>
-				</div>
-			</div>
+                </li>
+            </ul>
         </div>
     </div>
     

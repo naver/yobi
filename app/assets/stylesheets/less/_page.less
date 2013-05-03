@@ -5,7 +5,6 @@
     text-indent: -250px; overflow:hidden;
     background-size:123px 55px;
     background-image: url("@{base-image-path}/logo-white.png");
-    
     &.orange {
         background-image: url("@{base-image-path}/logo-orange.png");
     }
@@ -89,23 +88,9 @@
                         }
                     }
                     
-                    /** 로그인한 사용자의 dropdown 메뉴 **/
-                    .usermenu {
-                        margin:0; display:inline-block; vertical-align:middle;
-                        
-                        .dropdown-toggle {
-                            background:transparent;
-                            
-                            .d-label { 
-                                width:70px;
-                                span.text { margin-left:5px; }
-                                .avatar-wrap img { vertical-align: top; }
-                            }
-                            .d-caret {
-                                padding:5px 9px;
-                            } 
-                        }
-                    }                   
+                    .search-bar {
+                        padding:3px 0 0 5px;
+                    } /*.search-bar */
                 } // .right
             }// gnb-menu
         }//gnb-menu-wrap
@@ -186,7 +171,6 @@
             .page-title { 
                 float:left; overflow:hidden; margin:0;
                 line-height:56px; color:#fff; font-weight:normal;
-                
                 a { vertical-align:top; }
             }
 
@@ -211,12 +195,6 @@
                     .sp-line { 
                         color:#626262 !important; 
                         opacity:1 !important; 
-                    }
-                    .lnk-group {
-                        a { 
-                            color:#fff;
-                            &:hover { color:@primary; } 
-                        }
                     }
                 }
             } /* gnb-menus */
@@ -1465,7 +1443,27 @@
         }
     }
 }
+/*
+.fake-file-wrap {
+    margin-top: 10px;
+    position: relative;
+    overflow: hidden;
 
+    height:40px; display:block; clear:both;
+
+    .file {
+        position: absolute; z-index:2;
+        cursor:pointer;
+        left: -15px;
+        .opacity(0);
+    }
+
+    .ns-btn {
+        position:absolute; z-index:1;
+        display:block !important;
+    }
+}
+*/
 .cu-label {
     width: 80px;
     padding-right: 45px;
