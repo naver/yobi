@@ -14,19 +14,19 @@
 		                        <a href="#!/close" class="ico btn-delete"></a>
 		                    </div>
 		                </div>
-            			<label for="project-name">@Messages("project.name.placeholder")</label>
-            		</dt>
-            		<dd>
-            			<input id="project-name" type="text" name="name" class="text" placeholder="@Messages("project.name.alert")" maxlength="250">
-            		</dd>
-            		
-            		<dt>
+				<label for="project-name">@Messages("project.name.placeholder")</label>
+			</dt>
+			<dd>
+				<input id="project-name" type="text" name="name" class="text" placeholder="@Messages("project.name.alert")" maxlength="250">
+			</dd>
+
+			<dt>
 						<label for="description">@Messages("project.description.placeholder")</label>
 					</dt>
 					<dd>
 						<textarea id="description" name="overview" class="text textarea.span4" style="resize:vertical;"></textarea>
 					</dd>
-            	</dl>
+		</dl>
 
                 <ul class="options unstyled">
                     <li class="option">
@@ -42,7 +42,7 @@
                         <div class="option-desc">
 							<div class="btn-group" data-name="vcs">
 								<button class="btn dropdown-toggle large" data-toggle="dropdown">
-									<span class="d-label"></span> 
+									<span class="d-label"></span>
 									<span class="d-caret"><span class="caret"></span></span>
 								</button>
 								<ul class="dropdown-menu">
@@ -53,35 +53,7 @@
 							</div>
                         </div>
                     </li>
-                    
-                    @**
-                    <!-- 
-                    <li class="option">
-                        <div class="option-label">이용약관 <a href="#agreement" data-toggle="modal"><i class="ico ico-que-mark"></i></a></div>
-                        <div id="agreement" class="modal hide fade">
-                          <div class="modal-header">
-                            <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
-                            <h3>이용약관</h3>
-                          </div>
-                          <div class="modal-body">
-                            <pre>@agreements()</pre>
-                          </div>
-                          <div class="modal-footer">
-                            <a href="#" class="btn" data-dismiss="modal">Close</a>
-                          </div>
-                        </div>
-                        <div class="option-desc">
-	                        <div class="n-alert" data-errType="accept">
-			                    <div class="n-inner orange">
-			                        <span class="msg">@Messages("project.new.agreement.alert")</span>
-			                        <a href="#!/close" class="ico btn-delete"></a>
-			                    </div>
-			                </div>
-                            <input type="checkbox" class="stipulation checkbox checkbox-btn" autocomplete="off" id="stipulation" name="accept"><label for="stipulation" class="bg-checkbox label-agreement">본인은 약관에 대한 안내를 읽었으며 동의 합니다.</label>
-                        </div>
-                    </li>
-                     -->
-                    **@
+
                 </ul>
                 <div class="actions">
                     <button class="nbtn orange medium">@Messages("project.create")</button>
