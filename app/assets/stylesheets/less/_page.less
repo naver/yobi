@@ -98,6 +98,7 @@
                             .d-label {
                                 width:70px;
                                 span.text { margin-left:5px; }
+                                .avatar-wrap img { vertical-align: top; }
                             }
                             .d-caret {
                                 padding:5px 9px;
@@ -191,10 +192,21 @@
 
                 &.right {
                     margin-top:9px;
-                    .dropdown-toggle { background:#fff !important; }
-                    .sp-line { 
-                        color:#626262 !important; 
-                        opacity:1 !important; 
+                    .dropdown-toggle {
+                        /*background:#fff !important;*/
+                       color:#fff;
+                       border-bottom-color:inherit;
+
+                       .d-label {
+                           text-shadow:0 1px 1px rgba(0, 0, 0, 0.75);
+                       }
+                       .d-caret {
+                           border-left:1px solid #787878;
+                       }
+                    }
+                    .sp-line {
+                        color:#626262 !important;
+                        opacity:1 !important;
                     }
                     .lnk-group {
                         a {
