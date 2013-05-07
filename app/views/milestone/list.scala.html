@@ -42,9 +42,6 @@
 
     <div class="tab-wrap">
         <div class="pull-right btns">
-		@**<!--
-            <a href="@routes.MilestoneApp.manageMilestones(projectInst.owner, projectInst.name)" class="nbtn medium">@Messages("milestone.menu.manage")</a>
-             -->**@
             <a href="@routes.MilestoneApp.newMilestoneForm(projectInst.owner, projectInst.name)" class="nbtn medium orange">@Messages("milestone.menu.new")</a>
         </div>
 
@@ -119,9 +116,9 @@
 			<a href="@routes.MilestoneApp.editMilestoneForm(projectInst.owner, projectInst.name, milestone.id)" class="nbtn medium black">@Messages("button.delete")</a>
                 </div>
             </div>
-            <div class="completion-rate @if(milestone.getCompletionRate == 100){done}"><!--
-             -->@milestone.getCompletionRate<!--
-             --><i>%</i>
+            <div class="completion-rate @if(milestone.getCompletionRate == 100){done}">
+             @milestone.getCompletionRate
+             <i>%</i>
 			</div>
         </li>
         }
