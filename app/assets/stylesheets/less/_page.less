@@ -39,22 +39,33 @@
             .gnb-menus {
                 float: left;
                 /*overflow: hidden;*/
-                margin: 23px 10px 22px 34px;
-                
+                margin: 0px 10px 22px 34px;
+                /*margin: 23px 10px 22px 34px;*/
+               
                 .menu {
                     float: left;
-                    height: 24px;
-                    line-height: 24px;
                     margin-left: 35px;
                     color: @gnb-link-color;
+                    
                     a {
+                        display: block;
+                        min-width:100px;
+                        height: 24px;
+                        line-height: 24px;
+                        padding-top:23px; 
+                        text-align:center;
                         font-size: 13px;
-                        &:hover, &.selected {
-                            color: @gnb-link-hover-color;
-                        }
+                        &:hover { color: @gnb-link-hover-color; }
                     }
-                    &.highlight {
-                        a { color: @gnb-link-highlight-color; }
+                    
+                    &.active {
+                        border-top:3px solid @gnb-link-active-color;
+                        
+                        a { 
+                            padding-top:20px; 
+                            color: @gnb-link-active-color;
+                            font-weight:bold; text-shadow:0px 0px 2px #fff;
+                        }
                     }
                 }
 
@@ -195,11 +206,11 @@
                 
                 &.right {
                     margin-top:9px;
-                    .dropdown-toggle {
+                    .dropdown-toggle { 
                         /*background:#fff !important;*/
                        color:#fff;
                        border-bottom-color:inherit;
-
+                       
                        .d-label {
                            text-shadow:0 1px 1px rgba(0, 0, 0, 0.75);
                            .avatar-wrap { border:1px solid #333; }
@@ -592,10 +603,10 @@
                                 .user-thumb-wrap {
                                     width: 18px;
                                     height: 18px;
-                                    .border-radius(2px);
                                     margin-right: 10px;
                                     display: block;
                                     float: left;
+                                    .border-radius(2px);
                                     img {
                                         vertical-align: top;
                                     }
@@ -1426,31 +1437,44 @@
         border-bottom: 0 none;
         text-align: center;
     }
+    
+    /* 프로젝트 설정 */
     .setting-box {
         float: left;
         width: 399px;
+        
         &.left {
             padding-right: 20px;
             border-right: 1px solid @white;
             .logo-wrap {
-                vertical-align: top;
+                width:260px; height:188px;
+                background-repeat:no-repeat;
+                background-size:cover;
+                background-position:center;
+                .border-radius(10px);
                 .inline-block;
-                width: 234px;
-                margin-right: 20px;
-                img { .border-radius(2px); }
             }
             .logo-desc {
-                width: 140px;
+                width: 120px;
+                font-size: 12px;
+                margin-left:10px; 
+                vertical-align:top;
+                
                 .inline-block;
-                font-size: 11px;
                 .point {
-                    color: #51AACC;
+                    color: @secondary;
+                    font-weight:bold;
+                    text-transform:uppercase;
+                    display:block; clear:both;
                 }
-                &:first-child {
-                    margin-bottom: 17px;
+                
+                .descs li { 
+                    margin-top:10px;
+                    &:last-of-type { margin-top:25px; } 
                 }
             }
         }
+        
         &.right {
             padding-left: 20px;
             border-left: 1px solid @gray-d4;
@@ -1458,7 +1482,7 @@
                 width: 380px;
             }
             .textarea {
-                height: 70px; /*111px;*/
+                height: 80px; /*111px;*/
                 margin-bottom: 0;
                 resize:vertical;
             }
@@ -1510,7 +1534,7 @@
             &:hover { color:@primary; text-decoration:underline; }
         }
         
-        .highlight a { 
+        .active a { 
             color:@primary !important;            
             &:after {
                 content:'';
@@ -1536,7 +1560,7 @@
         }
         
         a { font-weight:bold; color:#959595; padding:0 25px; font-size:11px; }
-        .highlight a { color:#000 !important; }
+        .active a { color:#000 !important; }
     }
     
     .sp-line { 
@@ -1581,7 +1605,7 @@
 .members.project {
     margin: 0;
     list-style: none;
-
+    
     .member {
         float: left;
         width: 375px;
@@ -1589,11 +1613,11 @@
         margin-bottom: 6px;
         background-color: @white;
         .border-radius(10px);
-
+        
         &:nth-child(2n+1) {
             margin-right: 10px;
         }
-
+        
         .m-body {
             margin-left: 64px;
             .td {
@@ -1606,7 +1630,7 @@
                     max-width: 120px;
                     border-right: 1px solid @gray-d4;
                 }
-
+                
                 p {
                     word-wrap: break-word;
                     margin-bottom: 2px;
@@ -1635,7 +1659,7 @@
         float: right;
         .filter {
             margin-right:10px;
-            &.active { font-weight:bold; }
+            &.active { font-weight:bold; color:@primary; }
             &:last-of-type { margin:0; }
         }
         i { margin-right: 5px; }
@@ -1778,14 +1802,14 @@
                     }
                 }
             }
-
+            
             &.right {
                 height:385px;
                 margin-left: 610px;
                 padding: 15px 10px;
                 background-color: #ececec;
                 .border-radius(5px);
-
+                
                 .due-date    { width: 236px; margin-bottom:0; }
                 .pika-single { width:232px; }
                 .date-picker { margin-top:5px; }
@@ -1800,7 +1824,7 @@
 .project-home {
     padding: 10px;
     font-size: 0;
-
+    
     .inner {
         height: 188px;
         background-color: @white;
@@ -1808,30 +1832,23 @@
         font-size: 12px;
         overflow: hidden;
         vertical-align: top;
-
+        
         .inline-block;
         .box-shadow(0 1px 0 rgba(0, 0, 0, .25));
         .border-radius(10px);
-
+        
         &.member-info {
             width: 230px;
             margin-right: 0;
         }
-
+        
         &.logo {
-            width: 234px;
-            height: 168px;
-            padding: 10px 13px;
-            line-height:168px;
-            text-align:center;
-
-            .logo-wrap {
-                .inline-block;
-                /*width:230px;
-                height:160px;*/
-            }
+            width:260px; height:188px;
+            background-repeat:no-repeat;
+            background-position:center;
+            .background-size(cover);
         }
-
+        
         &.project-info {
             width: 350px;
             .infos {
@@ -1849,27 +1866,19 @@
                         padding-bottom: 0;
                         border-bottom: 0 none;
                     }
-                    span:not(.label) {
-                        &:not(:last-child):after {
-                            content: ", ";
-                        }
-                    }
                 }
             }
-            button#edit-toggle {
-                float: right;
-            }
         }
-
+        
         .member-wrap {
             height: 130px;
             overflow-y: auto;
         }
-
+        
         .project-members {
             list-style: none;
             margin: 0; padding: 10px;
-
+            
             .member {
                 padding: 5px 10px;
                 border-bottom: 1px solid @gray-d4;
@@ -1895,7 +1904,7 @@
                }
             }
         }
-
+        
         header {
             background-color: #F8F8F8;
             padding: 10px 15px; /*10px 20px;*/
@@ -2098,7 +2107,7 @@
 .board-comment-wrap {
     display:block; clear:both;
     background-color: #f5f5f5;
-
+    
     .border-radius(10px);
     .comment-header {
         padding: 0 20px;
@@ -2106,7 +2115,7 @@
         font-size: 14px;
         line-height: 40px;
     }
-
+    
     .comments {
         margin: 0;
         padding: 0;
@@ -2579,7 +2588,7 @@ div.markdown-preview {
         border-bottom:none;
         .border-radius(0px);
     }
-
+    
     .cell {
         display: table-cell;
         background-color: @white;
@@ -2672,14 +2681,14 @@ div.markdown-preview {
         .commit-id {
             width: 100px;
             padding-left: 20px;
-
+            
             font-family:Consolas; font-size:12px; font-weight:bold;
-
-            a {
+            
+            a { 
                 color:@secondary;
                 &:hover { color:@link-hover-color; text-decoration:underline; }
-
-                i { vertical-align:middle; margin-bottom:2px; }
+                
+                i { vertical-align:middle; margin-bottom:2px; } 
             }
         }
         .filename {
@@ -3198,10 +3207,5 @@ div.markdown-preview {
 }
 
 .actions {
-    .n-btn {
-        margin-right:5px;
-    }
-    &:last-child {
-        margin-right:0;
-    }
+    &:last-child { margin-right:0; }
 }

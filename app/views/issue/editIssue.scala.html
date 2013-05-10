@@ -13,8 +13,8 @@
 <div class="page">
 	@prjmenu(project, utils.MenuType.ISSUE, "main-menu-only")
   
-	<div class="content-wrap frm-wrap">
-
+	<div class="content-wrap frm-wrap">  
+    
     @form(action = routes.IssueApp.editIssue(project.owner, project.name, issue.id), 'id -> "issue-form", 'enctype -> "multipart/form-data") {
     <input type="hidden" name="authorId" value="@issue.authorId">
     
@@ -25,9 +25,9 @@
     	<dd>
     		<input type="text" id="title" name="title" value="@issue.title" class="text title" maxlength="250" tabindex="1">
     	</dd>
-	<dd>
-		<textarea id="body" name="body" markdown="true" class="text content" tabindex="2">@issue.body</textarea>
-	</dd>
+    	<dd>
+    		<textarea id="body" name="body" markdown="true" class="text content" tabindex="2">@issue.body</textarea>
+    	</dd>
     </dl>
 
 	@** fileUploader **@
@@ -51,7 +51,7 @@
 
 			<div class="btn-wrap">
 				<div class="nbtn medium white fake-file-wrap">
-					<i class="ico ico-plus-blue"></i>@Messages("button.upload")<!--
+					<i class="ico ico-plus-blue"></i>@Messages("button.upload")<!-- 
 				--> <input type="file" class="file" name="filePath">
 				</div>
 			</div>
@@ -77,7 +77,7 @@
 		<li class="option">
              <div class="option-label">@Messages("issue.state")</div>
              <div class="option-desc">
-		<div id="state" class="btn-group" data-name="state">
+             	<div id="state" class="btn-group" data-name="state">
 					<button class="btn dropdown-toggle large" data-toggle="dropdown">
 						<span class="d-label">@Messages("issue.state")</span>
 						<span class="d-caret"><span class="caret"></span></span>
@@ -95,7 +95,7 @@
 		<li class="option">
              <div class="option-label">@Messages("issue.new.detailInfo.assignee")</div>
              <div class="option-desc">
-		<div id="assignee" class="btn-group" data-name="assignee.user.id">
+             	<div id="assignee" class="btn-group" data-name="assignee.user.id">
 					<button class="btn dropdown-toggle large" data-toggle="dropdown">
 						<span class="d-label">@Messages("issue.new.selectDefault.assignee")</span>
 						<span class="d-caret"><span class="caret"></span></span>
@@ -135,8 +135,8 @@
 	<fieldset class="labels issue-form-labels form-horizontal bubble-wrap gray"></fieldset>
 
 	<div class="actions">
-		<button type="submit" class="nbtn orange medium">@Messages("button.save")</button><!--
-	 --><a href="javascript:history.back();" class="nbtn medium last">@Messages("button.cancel")</a>
+	 	<button type="submit" class="nbtn orange medium">@Messages("button.save")</button><!--
+	 --><a href="javascript:history.back();" class="nbtn medium last">@Messages("button.cancel")</a> 
 	</div>
 	@** <!-- @routes.IssueApp.issues(project.owner, project.name, "all") --> **@
 

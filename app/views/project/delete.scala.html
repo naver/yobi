@@ -3,8 +3,9 @@
 @import helper._
 @import utils.TemplateHelper._
 
-@projectMngMain(message, project) {
-    @prjmenu(project, utils.MenuType.PROJECT_SETTING, "")
+@main(message, project, utils.MenuType.PROJECT_SETTING) {
+<div class="page">
+	@prjmenu(project, utils.MenuType.PROJECT_SETTING, "")
 
     <div class="bubble-wrap gray wp">
         <div class="cu-label">@Messages("project.delete")</div>
@@ -17,7 +18,7 @@
         </div>
     </div>
     <div class="box-wrap bottom">
-        <a id="deletion" data-toggle="modal" href="#alertDeletion" class="nbtn medium orange"><!--
+        <a id="deletion" data-toggle="modal" href="#alertDeletion" class="nbtn medium orange"><!-- 
          --><i class="ico ico-delete-small"></i>@Messages("project.delete.this")</a>
     </div>
 
@@ -32,15 +33,15 @@
 	        <p> @Messages("project.delete.reaccept") </p>
 	    </div>
 	    <div class="modal-footer">
-	        <a href="#" class="btn" data-dismiss="modal">@Messages("button.no")</a>
-	        <a href="@routes.ProjectApp.deleteProject(project.owner, project.name)" class="btn btn-danger">@Messages("button.yes")</a>
+	        <a href="#" class="nbtn medium" data-dismiss="modal">@Messages("button.no")</a>
+	        <a href="@routes.ProjectApp.deleteProject(project.owner, project.name)" class="nbtn medium orange">@Messages("button.yes")</a>
 	    </div>
 	</div>
+</div>
 	
-	<script type="text/javascript">
-		$(document).ready(function(){
-	        $hive.loadModule("project.Delete");
-		});
-	</script>
-
+<script type="text/javascript">
+	$(document).ready(function(){
+        $hive.loadModule("project.Delete");
+	});
+</script>
 }

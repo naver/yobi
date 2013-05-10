@@ -20,8 +20,8 @@
 
 	<div class="bubble-wrap dark-gray repo-wrap">
 		<div class="inner-bubble repo-info">
-			<span class="clone-label"><strong class="@project.vcs">@project.vcs</strong>@Messages("code.repoUrl")</span><!--
-			 --><input id="repositoryURL" type="text" class="text repo-url" readonly="readonly" value="@CodeApp.getURL(project.owner, project.name)"><!--
+			<span class="clone-label"><strong class="@project.vcs">@project.vcs</strong>@Messages("code.repoUrl")</span><!-- 
+			 --><input id="repositoryURL" type="text" class="text repo-url" readonly="readonly" value="@CodeApp.getURL(project.owner, project.name)"><!-- 
              --><a id="copyURL" href="#!/copy-url" class="copy-btn btn">COPY TO CLIPBOARD</a>
 
 			<div id="branches" class="btn-group branches" data-name="branch" data-activate="manual">
@@ -50,11 +50,11 @@
 				<strong class="commitId">@@@commitId</strong>
 			</div>
 			<div id="commit">
-			<pre class="diff"><code>@patch</code></pre>
+		    	<pre class="diff"><code>@patch</code></pre>
 			</div>
 		</div>
 	</div>
-
+	
 	<a href="javascript: history.back();" class="nbtn medium pull-right">@Messages("button.list")</a>
 </div>
 

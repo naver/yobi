@@ -265,11 +265,11 @@ project.member = 멤버
 project.milestone = 마일스톤
 project.sidebar.plugin = 플러그인
 project.sidebar.help = 도움말
-project.logo.type = 파일형식:
+project.logo.type = 파일형식
 project.logo.maxFileSize = 최대파일크기
 project.logo.fileSizeAlert = 이미지 용량은 1MB 이하여야 합니다.
 project.logo.size = 사이즈
-project.logo = 로고
+project.logo = 프로젝트 로고
 project.logo.alert = 이미지 파일이 아닙니다.
 project.siteurl = 사이트 주소
 project.siteurl.alert = 사이트 URL은 http://로 시작해야 합니다.
@@ -288,6 +288,12 @@ project.wrongName = 프로젝트 이름이 올바르지 않습니다.
 project.tags = 태그
 project.license = 라이센스
 project.codeLanguage = 프로그래밍 언어
+
+# project.history.item: {0}=누가,{1}=무엇을,{2}=어떻게
+project.history.item = {0}님이 {1} {2}  
+project.history.type.commit = 코드를 커밋했습니다
+project.history.type.issue = 새 이슈를 등록했습니다
+project.history.type.post = 새 글을 작성했습니다
 
 #Site
 site.sidebar = 사이트 관리
