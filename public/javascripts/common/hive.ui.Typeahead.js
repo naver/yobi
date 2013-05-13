@@ -30,7 +30,7 @@
 		function _initVar(htOptions){
 			htVar.sActionURL = htOptions.sActionURL || "/users";
 			htVar.rxContentRange = /items\s+([0-9]+)\/([0-9]+)/;
-            htVar.htData = htOptions.htData;
+            htVar.htData = htOptions.htData || {};
 		}
 		
 		/**
