@@ -245,14 +245,37 @@ $hive = hive.Common = (function(){
 	/**
 	 * Show alert dialog
 	 * @param {String} sMessage Message string
-	 * @param {Function} fCallback Call this function after hidden dialog (optional)
+	 * @param {Function} fOnAfterHide Call this function after hidden dialog (optional)
 	 */
-	function showAlert(sMessage, fCallback){
-		if(!htVar.oAlertDialog) {
-			htVar.oAlertDialog = new hive.ui.Dialog("#hiveDialog");
+	function showAlert(sMessage, fOnAfterHide){
+		if(!htVar.oAlertDialog){
+			htVar.oAlertDialog = new hive.ui.Dialog("#hiveAlert");
 		}
 		
-		htVar.oAlertDialog.show(sMessage, fCallback);
+		htVar.oAlertDialog.show(sMessage, {
+			"fOnAfterHide": fCallback
+		});
+	}
+	
+	/**
+	 * Show notification message
+	 * @param {String} sMessage
+	 * @param {Number} nDuration
+	 */
+	function notify(sMessage, nDuration){
+		if(!htVar.oNotifyDialog){
+			htVar.oNotifyDialog = new hive.ui.Dialog("#hiveNotify");
+		}
+		
+		var fOnAfterShow = (nDuration === 0) ? undefined : function(){
+			setTimeout(function(){
+				htVar.oNotifyDialog.hide();
+			}, nDuration || 3000);
+		};
+		
+		htVar.oNotifyDialog.show(sMessage, {
+			"fOnAfterShow": fOnAfterShow
+		});
 	}
 	
 	/* public Interface */
@@ -265,7 +288,8 @@ $hive = hive.Common = (function(){
 		"getContrastColor": getContrastColor,
 		"sendForm"        : sendForm,
 		"getTrim"         : getTrim,
-		"showAlert"       : showAlert
+		"showAlert"       : showAlert,
+		"notify"		  : notify
 	};
 })();
 

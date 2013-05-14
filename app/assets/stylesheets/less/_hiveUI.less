@@ -269,7 +269,9 @@ button.nbtn {
 }
 
 /** alert **/
-.hiveDialog {
+.alert { display:none; } /** use .hiveAlert **/
+
+.hiveAlert {
     .border-radius(none);
     border:10px solid #bebebe;
     padding:16px 20px; width:500px;
@@ -292,5 +294,33 @@ button.nbtn {
         }
     }
 }
-.alert { display:none; } /** use .hiveDialog **/
 
+.hiveNotify {
+    position: fixed; overflow: hidden;
+    width: 200px; height: 50px;
+    right: 0 !important; 
+    bottom: 0 !important;
+    outline:none;
+    margin: 10px; padding: 10px;
+    text-align: center;
+    font-weight: bold;
+    color: #222;
+    box-shadow: 0px 0px 5px rgba(240, 160, 132, 0.6);
+    border: 1px solid #FAC7AB;
+    background-color: #FFF0E8;    
+    line-height: 50px; opacity: 0;
+    -webkit-transition-duration: 0.3s;
+    .border-radius(2px);
+    
+    .btn-dismiss {
+        float: right;
+        line-height: 10px;        
+    }
+    .msg { 
+        display:inline-block;
+        word-wrap: break-word;
+        word-break:break-all;
+        line-height:16px;
+        margin: 0;
+    }
+}
