@@ -152,16 +152,15 @@ public class BoardApp extends AbstractPostingApp {
         Project project = ProjectApp.getProject(userName, projectName);
         Posting post = Posting.finder.byId(postId);
 
-        if (!AccessControl.isAllowed(UserApp.currentUser(), post.asResource(), Operation.READ)) {
-            return forbidden(unauthorized.render(project));
-        }
-
         if (post == null) {
             return notFound(notExistingPage.render("title.post.notExistingPage", project));
         }
 
-        Form<PostingComment> commentForm = new Form<PostingComment>(PostingComment.class);
+        if (!AccessControl.isAllowed(UserApp.currentUser(), post.asResource(), Operation.READ)) {
+            return forbidden(unauthorized.render(project));
+        }
 
+        Form<PostingComment> commentForm = new Form<PostingComment>(PostingComment.class);
         return ok(views.html.board.post.render(post, commentForm, project));
     }
 
