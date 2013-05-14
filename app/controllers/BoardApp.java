@@ -8,10 +8,7 @@ import models.*;
 import models.enumeration.Operation;
 import models.enumeration.ResourceType;
 
-import models.enumeration.Direction;
-import models.enumeration.Matching;
 import views.html.board.editPost;
-import views.html.board.post;
 import views.html.board.newPost;
 import views.html.board.postList;
 import views.html.board.notExistingPage;
@@ -19,7 +16,6 @@ import views.html.project.unauthorized;
 
 import utils.AccessControl;
 import utils.Callback;
-import utils.Constants;
 import utils.JodaDateUtil;
 
 import play.data.Form;
@@ -155,17 +151,16 @@ public class BoardApp extends AbstractPostingApp {
     public static Result post(String userName, String projectName, Long postId) {
         Project project = ProjectApp.getProject(userName, projectName);
         Posting post = Posting.finder.byId(postId);
+        
+        if (post == null) {
+            return notFound(notExistingPage.render("title.post.notExistingPage", project));
+        }
 
         if (!AccessControl.isAllowed(UserApp.currentUser(), post.asResource(), Operation.READ)) {
             return forbidden(unauthorized.render(project));
         }
 
-        if (post == null) {
-            return notFound(notExistingPage.render("title.post.notExistingPage", project));
-        }
-
         Form<PostingComment> commentForm = new Form<PostingComment>(PostingComment.class);
-
         return ok(views.html.board.post.render(post, commentForm, project));
     }
 
