@@ -1,12 +1,17 @@
 package playRepository;
 
+import controllers.CodeApp;
 import controllers.ProjectApp;
 import models.Project;
+import models.PullRequest;
 import models.enumeration.ResourceType;
+import models.enumeration.State;
 import models.resource.Resource;
 import org.codehaus.jackson.node.ObjectNode;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.LogCommand;
+import org.eclipse.jgit.api.MergeCommand;
+import org.eclipse.jgit.api.MergeResult;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.api.errors.NoHeadException;
 import org.eclipse.jgit.diff.DiffEntry;
@@ -15,6 +20,9 @@ import org.eclipse.jgit.lib.*;
 import org.eclipse.jgit.revwalk.RevCommit;
 import org.eclipse.jgit.revwalk.RevTree;
 import org.eclipse.jgit.revwalk.RevWalk;
+import org.eclipse.jgit.transport.CredentialsProvider;
+import org.eclipse.jgit.transport.RefSpec;
+import org.eclipse.jgit.transport.UsernamePasswordCredentialsProvider;
 import org.eclipse.jgit.treewalk.EmptyTreeIterator;
 import org.eclipse.jgit.treewalk.TreeWalk;
 import org.eclipse.jgit.treewalk.filter.PathFilter;
@@ -39,6 +47,11 @@ public class GitRepository implements PlayRepository {
      * Git 저장소 베이스 디렉토리
      */
     private static String repoPrefix = "repo/git/";
+
+    /**
+     * Git 저장소 베이스 디렉토리
+     */
+    private static String repoForMergingPrefix = "repo/git-merging/";
 
     public static String getRepoPrefix() {
         return repoPrefix;
@@ -72,14 +85,14 @@ public class GitRepository implements PlayRepository {
      * 실제 저장소를 생성하는건 아니고, Git 저장소를 참조할 수 있는 {@link Repository} 객체를 생성한다.
      * 생성된 {@link Repository} 객체를 사용해서 기존에 만들어져있는 Git 저장소를 참조할 수도 있고, 새 저장소를 생성할 수도 있다.
      *
-     * @param userName
+     * @param ownerName
      * @param projectName
      * @return
      * @throws IOException
      */
-    public static Repository buildGitRepository(String userName, String projectName) throws IOException {
+    public static Repository buildGitRepository(String ownerName, String projectName) throws IOException {
         return new RepositoryBuilder().setGitDir(
-                new File(getRepoPrefix() + userName + "/" + projectName + ".git")).build();
+                new File(getGitDirectory(ownerName, projectName))).build();
     }
 
     /**
@@ -99,6 +112,7 @@ public class GitRepository implements PlayRepository {
      *
      * @throws IOException
      * @see <a href="https://www.kernel.org/pub/software/scm/git/docs/gitglossary.html#def_bare_repository">bare repository</a>
+     * @see Repository#create()
      */
     @Override
     public void create() throws IOException {
@@ -379,5 +393,230 @@ public class GitRepository implements PlayRepository {
             }
 
         };
+    }
+
+    /**
+     * Git 디렉토리 경로를 반환한다.
+     *
+     * when: Git 저장소를 참조하는 {@link Repository} 객체를 생성할 때 주로 사용한다.
+     *
+     * @param project
+     * @return
+     * @see #getGitDirectory(String, String)
+     */
+    public static String getGitDirectory(Project project) {
+        return getGitDirectory(project.owner, project.name);
+    }
+
+    /**
+     * Git 디렉토리 경로를 반환한다.
+     *
+     * when: Git 저장소를 참조하는 {@link Repository} 객체를 생성할 때 주로 사용한다.
+     *
+     * @param ownerName
+     * @param projectName
+     * @return
+     */
+    public static String getGitDirectory(String ownerName, String projectName) {
+        return getRepoPrefix() + ownerName + "/" + projectName + ".git";
+    }
+
+    /**
+     * {@code project}의 Git 저장소를 반환한다.
+     * <p/>
+     * when: {@link RepositoryService#gitAdvertise(models.Project, String, play.mvc.Http.Response)}와
+     * {@link RepositoryService#gitRpc(models.Project, String, play.mvc.Http.Request, play.mvc.Http.Response)}에서 사용한다.
+     * <p/>
+     * {@link GitRepository#buildGitRepository(models.Project)}를 사용하여 Git 저장소를 참조할 객체를 생성한다.
+     *
+     * @param project
+     * @return
+     * @throws IOException
+     */
+    public static Repository createGitRepository(Project project) throws IOException {
+        return GitRepository.buildGitRepository(project);
+    }
+
+
+    /**
+     * {@code originalProject}의 Git 저장소를 clone 하는 {@code forkingProject}의 Git 저장소를 생성한다.
+     *
+     * 모든 브랜치를 복사하며 bare 모드로 생성한다.
+     *
+     * @param originalProject
+     * @param forkingProject
+     * @throws GitAPIException
+     * @throws IOException
+     * * @see <a href="https://www.kernel.org/pub/software/scm/git/docs/gitglossary.html#def_bare_repository">bare repository</a>
+     */
+    public static void cloneRepository(Project originalProject, Project forkingProject) throws GitAPIException, IOException {
+        String url = CodeApp.getURL(originalProject.owner, originalProject.name);
+        String directory = getGitDirectory(forkingProject);
+        Git.cloneRepository()
+                .setURI(url)
+                .setDirectory(new File(directory))
+                .setCloneAllBranches(true)
+                .setBare(true)
+                .call();
+    }
+
+
+    /**
+     * {@code pullRequest}를 merge 한다.
+     *
+     * 자동으로 merge해도 안전한지 확인한 다음 admin 계정으로 코드를 받을 저장소로 자동으로 병합한 코드를 push 한다.
+     *
+     * @param pullRequest
+     */
+    public static void merge(PullRequest pullRequest) {
+        boolean isSafeToMerge = isSafeToMerge(pullRequest);
+
+        if(!isSafeToMerge) {
+            return;
+        }
+
+        CredentialsProvider cp = getAdminAccount();
+        Project toProject = pullRequest.toProject;
+        Project forkingProject = createForkingProject(toProject);
+
+        String directory = null;
+        Repository clonedRepository = null;
+        try {
+            directory = GitRepository.getMergingDirectory(forkingProject);
+            clonedRepository = new RepositoryBuilder()
+                    .setWorkTree(new File(directory))
+                    .setGitDir(new File(directory + "/.git"))
+                    .build();
+
+            Git git = new Git(clonedRepository);
+            String srcToBranchName = pullRequest.toBranch;
+            String destToBranchName = srcToBranchName + "-to";
+
+            // 코드 받을 프로젝트의 코드 받을 브랜치로 clone한 프로젝트의 merge 한 브랜치의 코드를 push 한다.
+            git.push()
+                    .setRemote(CodeApp.getURL(toProject.owner, toProject.name))
+                    .setRefSpecs(new RefSpec(destToBranchName + ":" + srcToBranchName))
+                    .setCredentialsProvider(cp)
+                    .call();
+
+            // 풀리퀘스트 완료
+            pullRequest.state = State.CLOSED;
+        } catch (IOException e) {
+            throw new IllegalStateException(e);
+        } catch (GitAPIException e) {
+            throw new IllegalStateException(e);
+        } finally {
+            FileUtil.rm_rf(new File(directory));
+            if(clonedRepository != null) {
+                clonedRepository.close();
+            }
+        }
+    }
+
+    /**
+     * {@code pullRequest}를 자동으로 merge해도 괜찮은지 확인한다.
+     *
+     * bare repository는 checkout 등의 명령어를 사용할 수 없기 때문에
+     * 코드를 받을 프로젝트를 clone하는 non-bare repository를 생성하고,
+     * 그 repository로 코드를 보내는 저장소의 브랜치와 코드를 받는 저장소의 브랜치를 체크아웃 받은다음
+     * '코드를 받을 저장소의 브랜치'를 fetch 받은 브랜치에서
+     * '코드를 보내는 저장소의 브랜치'를 fetch 받은 브랜치를 merge한다.
+     *
+     * 이때 merge한 결과 conflict가 발생하면 false를 리턴하고 그렇지 않은 경우에는 true를 반환한다.
+     *
+     * @param pullRequest
+     * @return
+     */
+    public static boolean isSafeToMerge(PullRequest pullRequest) {
+        CredentialsProvider cp = getAdminAccount();
+
+        Project toProject = pullRequest.toProject; // 코드 받을 프로젝트
+        Project fromProject = pullRequest.fromProject; // 코드 보낸 프로젝트
+        Project forkingProject = createForkingProject(toProject); // 코드 받을 프로젝트를 clone하는 프로젝트
+
+        String url = CodeApp.getURL(toProject.owner, toProject.name);
+        String directory = GitRepository.getMergingDirectory(forkingProject);
+
+        // clone으로 생성될 디렉토리를 미리 삭제한다.
+        FileUtil.rm_rf(new File(directory));
+
+        // 코드를 받는 쪽 프로젝트를 none-bare 모드로 clone 한다.
+        MergeResult mergeResult = null;
+        Repository clonedRepository = null;
+        try {
+            Git.cloneRepository()
+                    .setURI(url)
+                    .setDirectory(new File(directory))
+                    .call();
+
+            clonedRepository = new RepositoryBuilder()
+                    .setWorkTree(new File(directory))
+                    .setGitDir(new File(directory + "/.git"))
+                    .build();
+
+            Git git = new Git(clonedRepository);
+            String srcToBranchName = pullRequest.toBranch;
+            String destToBranchName = srcToBranchName + "-to";
+            String srcFromBranchName = pullRequest.fromBranch;
+            String destFromBranchName = srcFromBranchName + "-from";
+
+            // 코드를 받아오면서 생성될 브랜치를 미리 삭제한다.
+            git.branchDelete().setBranchNames(destToBranchName).setForce(true).call();
+            git.branchDelete().setBranchNames(destFromBranchName).setForce(true).call();
+
+            // 코드를 받을 브랜치에 해당하는 코드를 fetch 한다.
+            git.fetch()
+                    .setCredentialsProvider(cp)
+                    .setRemote(CodeApp.getURL(toProject.owner, toProject.name))
+                    .setRefSpecs(new RefSpec(srcToBranchName + ":" + destToBranchName))
+                    .call();
+
+            // 코드를 보내는 브랜치에 해당하는 코드를 fetch 한다.
+            git.fetch()
+                    .setCredentialsProvider(cp)
+                    .setRemote(CodeApp.getURL(fromProject.owner, fromProject.name))
+                    .setRefSpecs(new RefSpec(srcFromBranchName + ":" + destFromBranchName))
+                    .call();
+
+            // 코드를 받을 브랜치로 이동(checkout)한다.
+            git.checkout()
+                    .setName(destToBranchName)
+                    .setCreateBranch(false)
+                    .call();
+
+            // 코드를 보낸 브랜치의 코드를 merge 한다.
+            ObjectId fromBranch = clonedRepository.resolve(destFromBranchName);
+            mergeResult = git.merge()
+                    .setFastForward(MergeCommand.FastForwardMode.NO_FF) // create a merge commit
+                    .include(fromBranch)
+                    .call();
+        } catch (IOException e) {
+            throw new IllegalStateException(e);
+        } catch (GitAPIException e) {
+            throw new IllegalStateException(e);
+        } finally {
+            if(clonedRepository != null) {
+                clonedRepository.close();
+            }
+        }
+
+        // merge 결과를 반환한다.
+        return mergeResult.getMergeStatus().isSuccessful();
+    }
+
+    private static String getMergingDirectory(Project project) {
+        return repoForMergingPrefix + project.owner + "/" + project.name + ".git";
+    }
+
+    private static CredentialsProvider getAdminAccount() {
+        return new UsernamePasswordCredentialsProvider("admin", "admin00");
+    }
+
+    private static Project createForkingProject(Project toProject) {
+        Project forkingProject = new Project();
+        forkingProject.owner = toProject.owner;
+        forkingProject.name = toProject.name;
+        forkingProject.vcs = RepositoryService.VCS_GIT;
+        return forkingProject;
     }
 }
