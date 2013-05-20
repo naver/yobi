@@ -409,6 +409,20 @@ public class GitRepository implements PlayRepository {
     }
 
     /**
+     * Git 디렉토리 URI를 반환한다.
+     *
+     * when: 로컬 저장소에서 clone, fetch, push 커맨드를 사용할 때 저장소를 참조할 URI가 필요할 때 사용한다.
+     *
+     * @param project
+     * @return
+     * @throws IOException
+     */
+    public static String getGitDirectoryURI(Project project) throws IOException {
+        String currentDirectory = new java.io.File( "." ).getCanonicalPath();
+        return "file://" + currentDirectory + "/" + getGitDirectory(project);
+    }
+
+    /**
      * Git 디렉토리 경로를 반환한다.
      *
      * when: Git 저장소를 참조하는 {@link Repository} 객체를 생성할 때 주로 사용한다.
@@ -450,7 +464,7 @@ public class GitRepository implements PlayRepository {
      * * @see <a href="https://www.kernel.org/pub/software/scm/git/docs/gitglossary.html#def_bare_repository">bare repository</a>
      */
     public static void cloneRepository(Project originalProject, Project forkingProject) throws GitAPIException, IOException {
-        String url = CodeApp.getURL(originalProject.owner, originalProject.name);
+        String url = getGitDirectoryURI(originalProject);
         String directory = getGitDirectory(forkingProject);
         Git.cloneRepository()
                 .setURI(url)
@@ -475,7 +489,6 @@ public class GitRepository implements PlayRepository {
             return;
         }
 
-        CredentialsProvider cp = getAdminAccount();
         Project toProject = pullRequest.toProject;
         Project forkingProject = createForkingProject(toProject);
 
@@ -494,9 +507,8 @@ public class GitRepository implements PlayRepository {
 
             // 코드 받을 프로젝트의 코드 받을 브랜치로 clone한 프로젝트의 merge 한 브랜치의 코드를 push 한다.
             git.push()
-                    .setRemote(CodeApp.getURL(toProject.owner, toProject.name))
+                    .setRemote(getGitDirectoryURI(toProject))
                     .setRefSpecs(new RefSpec(destToBranchName + ":" + srcToBranchName))
-                    .setCredentialsProvider(cp)
                     .call();
 
             // 풀리퀘스트 완료
@@ -528,13 +540,10 @@ public class GitRepository implements PlayRepository {
      * @return
      */
     public static boolean isSafeToMerge(PullRequest pullRequest) {
-        CredentialsProvider cp = getAdminAccount();
-
         Project toProject = pullRequest.toProject; // 코드 받을 프로젝트
         Project fromProject = pullRequest.fromProject; // 코드 보낸 프로젝트
         Project forkingProject = createForkingProject(toProject); // 코드 받을 프로젝트를 clone하는 프로젝트
 
-        String url = CodeApp.getURL(toProject.owner, toProject.name);
         String directory = GitRepository.getMergingDirectory(forkingProject);
 
         // clone으로 생성될 디렉토리를 미리 삭제한다.
@@ -545,7 +554,7 @@ public class GitRepository implements PlayRepository {
         Repository clonedRepository = null;
         try {
             Git.cloneRepository()
-                    .setURI(url)
+                    .setURI(getGitDirectoryURI(toProject))
                     .setDirectory(new File(directory))
                     .call();
 
@@ -566,15 +575,13 @@ public class GitRepository implements PlayRepository {
 
             // 코드를 받을 브랜치에 해당하는 코드를 fetch 한다.
             git.fetch()
-                    .setCredentialsProvider(cp)
-                    .setRemote(CodeApp.getURL(toProject.owner, toProject.name))
+                    .setRemote(getGitDirectoryURI(toProject))
                     .setRefSpecs(new RefSpec(srcToBranchName + ":" + destToBranchName))
                     .call();
 
             // 코드를 보내는 브랜치에 해당하는 코드를 fetch 한다.
             git.fetch()
-                    .setCredentialsProvider(cp)
-                    .setRemote(CodeApp.getURL(fromProject.owner, fromProject.name))
+                    .setRemote(getGitDirectoryURI(fromProject))
                     .setRefSpecs(new RefSpec(srcFromBranchName + ":" + destFromBranchName))
                     .call();
 
@@ -606,10 +613,6 @@ public class GitRepository implements PlayRepository {
 
     private static String getMergingDirectory(Project project) {
         return repoForMergingPrefix + project.owner + "/" + project.name + ".git";
-    }
-
-    private static CredentialsProvider getAdminAccount() {
-        return new UsernamePasswordCredentialsProvider("admin", "admin00");
     }
 
     private static Project createForkingProject(Project toProject) {
