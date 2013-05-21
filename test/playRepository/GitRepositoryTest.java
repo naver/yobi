@@ -1,6 +1,20 @@
 package playRepository;
 
-import static org.fest.assertions.Assertions.assertThat;
+import models.Project;
+import org.eclipse.jgit.api.Git;
+import org.eclipse.jgit.api.errors.GitAPIException;
+import org.eclipse.jgit.api.errors.NoFilepatternException;
+import org.eclipse.jgit.lib.Constants;
+import org.eclipse.jgit.lib.Repository;
+import org.eclipse.jgit.lib.RepositoryBuilder;
+import org.eclipse.jgit.revwalk.RevCommit;
+import org.eclipse.jgit.revwalk.RevTree;
+import org.eclipse.jgit.revwalk.RevWalk;
+import org.eclipse.jgit.treewalk.TreeWalk;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Ignore;
+import org.junit.Test;
 
 import java.io.BufferedWriter;
 import java.io.File;
@@ -8,23 +22,20 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.util.List;
 
-import org.eclipse.jgit.api.Git;
-import org.eclipse.jgit.api.errors.GitAPIException;
-import org.eclipse.jgit.api.errors.NoFilepatternException;
-import org.eclipse.jgit.lib.Repository;
-import org.eclipse.jgit.lib.RepositoryBuilder;
-import org.eclipse.jgit.revwalk.RevCommit;
-import org.junit.*;
+import static org.fest.assertions.Assertions.assertThat;
 
 public class GitRepositoryTest {
+
     @Before
     public void before() {
         GitRepository.setRepoPrefix("resources/test/repo/git/");
+        GitRepository.setRepoForMergingPrefix("resources/test/repo/git-merging/");
     }
 
     @After
     public void after() {
         rm_rf(new File(GitRepository.getRepoPrefix()));
+        rm_rf(new File(GitRepository.getRepoForMergingPrefix()));
     }
 
     @Test
@@ -142,6 +153,84 @@ public class GitRepositoryTest {
         assertThat(history5.get(2).getMessage()).isEqualTo("commit 1");
     }
 
+    @Test
+    public void cloneRepository() throws Exception {
+        // Given
+        String userName = "whiteship";
+        String projectName = "testProject";
+
+        Project original = createProject(userName, projectName);
+        Project fork = createProject("keesun", projectName);
+
+        rm_rf(new File(GitRepository.getGitDirectory(original)));
+        rm_rf(new File(GitRepository.getGitDirectory(fork)));
+
+        GitRepository fromRepo = new GitRepository(userName, projectName);
+        fromRepo.create();
+
+        // When
+        GitRepository.cloneRepository(original, fork);
+
+        // Then
+        File file = new File(GitRepository.getGitDirectory(fork));
+        assertThat(file.exists()).isTrue();
+    }
+
+    @Test
+    public void cloneRepositoryWithNonBareMode() throws IOException, GitAPIException {
+        // Given
+        Project originProject = createProject("whiteship", "test");
+        rm_rf(new File(GitRepository.getGitDirectory(originProject)));
+        new GitRepository(originProject.owner, originProject.name).create();
+
+        String cloneWorkingTreePath = GitRepository.getDirectoryForMerging(originProject.owner, originProject.name);
+        rm_rf(new File(cloneWorkingTreePath));
+
+        // When
+        Git.cloneRepository()
+                .setURI(GitRepository.getGitDirectoryURL(originProject))
+                .setDirectory(new File(cloneWorkingTreePath))
+                .call();
+
+        // Then
+        assertThat(new File(cloneWorkingTreePath).exists()).isTrue();
+        assertThat(new File(cloneWorkingTreePath + "/.git").exists()).isTrue();
+
+        Repository cloneRepository = new RepositoryBuilder()
+                .setWorkTree(new File(cloneWorkingTreePath))
+                .setGitDir(new File(cloneWorkingTreePath + "/.git"))
+                .build();
+
+        assertThat(cloneRepository.getFullBranch()).isEqualTo("refs/heads/master");
+
+        // When
+        Git cloneGit = new Git(cloneRepository);
+
+        // toProject를 clone 받은 워킹 디렉토리에서 테스트 파일 만들고 커밋하고 푸쉬하기
+        String readmeFileName = "readme.md";
+        String testFilePath = cloneWorkingTreePath + "/" + readmeFileName;
+        BufferedWriter out = new BufferedWriter(new FileWriter(testFilePath));
+        out.write("hello 1");
+        out.flush();
+        cloneGit.add().addFilepattern(readmeFileName).call();
+        cloneGit.commit().setMessage("commit 1").call();
+        cloneGit.push().call();
+
+        // Then
+        Repository originRepository = GitRepository.buildGitRepository(originProject);
+        String readmeFileInClone = new String(getRawFile(cloneRepository, readmeFileName));
+        assertThat(readmeFileInClone).isEqualTo("hello 1");
+        String readmeFileInOrigin = new String(getRawFile(originRepository, readmeFileName));
+        assertThat(readmeFileInOrigin).isEqualTo("hello 1");
+    }
+
+    private Project createProject(String owner, String name) {
+        Project project = new Project();
+        project.owner = owner;
+        project.name = name;
+        return project;
+    }
+
     @Ignore
     @Test
     public void findFileInfo() throws Exception {
@@ -177,4 +266,15 @@ public class GitRepositoryTest {
         }
         file.delete();
     }
+
+    private byte[] getRawFile(Repository repository, String path) throws IOException {
+        RevTree tree = new RevWalk(repository).parseTree(repository.resolve(Constants.HEAD));
+        TreeWalk treeWalk = TreeWalk.forPath(repository, path, tree);
+        if (treeWalk.isSubtree()) {
+            return null;
+        } else {
+            return repository.open(treeWalk.getObjectId(0)).getBytes();
+        }
+    }
+
 }

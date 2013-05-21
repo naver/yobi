@@ -7,6 +7,7 @@ import models.User;
 import models.enumeration.RoleType;
 import models.enumeration.State;
 import org.eclipse.jgit.api.errors.GitAPIException;
+import org.eclipse.jgit.revwalk.RevWalk;
 import play.data.Form;
 import play.mvc.Controller;
 import play.mvc.Result;
@@ -83,9 +84,8 @@ public class PullRequestApp extends Controller {
             return notFound();
         }
 
-        // 포크 프로젝트만 코드를 보낼 수 있다.
         if(!project.isFork()) {
-            badRequest();
+            badRequest("this request is allowed to only fork project");
         }
 
         List<String> fromBranches = RepositoryService.getRepository(project).getBranches();
