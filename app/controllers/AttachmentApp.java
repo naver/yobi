@@ -26,7 +26,23 @@ import utils.HttpUtil;
 
 public class AttachmentApp extends Controller {
 
-    public static Result newFile() throws NoSuchAlgorithmException, IOException {
+    /**
+     * 사용자 첨부파일로 업로드한다
+     *
+     * when 이슈나 글, 코멘트등에서 파일을 첨부하기 전에 먼저 업로드
+     *
+     * 멀티파트 폼데이터로 파일 업로드 요청을 받아서 서버에 파일 저장을 시도하고
+     * 만약 이미 같은 파일이 서버내에 globally 존재한다면 200OK로 응답
+     * 존재하지 않는 파일이라면 201 created로 응답
+     *
+     * 요청에 첨부파일이 없는 것으로 보일때는 400 Bad Request로 응답
+     * 업로더가 익명 사용자일 경우에는 403 Forbidden 으로 응답
+     *
+     * @return 생성된 파일의 메타데이터를 JSON 타입으로 반환하는 응답
+     * @throws NoSuchAlgorithmException
+     * @throws IOException
+     */
+    public static Result uploadFile() throws NoSuchAlgorithmException, IOException {
         // Get the file from request.
         FilePart filePart =
                 request().body().asMultipartFormData().getFile("filePath");
@@ -42,7 +58,7 @@ public class AttachmentApp extends Controller {
 
         // Store the file in the user's temporary area.
         Attachment attach = new Attachment();
-        boolean isCreated = attach.storeInUserTemporaryArea(file, filePart.getFilename(), UserApp.currentUser().id);
+        boolean isCreated = attach.storeToUserArea(file, filePart.getFilename(), UserApp.currentUser().id);
 
         // The request has been fulfilled and resulted in a new resource being
         // created. The newly created resource can be referenced by the URI(s)
@@ -86,6 +102,18 @@ public class AttachmentApp extends Controller {
         }
     }
 
+    /**
+     * {@code id}로 파일을 찾아서 첨부파일로 돌려준다.
+     *
+     * when: 첨부파일을 다운로드 받을 때
+     *
+     * 주의사항: 파일명이 깨지지 않도록 {@link utils.HttpUtil#encodeContentDisposition)}로 인코딩한다.
+     *
+     * @param id 첨부파일 id
+     * @return 파일이 첨부된 응답
+     * @throws NoSuchAlgorithmException
+     * @throws IOException
+     */
     public static Result getFile(Long id) throws NoSuchAlgorithmException, IOException {
         Attachment attachment = Attachment.findById(id);
 
@@ -107,6 +135,22 @@ public class AttachmentApp extends Controller {
         return ok(file);
     }
 
+    /**
+     * {@code id}에 해당하는 첨부파일을 지운다.
+     *
+     * 게시물, 이슈, 댓글들의 첨부파일을 지울때 사용한다.
+     *
+     * 폼의 필드에 {@code _method}가 존재하고 값이 delete로 지정되어 있지 않으면 Bad Request로 응답한다.
+     * 파일을 못 찾으면 Not Found
+     * 삭제 권한이 없으면 Forbidden
+     *
+     * 첨부내용을 삭제한 후 해당 첨부의 origin 파일 유효검증
+     *
+     * @param id 첨부파일 id
+     * @return attachment 삭제 결과 (하지만 해당 메시지를 쓰고 있지는 않다. 아까운 네크워크 자원..)
+     * @throws NoSuchAlgorithmException
+     * @throws IOException
+     */
     public static Result deleteFile(Long id)
             throws NoSuchAlgorithmException, IOException {
         // _method must be 'delete'
@@ -129,46 +173,78 @@ public class AttachmentApp extends Controller {
 
         attach.delete();
 
-        if (!Attachment.exists(attach.hash)) {
-            if (!Attachment.fileExists(attach.hash)) {
-                Logger.error("The uploaded file '" + attach.name + "'cannot be " +
-                        "found even if the file is still referred by some" +
-                        "attachments.");
-            }
-            return ok("Both the attachment and its origin file are removed successfully.");
+        logIfOriginFileIsNotValid(attach.hash);
+
+        if (Attachment.fileExists(attach.hash)) {
+            return ok("The attachment is removed successfully, but its origin file still exists.");
         } else {
-            if (Attachment.fileExists(attach.hash)) {
-                Logger.warn("The attachment is removed successfully, but its " +
-                        "origin file still exists abnormally even if the file " +
-                        "referred by nowhere.");
-            }
-            return ok("The attachment is removed successfully, but its " +
-                    "origin file still exists.");
+            return ok("Both the attachment and its origin file are removed successfully.");
         }
     }
 
-    public static Map<String, String> fileAsMap(Attachment attach) {
-        Map<String, String> file = new HashMap<String, String>();
+    /**
+     * origin file의 유효성을 검증하고, 유효하지 않다면 로그를 남긴다.
+     *
+     * origin file이 존재하지 않지만 그 파일을 참조하는 첨부가 존재하는 경우엔 에러 로그를 남긴다.
+     * origin file이 존재하지만 그 파일을 참조하는 첨부가 존재하지 않는 경우엔 경고 로그를 남긴다.
+     *
+     * @param hash origin file의 hash
+     */
+    private static void logIfOriginFileIsNotValid(String hash) {
+        if (!Attachment.fileExists(hash) && Attachment.exists(hash)) {
+            Logger.error("The origin file '" + hash + "' cannot be " +
+                    "found even if the file is still referred by some" +
+                    "attachments.");
+        }
 
-        file.put("id", attach.id.toString());
-        file.put("mimeType", attach.mimeType);
-        file.put("name", attach.name);
-        file.put("url", routes.AttachmentApp.getFile(attach.id).url());
-        file.put("size", attach.size.toString());
-
-        return file;
+        if (Attachment.fileExists(hash) && !Attachment.exists(hash)) {
+            Logger.warn("The attachment is removed successfully, but its " +
+                    "origin file '" + hash + "' still exists abnormally even if the file " +
+                    "referred by nowhere.");
+        }
     }
 
+    /**
+     * 첨부파일의 메타데이터를 가져온다.
+     *
+     * @param attach 첨부
+     * @return 메타데이터를 맵으로
+     */
+    private static Map<String, String> extractFileMetaDataFromAttachementAsMap(Attachment attach) {
+        Map<String, String> metadata = new HashMap<String, String>();
+
+        metadata.put("id", attach.id.toString());
+        metadata.put("mimeType", attach.mimeType);
+        metadata.put("name", attach.name);
+        metadata.put("url", routes.AttachmentApp.getFile(attach.id).url());
+        metadata.put("size", attach.size.toString());
+
+        return metadata;
+    }
+
+    /**
+     * 파일의 목록을 가져온다.
+     *
+     * 이슈, 게시물, 댓글을 볼 때, 첨부된 파일들의 목록을 보여주기 위해
+     * 이슈, 게시물, 댓글을 편집할 때, 첨부된 파일들의 목록 및 사용자 파일들의 목록을 보여주기 위해
+     *
+     * 로그인한 사용자의 파일들의 목록을 {@code tempFiles} 프로퍼티로 넘겨준다.
+     * 첨부 파일들의 목록을 {@code attachments} 프로퍼티로 넘겨준다.
+     * 첨부 파일들 중 로그인한 사용자가 읽기 권한을 갖지 못한 것이 하나라도 있다면 403 Forbidden 으로 응답한다.
+     *
+     * @return json 포맷으로 된 파일 목록을 본문으로 하는 응답. 다음고 같은 형식이다.
+     *         {@code {tempFiles: 사용자 파일 목록, attachments: 첨부 파일 목록 }}
+     */
     public static Result getFileList() {
         Map<String, List<Map<String, String>>> files =
                 new HashMap<String, List<Map<String, String>>>();
 
-        // Get files from the user's temporary area.
-        List<Map<String, String>> tempFiles = new ArrayList<Map<String, String>>();
-        for (Attachment attach : Attachment.findTempFiles(UserApp.currentUser().id)) {
-            tempFiles.add(fileAsMap(attach));
+        // Get files from the user's area.
+        List<Map<String, String>> userFiles = new ArrayList<Map<String, String>>();
+        for (Attachment attach : Attachment.findByContainer(UserApp.currentUser().asResource())) {
+            userFiles.add(extractFileMetaDataFromAttachementAsMap(attach));
         }
-        files.put("tempFiles", tempFiles);
+        files.put("tempFiles", userFiles);
 
         // Get attached files only if the user has permission to read it.
         Map<String, String[]> query = request().queryString();
@@ -183,7 +259,7 @@ public class AttachmentApp extends Controller {
                         attach.asResource(), Operation.READ)) {
                     return forbidden();
                 }
-                attachments.add(fileAsMap(attach));
+                attachments.add(extractFileMetaDataFromAttachementAsMap(attach));
             }
             files.put("attachments", attachments);
         }

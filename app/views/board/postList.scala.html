@@ -49,7 +49,7 @@
 	</div>
 	}
 
-  	@if(notices != null && notices.size > 0) {
+	@if(notices != null && notices.size > 0) {
     <div class="notice-wrap bubble-wrap gray">
 		<ul class="board-list unstyled">
 		@for(post <- notices) {
@@ -63,21 +63,21 @@
                     }
                 </div>
                 <div class="contents">
-                	<p class="title">
-                		<a href="@routes.BoardApp.post(project.owner, project.name, post.id)">@post.title</a>
-                	</p>
-                	<p class="infos nm">
-                		by <a href="@routes.UserApp.userInfo(post.authorLoginId)" class="author">@post.authorLoginId</a><!-- 
+			<p class="title">
+				<a href="@routes.BoardApp.post(project.owner, project.name, post.id)">@post.title</a>
+			</p>
+			<p class="infos nm">
+				by <a href="@routes.UserApp.userInfo(post.authorLoginId)" class="author">@post.authorLoginId</a><!--
 					-->&nbsp;<span class="date">@utils.TemplateHelper.agoString(post.ago())</span>
 					</p>
                 </div>
                 <div class="right-panel">
-                	<div class="comment-wrap">
-                		<i class="ico ico-comment-bubble"></i> <span class="num">@post.numOfComments</span>
-                	</div>
-                	<a href="@routes.UserApp.userInfo(post.authorLoginId)" class="avatar-wrap pull-right"><!-- 
-                 	--><img src="@User.findByLoginId(post.authorLoginId).avatarUrl" alt="@post.authorName" width="32" height="32">
-                	</a>
+			<div class="comment-wrap">
+				<i class="ico ico-comment-bubble"></i> <span class="num">@post.numOfComments</span>
+			</div>
+			<a href="@routes.UserApp.userInfo(post.authorLoginId)" class="avatar-wrap pull-right"><!--
+			--><img src="@User.findByLoginId(post.authorLoginId).avatarUrl" alt="@post.authorName" width="32" height="32">
+			</a>
 				</div>
 			</li>
 		}
@@ -92,8 +92,8 @@
 				<a href="@routes.BoardApp.post(project.owner, project.name, post.id)">@post.getNumber</a>
 			</div>
 			<div class="attach-wrap">
-				@if(Attachment.findByContainer(post.asResource).size > 0){ 
-					<i class="ico ico-clip"></i> 
+				@if(Attachment.findByContainer(post.asResource).size > 0){
+					<i class="ico ico-clip"></i>
 				}
 			</div>
 			<div class="contents">
@@ -101,7 +101,7 @@
 					<a href="@routes.BoardApp.post(project.owner, project.name, post.id)">@post.title</a>
 				</p>
 				<p class="infos nm">
-					by <a href="@routes.UserApp.userInfo(post.authorLoginId)" class="author">@post.authorLoginId</a><!-- 
+					by <a href="@routes.UserApp.userInfo(post.authorLoginId)" class="author">@post.authorLoginId</a><!--
 				 -->&nbsp;<span class="date">@utils.TemplateHelper.agoString(post.ago())</span>
 				</p>
 			</div>
@@ -109,11 +109,11 @@
 				<div class="comment-wrap">
 					<i class="ico ico-comment-bubble"></i><span class="num">@post.numOfComments</span>
 				</div>
-				<a href="@routes.UserApp.userInfo(post.authorLoginId)" class="avatar-wrap pull-right"><!-- 
+				<a href="@routes.UserApp.userInfo(post.authorLoginId)" class="avatar-wrap pull-right"><!--
 				 --><img src="@User.findByLoginId(post.authorLoginId).avatarUrl" alt="@post.authorName" width="32" height="32">
 				</a>
 			</div>
-		</li> 
+		</li>
 		}
 	</ul>
   }

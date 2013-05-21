@@ -5,6 +5,7 @@
 @import utils.TemplateHelper._
 @import scala.collection.immutable.Map
 @import models.enumeration._
+@import utils.AccessControl._
 
 @urlToList = {@routes.IssueApp.issues(project.owner, project.name, param.state, "html", currentPage.getPageIndex + 1)}
 
@@ -46,7 +47,6 @@
 									<input type="text" name="authorLoginId" class="input-medium">
 								</div>
 							</div>
-							
 							<div class="control-group">
 								<label class="control-label">@Messages("assignee")</label>
 								<div class="controls">
@@ -65,7 +65,6 @@
 									</div>
 								</div>
 							</div>
-							
 							<div class="control-group">
 								<label class="control-label">@Messages("milestone")</label>
 								<div class="controls">
@@ -162,7 +161,8 @@
 			"sURLLabels"   : "@routes.IssueLabelApp.labels(project.owner, project.name)",
 			"sURLPost"     : "@routes.IssueLabelApp.newLabel(project.owner, project.name)"
 		};
-		@if(ProjectUser.roleOf(session.get("loginId"), project).equals("manager")){
+
+        @if(isProjectResourceCreatable(UserApp.currentUser, project, ResourceType.ISSUE_LABEL)){
 		htOptLabel.bEditable = true;
 		}
 

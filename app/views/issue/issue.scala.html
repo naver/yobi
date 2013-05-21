@@ -101,6 +101,7 @@
 	<div class="board-comment-wrap">
 		<div class="comment-header"><strong>@Messages("comment")</strong> <strong class="num">@issue.comments.size</strong></div>
     
+<<<<<<< HEAD
 	@if(issue.comments.size > 0) {
 		<ul class="comments">
 		@for(comment <- issue.comments){
@@ -125,7 +126,7 @@
 		</ul>
 	}
 
-	@if(isCreatable(User.findByLoginId(session.get("loginId")), project, models.enumeration.ResourceType.BOARD_POST)){
+    @if(isProjectResourceCreatable(User.findByLoginId(session.get("loginId")), project, models.enumeration.ResourceType.BOARD_POST)){
 		@form(routes.IssueApp.newComment(project.owner, project.name, issue.id), 'id -> "comment-form", 'enctype -> "multipart/form-data"){
 		<div class="write-comment-box">
 			<div class="write-comment-wrap">
@@ -179,7 +180,7 @@
 
 <script type="text/template" id="tplAttachedFile"><!--
 	--><li class="attached-file" data-name="${fileName}" data-href="${fileHref}" data-mime="${mimeType}" data-size="${fileSize}">
-	<strong>${fileName}(${fileSizeReadable})</strong><!--
+    <strong>${fileName}(${fileSizeReadable})${notice}</strong><!--
 	--><a class="attached-delete"><i class="ico btn-delete"></i></a></li>
 </script>
 
@@ -223,7 +224,7 @@
 		
 		// hive.issue.View
 		$hive.loadModule("issue.View", {
-			"sAction"       : "@routes.AttachmentApp.newFile",
+			"sAction"       : "@routes.AttachmentApp.uploadFile",
 			"htOptLabel"    : htOptLabel
 		});		
 	});

@@ -93,11 +93,12 @@ public class SiteApp extends Controller {
     }
 
     public static Result deleteUser(Long userId) {
-        if( User.findByLoginId(session().get("loginId")).isSiteManager() ){
-            if(Project.isOnlyManager(userId).size() == 0)
-                User.find.byId(userId).delete();
-            else
-                flash(Constants.WARNING, "site.userList.deleteAlert");
+        if (User.findByLoginId(session().get("loginId")).isSiteManager()){
+            if (Project.isOnlyManager(userId)) {
+                flash(Constants.WARNING, "site.userList.deleteAlert");                
+            } else {
+                User.find.byId(userId).delete();                
+            }
         } else {
             flash(Constants.WARNING, "auth.unauthorized.waringMessage");
         }
@@ -166,7 +167,7 @@ public class SiteApp extends Controller {
                 String[] parts = projectName.split("/");
                 String owner = parts[0];
                 String name = parts[1];
-                Project project = Project.findByNameAndOwner(owner, name);
+                Project project = Project.findByOwnerAndProjectName(owner, name);
                 for (ProjectUser projectUser : ProjectUser.findMemberListByProject(project.id)) {
                     Logger.debug(projectUser.user.email);
                     emails.add(projectUser.user.email);

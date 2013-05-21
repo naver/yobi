@@ -7,7 +7,6 @@
 @import utils.AccessControl._
 @import models.enumeration._
 
-
 @main(Messages(title), project, utils.MenuType.ISSUE) {
 
 <div class="page">
@@ -58,7 +57,7 @@
 		</div>
 		<script type="text/template" id="tplAttachedFile"><!--
 				--><li class="attached-file" data-name="${fileName}" data-href="${fileHref}" data-mime="${mimeType}" data-size="${fileSize}">
-				<strong>${fileName}(${fileSizeReadable})</strong><!--
+                <strong>${fileName}(${fileSizeReadable})${notice}</strong><!--
 				--><a class="attached-delete"><i class="ico btn-delete"></i></a></li>
 			</script>
 
@@ -154,7 +153,8 @@
 			"sURLPost"     : "@routes.IssueLabelApp.newLabel(project.owner, project.name)",
 			"htActive"     : {@for(label <- issue.labels) { "@label.id":"@label.color", }"":""}
 		};
-		@if(ProjectUser.roleOf(session.get("loginId"), project).equals("manager")){
+
+        @if(isProjectResourceCreatable(UserApp.currentUser, project, ResourceType.ISSUE_LABEL)){
 			htOptLabel.bEditable = true;
 		}
 		
@@ -162,7 +162,7 @@
 		$hive.loadModule("issue.Write", {
 			"sMode"			 : "edit",
 			"elTextarea"	 : $("#body"),
-			"sUploaderAction": "@routes.AttachmentApp.newFile",
+			"sUploaderAction": "@routes.AttachmentApp.uploadFile",
 			"htOptLabel"     : htOptLabel
 		});
 	});
