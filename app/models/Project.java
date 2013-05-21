@@ -55,7 +55,7 @@ public class Project extends Model {
 	public String overview;
 	public String vcs;
 	public String siteurl;
-    public String owner;
+    public String owner; // UserApp.currentUser().loginId from ProjectApp.newProject
 
 	public boolean isPublic;
 
@@ -78,6 +78,12 @@ public class Project extends Model {
 
     @ManyToMany
     public Set<Tag> tags;
+
+    @ManyToOne
+    public Project originalProject;
+
+    @OneToMany(mappedBy = "originalProject")
+    public List<Project> forkingProjects;
 
     public String getCreatedDate() {
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy.MM.dd");
@@ -106,7 +112,7 @@ public class Project extends Model {
 
 	/**
 	 * 해당 프로젝트 존재 여부를 반환한다.
-	 * 
+	 *
 	 * @param loginId 로그인 아이디
 	 * @param projectName 프로젝트 이름
 	 * @return 프로젝트가 존재하면 true, 존재하지 않으면 false
@@ -220,7 +226,7 @@ public class Project extends Model {
 
 	public Date lastUpdateDate() {
 		try {
-			GitRepository gitRepo = new GitRepository(owner, name);
+			GitRepository gitRepo = new GitRepository(this.owner, this.name);
 			List<String> branches = RepositoryService.getRepository(this)
 					.getBranches();
 			if (!branches.isEmpty()) {
@@ -282,6 +288,37 @@ public class Project extends Model {
         lastPostingNumber++;
         update();
         return lastPostingNumber;
+    }
+
+    public boolean isFork() {
+        return this.originalProject != null;
+    }
+
+    public boolean hasForks() {
+        return this.forkingProjects.size() > 0;
+    }
+
+    public void addFork(Project forkProject) {
+        getForkingProjects().add(forkProject);
+        forkProject.originalProject = this;
+    }
+
+    public static Project findByOwnerAndOriginalProject(String loginId, Project originalProject) {
+        return find.where()
+                .eq("originalProject", originalProject)
+                .eq("owner", loginId)
+                .findUnique();
+    }
+
+    public void deleteFork() {
+        if(this.originalProject != null) {
+            this.originalProject.deleteFork(this);
+        }
+    }
+
+    private void deleteFork(Project project) {
+        getForkingProjects().remove(project);
+        project.originalProject = null;
     }
 
     public static class SortByNameWithIgnoreCase implements Comparator<Project> {
@@ -383,4 +420,12 @@ public class Project extends Model {
     public String toString() {
         return owner + "/" + name;
     }
+
+    public List<Project> getForkingProjects() {
+        if(this.forkingProjects == null) {
+            this.forkingProjects = new ArrayList<Project>();
+        }
+        return forkingProjects;
+    }
+
 }

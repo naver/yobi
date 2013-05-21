@@ -26,6 +26,7 @@ title.projectList = Project List
 title.help = HELP
 title.search = SEARCH
 title.resetPassword = Reset Password
+title.newPullRequest = Pull Request
 
 hive.name = HIVE
 hive.title = Collaborative Software Development Platform
@@ -38,6 +39,7 @@ menu.issue = Issue
 menu.wiki = Wiki
 menu.admin = Administrator
 menu.siteAdmin = Site Admin
+menu.pullRequest = Pull Request
 
 message.warning = Warning
 message.success = Success
@@ -122,6 +124,7 @@ issue.state.unit = issues
 issue.state.all = All
 issue.state.open = Open
 issue.state.closed = Closed
+issue.state.rejected = Rejected
 issue.state.assigned = Assigned
 issue.state.enrolled = Enrolled
 issue.state.solved = Solved
@@ -436,3 +439,19 @@ userinfo.starredProjects = Starred
 admin.resetPasswordEmail.title = [HIVE] Password reset mail request
 admin.resetPasswordEmail.mailcontents = copy the below url and paste it to browser url bar
 admin.resetPasswordEmail.invalidRequest = Invalid Password Reset Request
+
+# Fork & PullRequest
+pullRequest.is.safe = This pull request can be merged safely.
+pullRequest.is.not.safe = This pull request can not be merged safely, There may be some conflicts.
+pullRequest.accept = Accept
+pullRequest.reject = Reject
+pullRequest.cancel = Cancel
+pullRequest.select.branch = Select Branch
+pullRequest.from = From
+pullRequest.to = To
+pullRequest.opened.code = Opened Code
+pullRequest.accepted.code = Accepted Code
+pullRequest.rejected.code = Rejected Code
+pullRequest.sent.code = Sent Code
+fork = Fork
+pullRequest = PullRequest
