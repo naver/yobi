@@ -7,7 +7,10 @@
  * http://hive.dev.naver.com/license
  */
 window.hive = (typeof hive == "undefined") ? {} : hive;
-
+/**
+ * HIVE Common Utility
+ * @author "JiHan Kim"
+ */
 $hive = hive.Common = (function(){
 	
 	var htVar = {
@@ -103,17 +106,6 @@ $hive = hive.Common = (function(){
 			oModule = oModule[sDepth];
 		}
 		
-		/*
-		if(typeof oModule != "function"){
-			console.log("[HIVE] " + sName + " is not loaded or invalid module");
-			return false;
-		}
-		
-		htModuleInstance[sName] = new oModule(htOptions);
-		return htModuleInstance[sName];
-		*/
-		
-		// temporary code for compatibility with nForge
 		var oInstance;
 		if(typeof oModule == "undefined"){
 			return false;
@@ -296,22 +288,3 @@ $hive = hive.Common = (function(){
 		"nl2br"			  : nl2br
 	};
 })();
-
-
-var nforge = {
-	"namespace": function(sName){
-		var oNS = $hive.createNamespace("nforge." + sName);
-		oNS.container[oNS.name] = {};
-	},
-	
-	"require": function(sModuleName, htOptions){
-		if(sModuleName instanceof Array) {
-			sModuleName.forEach(function(sName){
-				$hive.loadModule(sName, htOptions);
-			});
-			return;
-		}
-		
-		$hive.loadModule(sModuleName, htOptions);
-	}
-};
