@@ -68,4 +68,12 @@
 >        <div>${name} ${email}</div>
 >    </script>
 >
->    var sTpl = document.getElementById("tplItem").text;
+>    <script type="text/javascript">
+>        var sTpl = document.getElementById("tplItem").text;
+>        var htData = {
+>            "name" : "John Doe", 
+>            "email": "john@doe.com"
+>        };
+>
+>        $.tmpl(sTpl, htData).appendTo("#target");
+>    </script>

@@ -2,6 +2,7 @@
 
 @import utils.JodaDateUtil._
 @import utils.TemplateHelper._
+@import utils.AccessControl._
 @import models.enumeration._
 @import utils.AccessControl._
 
@@ -137,7 +138,11 @@
 
 <script type="text/javascript">
 $(document).ready(function(){
-	$hive.loadModule("project.Home");
+	$hive.loadModule("project.Home", {
+        "sURLProjectTags": "@routes.ProjectApp.tags(project.owner, project.name)",
+        "sURLTags"       : "@routes.TagApp.tags()",
+        "nProjectId"     : @project.id
+    });
 });
 </script>
 }
