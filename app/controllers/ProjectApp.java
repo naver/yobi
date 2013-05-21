@@ -42,22 +42,28 @@ import static com.avaje.ebean.Expr.contains;
  */
 public class ProjectApp extends Controller {
 
-	private static final int LOGO_FILE_LIMIT_SIZE = 1048576;
+    private static final int LOGO_FILE_LIMIT_SIZE = 1048576;
 
-	/** 프로젝트 로고로 사용할 수 있는 이미지 확장자 */
+    /** 프로젝트 로고로 사용할 수 있는 이미지 확장자 */
     public static final String[] LOGO_TYPE = {"jpg", "jpeg", "png", "gif", "bmp"};
 
     /** 자동완성에서 보여줄 최대 프로젝트 개수 */
     private static final int MAX_FETCH_PROJECTS = 1000;
 
-	private static final int COMMIT_HISTORY_PAGE = 1;
+    private static final int COMMIT_HISTORY_PAGE = 1;
 
-	private static final int COMMIT_HISTORY_SHOW_LIMIT = 5;
+    private static final int COMMIT_HISTORY_SHOW_LIMIT = 5;
 
-	private static final int RECENLTY_ISSUE_SHOW_LIMIT = 5;
+    private static final int RECENLTY_ISSUE_SHOW_LIMIT = 5;
 
-	private static final int RECENLTY_POSTING_SHOW_LIMIT = 5;
+    private static final int RECENLTY_POSTING_SHOW_LIMIT = 5;
 
+    /**
+     * getProject
+     * @param userName
+     * @param projectName
+     * @return
+     */
     public static Project getProject(String userName, String projectName) {
         return Project.findByOwnerAndProjectName(userName, projectName);
     }
@@ -88,9 +94,9 @@ public class ProjectApp extends Controller {
 
         List<Commit> commits = null;
         try {
-			commits = repository.getHistory(COMMIT_HISTORY_PAGE, COMMIT_HISTORY_SHOW_LIMIT, null);
+            commits = repository.getHistory(COMMIT_HISTORY_PAGE, COMMIT_HISTORY_SHOW_LIMIT, null);
         } catch (NoHeadException e) {
-		// NOOP
+        // NOOP
         }
 
         List<Issue> issues = Issue.findRecentlyCreated(project, RECENLTY_ISSUE_SHOW_LIMIT);
@@ -101,7 +107,7 @@ public class ProjectApp extends Controller {
         return ok(overview.render("title.projectHome", project, histories));
     }
 
-	/**
+    /**
      * 신규 프로젝트 생성 페이지로 이동한다.<p />
      *
      * 비로그인 상태({@link controllers.UserApp#anonymous})이면 로그인 경고메세지와 함께 로그인페이지로 redirect 된다.<br />
@@ -160,12 +166,10 @@ public class ProjectApp extends Controller {
             flash(Constants.WARNING, "project.name.duplicate");
             filledNewProjectForm.reject("name");
             return badRequest(create.render("title.newProject", filledNewProjectForm));
-
         } else if (filledNewProjectForm.hasErrors()) {
             filledNewProjectForm.reject("name");
             flash(Constants.WARNING, "project.name.alert");
-            return badRequest(newProject.render("title.newProject", filledNewProjectForm));
-
+            return badRequest(create.render("title.newProject", filledNewProjectForm));
         } else {
             Project project = filledNewProjectForm.get();
             project.owner = UserApp.currentUser().loginId;
@@ -236,9 +240,9 @@ public class ProjectApp extends Controller {
      * @param filePart
      * @return {@code filePart}가 null이면 true, {@code filename}이 null이면 true, {@code fileLength}가 0 이하이면 true
      */
-	private static boolean isEmptyFilePart(FilePart filePart) {
-		return filePart == null || filePart.getFilename() == null || filePart.getFilename().length() <= 0;
-	}
+    private static boolean isEmptyFilePart(FilePart filePart) {
+        return filePart == null || filePart.getFilename() == null || filePart.getFilename().length() <= 0;
+    }
 
     /**
      * {@code filename}의 확장자를 체크하여 이미지인지 확인한다.<p />
@@ -279,7 +283,7 @@ public class ProjectApp extends Controller {
     /**
      * 프로젝트를 삭제한다.<p />
      *
-	 * {@code loginId}와 {@code projectName}으로 프로젝트 정보를 가져온다.<br />
+     * {@code loginId}와 {@code projectName}으로 프로젝트 정보를 가져온다.<br />
      * 삭제 권한이 없을 경우는 경고 메시지와 함께 설정페이지로 redirect된다. <br />
      *
      * @param loginId the user login id
@@ -288,7 +292,7 @@ public class ProjectApp extends Controller {
      * @throws Exception the exception
      */
     public static Result deleteProject(String loginId, String projectName) throws Exception {
-	Project project = Project.findByOwnerAndProjectName(loginId, projectName);
+    Project project = Project.findByOwnerAndProjectName(loginId, projectName);
 
         if (AccessControl.isAllowed(UserApp.currentUser(), project.asResource(), Operation.DELETE)) {
             RepositoryService.deleteRepository(loginId, projectName, project.vcs);
@@ -312,8 +316,8 @@ public class ProjectApp extends Controller {
      * @return 프로젝트, 멤버목록, Role 목록
      */
     public static Result members(String loginId, String projectName) {
-	Project project = Project.findByOwnerAndProjectName(loginId, projectName);
-        return ok(memberList.render("title.memberList",
+    Project project = Project.findByOwnerAndProjectName(loginId, projectName);
+        return ok(views.html.project.members.render("title.memberList",
                 ProjectUser.findMemberListByProject(project.id), project,
                 Role.getActiveRoles()));
     }
@@ -371,7 +375,7 @@ public class ProjectApp extends Controller {
      * @return the result
      */
     public static Result deleteMember(String loginId, String projectName, Long userId) {
-	Project project = Project.findByOwnerAndProjectName(loginId, projectName);
+    Project project = Project.findByOwnerAndProjectName(loginId, projectName);
 
         if (UserApp.currentUser().id == userId
                 || AccessControl.isAllowed(UserApp.currentUser(), project.asResource(), Operation.UPDATE)) {
@@ -400,7 +404,7 @@ public class ProjectApp extends Controller {
      * @return
      */
     public static Result editMember(String loginId, String projectName, Long userId) {
-	Project project = Project.findByOwnerAndProjectName(loginId, projectName);
+    Project project = Project.findByOwnerAndProjectName(loginId, projectName);
 
         if (AccessControl.isAllowed(UserApp.currentUser(), project.asResource(), Operation.UPDATE)) {
             if (project.isOwner(User.find.byId(userId))) {
