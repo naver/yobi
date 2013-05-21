@@ -46,12 +46,12 @@ public class BoardApp extends AbstractPostingApp {
 
     /**
      * 게시물 목록 조회
-     * 
+     *
      * when: 특정 프로젝트의 게시물 목록을 검색 / 조회 할 때 사용
-     * 
+     *
      * 접근 권한을 체크하고 접근 권한이 없다면 forbidden 처리한다.
      * 검색 조건에 matching 되는 게시물 목록과 공지사항을 가져와서 표시한다.
-     * 
+     *
      * @param userName 프로젝트 소유자
      * @param projectName 프로젝트 이름
      * @param pageNum 페이지 번호
@@ -80,11 +80,11 @@ public class BoardApp extends AbstractPostingApp {
 
     /**
      * 게시물 등록 폼
-     * 
+     *
      * when: 새로운 게시물을 작성할 때 사용
-     * 
+     *
      * 공지작성 권한이 있다면 등록 폼에서 공지사항 여부 체크 박스를 활성화한다.
-     * 
+     *
      * @param userName 프로젝트 소유자
      * @param projectName 프로젝트 이름
      * @return
@@ -100,11 +100,11 @@ public class BoardApp extends AbstractPostingApp {
 
     /**
      * 게시물 등록
-     * 
+     *
      * when: 게시물 작성 후 저장시 호출
-     * 
+     *
      * 게시물 등록 권한을 확인하여, 권한이 없다면 forbidden 처리한다.
-     * 
+     *
      * @param userName 프로젝트 소유자
      * @param projectName 프로젝트 이름
      * @return
@@ -137,12 +137,12 @@ public class BoardApp extends AbstractPostingApp {
 
     /**
      * 게시물 조회
-     * 
+     *
      * when: 게시물 상세 조회시 호출
-     * 
+     *
      * 접근 권한을 체크하고 접근 권한이 없다면 forbidden 처리한다.
      * 게시물ID에 해당하는 내용이 없다면, 해당하는 게시물이 없음을 알린다.
-     * 
+     *
      * @param userName 프로젝트 소유자
      * @param projectName 프로젝트 이름
      * @param postId 게시물ID
@@ -151,7 +151,7 @@ public class BoardApp extends AbstractPostingApp {
     public static Result post(String userName, String projectName, Long postId) {
         Project project = ProjectApp.getProject(userName, projectName);
         Posting post = Posting.finder.byId(postId);
-        
+
         if (post == null) {
             return notFound(notExistingPage.render("title.post.notExistingPage", project));
         }
@@ -166,9 +166,9 @@ public class BoardApp extends AbstractPostingApp {
 
     /**
      * 게시물 수정 폼
-     * 
+     *
      * when: 게시물 수정할때 호출
-     * 
+     *
      * 수정 권한을 체크하고 접근 권한이 없다면 forbidden 처리한다.
      * 공지작성 권한이 있다면 등록 폼에서 공지사항 여부 체크 박스를 활성화한다.
      *
@@ -193,11 +193,11 @@ public class BoardApp extends AbstractPostingApp {
 
     /**
      * 게시물 수정
-     * 
+     *
      * when: 게시물 수정 후 저장시 호출
-     * 
+     *
      * 수정된 내용을 반영하고 게시물 목록 첫 페이지로 돌아간다
-     * 
+     *
      * @param userName 프로젝트 소유자
      * @param projectName 프로젝트 이름
      * @param postId 게시물ID
@@ -221,12 +221,12 @@ public class BoardApp extends AbstractPostingApp {
     }
 
     /**
-     * 게시물 삭제 
-     * 
+     * 게시물 삭제
+     *
      * when: 게시물 삭제시 호출
-     * 
+     *
      * 게시물을 삭제하고 게시물 목록 첫 페이지로 돌아간다
-     * 
+     *
      * @param userName 프로젝트 소유자
      * @param projectName 프로젝트 이름
      * @param postingId 게시물ID
@@ -243,12 +243,12 @@ public class BoardApp extends AbstractPostingApp {
 
     /**
      * 댓글 작성
-     * 
+     *
      * when: 게시물에 댓글 작성 후 저장시 호출
-     * 
+     *
      * validation check 하여 오류가 있다면 bad request
      * 작성된 댓글을 저장하고 게시물 상세화면으로 돌아간다
-     * 
+     *
      * @param userName 프로젝트 소유자
      * @param projectName 프로젝트 이름
      * @param postId 게시물ID
@@ -279,11 +279,11 @@ public class BoardApp extends AbstractPostingApp {
 
     /**
      * 댓글 삭제
-     * 
+     *
      * when: 댓글 삭제시 호출
-     * 
+     *
      * 댓글을 삭제하고 게시물 상세화면으로 돌아간다
-     * 
+     *
      * @param userName 프로젝트 소유자
      * @param projectName 프로젝트 이름
      * @param postId 게시물ID

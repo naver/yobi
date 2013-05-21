@@ -20,7 +20,6 @@ public class MilestoneApp extends Controller {
         public String state    = "open";
         public String orderBy  = "dueDate";
         public String orderDir = "asc";
-
         public MilestoneCondition() {
             this.state    = "open";
             this.orderBy  = "dueDate";

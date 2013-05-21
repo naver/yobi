@@ -32,8 +32,8 @@
                     <li class="option">
                         <div class="option-label">@Messages("project.shareOption")</div>
                         <div class="option-desc">
-                            <input name="share_option" type="radio" checked="checked" id="public" value="true" class="radio-btn"><label for="public" class="bg-radiobtn label-public">공개</label>
-                            <input name="share_option" type="radio" id="private" value="false" class="radio-btn"><label for="private" class="bg-radiobtn label-private">비공개</label>
+                            <input name="isPublic" type="radio" checked="checked" id="public" value="true" class="radio-btn"><label for="public" class="bg-radiobtn label-public">공개</label>
+                            <input name="isPublic" type="radio" id="private" value="false" class="radio-btn"><label for="private" class="bg-radiobtn label-private">비공개</label>
                             <span class="note">@Messages("project.private.notice")</span>
                         </div>
                     </li>
@@ -53,35 +53,6 @@
 							</div>
                         </div>
                     </li>
-                    
-                    @**
-                    <!-- 
-                    <li class="option">
-                        <div class="option-label">이용약관 <a href="#agreement" data-toggle="modal"><i class="ico ico-que-mark"></i></a></div>
-                        <div id="agreement" class="modal hide fade">
-                          <div class="modal-header">
-                            <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
-                            <h3>이용약관</h3>
-                          </div>
-                          <div class="modal-body">
-                            <pre>@agreements()</pre>
-                          </div>
-                          <div class="modal-footer">
-                            <a href="#" class="btn" data-dismiss="modal">Close</a>
-                          </div>
-                        </div>
-                        <div class="option-desc">
-	                        <div class="n-alert" data-errType="accept">
-			                    <div class="n-inner orange">
-			                        <span class="msg">@Messages("project.new.agreement.alert")</span>
-			                        <a href="#!/close" class="ico btn-delete"></a>
-			                    </div>
-			                </div>
-                            <input type="checkbox" class="stipulation checkbox checkbox-btn" autocomplete="off" id="stipulation" name="accept"><label for="stipulation" class="bg-checkbox label-agreement">본인은 약관에 대한 안내를 읽었으며 동의 합니다.</label>
-                        </div>
-                    </li>
-                     -->
-                    **@
                 </ul>
                 <div class="actions">
                     <button class="nbtn orange medium">@Messages("project.create")</button>
