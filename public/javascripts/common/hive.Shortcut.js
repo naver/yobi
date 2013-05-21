@@ -6,6 +6,10 @@
  * 
  * http://hive.dev.naver.com/license
  */
+/**
+ * HIVE Keyboard Shortcut module
+ * @author "JiHan Kim"
+ */
 hive.ShortcutKey = (function(htOptions){
 	
 	var htVar = {};
@@ -181,7 +185,7 @@ hive.ShortcutKey = (function(htOptions){
 		htHandlers = htVar = null;
 	}
 	
-	_init(htOptions);
+	_init(htOptions || {});
 
 	// public interface
 	return {
