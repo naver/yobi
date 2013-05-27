@@ -16,9 +16,9 @@ input[type="email"], input[type="url"], input[type="search"], input[type="tel"],
 
 /** HIVE UI 시작 **/ 
 form { margin:0 0 2px; }
-textarea, input[type="text"], input[type="password"], input[type="datetime"], 
-input[type="datetime-local"], input[type="date"], input[type="month"], input[type="time"], 
-input[type="week"], input[type="number"], input[type="email"], input[type="url"], 
+textarea, input[type="text"], input[type="password"], input[type="datetime"],
+input[type="datetime-local"], input[type="date"], input[type="month"], input[type="time"],
+input[type="week"], input[type="number"], input[type="email"], input[type="url"],
 input[type="search"], input[type="tel"], input[type="color"], .uneditable-input {
     .box-shadow(none);
     .border-radius(2px);
@@ -29,23 +29,23 @@ input[type="search"], input[type="tel"], input[type="color"], .uneditable-input 
     background:@white; text-align:left;
     padding:0; padding-left:12px;
     .border-radius(2px);
-    
+
     .d-label {
         float:left; margin:0;
         padding:4px 0; padding-right:9px;
-        width:116px; overflow:hidden; 
-        .inline-block;        
+        width:116px; overflow:hidden;
+        .inline-block;
     }
     &.small  .d-label { width: 29px;  }
     &.medium .d-label { width: 58px;  }
     &.large  .d-label { width: 116px; }
-    &.auto   .d-label { width: inherit; } 
+    &.auto   .d-label { width: inherit; }
 
     .d-caret {
-        float:right; margin:0; 
+        float:right; margin:0;
         padding:4px 9px;
         border-left:1px solid #d9d9d9;
-    }    
+    }
 }
 .btn-group.open .btn.dropdown-toggle {
     background:darken(@white, 10%);
@@ -54,13 +54,20 @@ input[type="search"], input[type="tel"], input[type="color"], .uneditable-input 
     border-top-color:@blue;
 }
 .dropdown-menu li>a:hover,.dropdown-menu li>a:focus,.dropdown-submenu:hover>a {
-    background-color:@darkgray !important;
-    .linear-gradient(@darkgray, darken(@darkgray, 10%));
+    color:#fff;
+    background:@darkgray !important;
+    filter:none; /* for IE */
+    /*.linear-gradient(@darkgray, darken(@darkgray, 10%));*/
 }
 .dropdown-menu .active > a, .dropdown-menu .active > a:hover {
     color:#fff;
-    background-color:@darkgray !important;
-    .linear-gradient(@darkgray, darken(@darkgray, 10%));    
+    background:@darkgray !important;
+    filter:none; /* for IE */
+    /*.linear-gradient(@darkgray, darken(@darkgray, 10%));*/    
+}
+.dropdown-menu .disabled span {
+    padding-left:10px;
+    font-weight:bold; color:@darkgray;
 }
 
 /** buttons **/
@@ -70,7 +77,8 @@ input[type="search"], input[type="tel"], input[type="color"], .uneditable-input 
     font-size: 11px;
     line-height: 18px;
     height: 18px;
-    border:0; padding:0; 
+    border:0; padding:0;
+    margin-right:5px;
 
     .border-radius(2px);
     .box-shadow(0 1px 2px rgba(0, 0, 0, .25));
@@ -79,10 +87,11 @@ input[type="search"], input[type="tel"], input[type="color"], .uneditable-input 
 
     color: @white;
     background-color: #707070;
-    &:hover { 
+    &:hover {
         background-color: darken(#707070, 10%);
         text-decoration: none;
     }
+    &.last { margin-right:0; }
 
     &.blue {
         background-color: @blue; /*#56B5D9*/
@@ -93,12 +102,11 @@ input[type="search"], input[type="tel"], input[type="color"], .uneditable-input 
         background-color: @orange;
         &:hover { background-color: darken(@orange, 10%); }
     }
-    
+
     &.black {
         background-color: #222;
         &:hover { background-color : #000;  }
     }
-    
     &.white {
         color: #222;
         background-color: @white;
@@ -116,44 +124,61 @@ button.nbtn {
     &.medium { padding:4px 20px; height:30px; line-height:1; }
     &.large  { padding:8px 30px; height:36px; line-height:1; font-size:15px; }
 }
+.nbtn-group:last-child {
+    margin-right:0px;
+}
 
 /* fileUpload button **/
 .fake-file-wrap {
-    position: relative; display:block; clear:both; 
-    overflow: hidden; cursor:pointer; 
-    width:70px; margin-top:10px; 
+    position: relative; display:block; clear:both;
+    overflow: hidden; cursor:pointer;
+    width:70px; margin-top:10px;
     &:hover {
         background:darken(@white, 10%);
     }
-    
+
     .file {
-        position: absolute; z-index:2; cursor:pointer; 
-        top:0; left: 5px; /*-15px;*/ width:100px;
+        position: absolute; z-index:2; cursor:pointer;
+        top:0; left: -15px; width:100px;
         .opacity(0);
-    }    
+    }
 }
 
 /** issue label **/
 .issue-label {
-    border:none; padding:2px 4px; margin-right:5px; 
+    border:none; padding:2px 4px; margin-right:5px;
     font-size:11px; font-weight:bold;
-    box-shadow: inset 0px -1px 1px rgba(0,0,0,0.3);
+    .box-shadow(inset 0px -1px 1px rgba(0,0,0,0.3));
     -webkit-transition-duration:0.25s;
     &:last-of-type { margin:0; }
-    
+
     .delete {
         display:none;
         margin-left:8px; padding:8px 4px;
         -webkit-transition-duration:inherit;
-        &:hover { background:rgba(0,0,0,.2); } 
+        &:hover { background:rgba(0,0,0,.2); }
     }
     &.editable .delete { display:inline; }
-    
+
     &.active {
         .border-radius(2px);
         &.active-white   { color:#fff; }
         &.active-dimgray { color:#696969; }
     }
+}
+
+/** project label **/
+.project-label {
+    border:none; padding:1px 5px; display:inline-block;
+    font-size:11px; font-weight:bold;
+    color:#fff; white-space:nowrap; vertical-align:middle;
+    background:#d9d9d9;
+    
+    .border-radius(2px);
+    .box-shadow(inset 0px -2px 2px rgba(255,255,255,0.4));
+    
+    &.language { background:#e74c3c; }
+    &.license  { background:#f1c40f; }
 }
 
 /** input **/
@@ -191,32 +216,32 @@ button.nbtn {
 
 /** 화면 상단의 전체 검색 폼 **/
 .form-searchbar {
-    width: 146px; height: 19px;
+    width: 146px; height: 29px;
     margin: 0; padding: 0 6px;
     background-color: @search-bar-bg-color;
     border:1px solid @search-bar-border-color;
-    
+
     .border-radius(2px);
     .box-shadow(inset 0px 2px 3px rgba(0,0,0,0.12));
-    
+
     .text {
-        width: 128px; height: 13px;
+        width: 128px; /*height: 13px;*/
         margin: 0; margin-right:3px;
-        padding:4px 0px; 
+        padding:4px 0px;
         border: 0 none;
-        
-        font-size: 11px;
+        font-size: 14px; /* 11px */
         color: @search-input-color;
         background-color: transparent;
-       
+
        .box-shadow(none);
        &:focus { .box-shadow(none); }
     }
-    
+
     .ico-search {
         border:0; padding:0;
         background-color:transparent;
-        margin-bottom:2px;
+        /*margin-bottom:2px;*/
+        margin-top:2px;
     }
 }
 
@@ -225,20 +250,22 @@ button.nbtn {
     width:32px; height:32px; /* default size: medium */
     display:inline-block;
     vertical-align:middle;
-    overflow:hidden; 
+    overflow:hidden;
     border: 1px solid #ccc;
     .border-radius(3px) !important;
-    
+
+    &.mini    { width:12px; height:12px;   }
+    &.smaller { width:20px; height:20px;   }
     &.small   { width:24px; height:24px;   }
     &.medium  { width:32px; height:32px;   }
     &.large   { width:64px; height:64px;   }
     &.xlarge  { width:128px; height:128px; }
 }
-    
+
 /** tab UI **/
 .nav-tabs {
     li {
-        a { 
+        a {
             padding-left:30px; padding-right:30px;
             background:#ececec;
             border:1px solid #d3d3d3;
@@ -256,24 +283,23 @@ button.nbtn {
     .border-radius(none);
     border:10px solid #bebebe;
     padding:16px 20px; width:500px;
-    
+
     .btn-dismiss {
         padding:0; margin:0; width:100%; text-align: right;
         display:block; clear:both;
-        
+
         button {
             font-size:24px; font-weight:bold; color:#898989;
             border:none; background:transparent;
         }
     }
-    
+
     .message {
         .msg {
             text-align:center;
-            font-weight:bold; font-size:18px; 
+            font-weight:bold; font-size:18px;
             margin-bottom:20px; line-height:1.5em;
         }
     }
 }
 .alert { display:none; } /** use .hiveDialog **/
-

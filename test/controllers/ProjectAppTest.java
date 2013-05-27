@@ -31,7 +31,8 @@ public class ProjectAppTest {
             public void run() {
                 //Given
                 Map<String,String> data = new HashMap<String,String>();
-                data.put("name", "foo");
+                data.put("category", "OS");
+                data.put("name", "linux");
                 User admin = User.findByLoginId("admin");
 
                 //When
@@ -44,14 +45,15 @@ public class ProjectAppTest {
                 );
 
                 //Then
-                assertThat(status(result)).isEqualTo(OK);
+                assertThat(status(result)).isEqualTo(CREATED);
                 Iterator<Map.Entry<String, JsonNode>> fields = Json.parse(contentAsString(result)).getFields();
                 Map.Entry<String, JsonNode> field = fields.next();
                 Tag expected = new Tag();
                 expected.id = Long.valueOf(field.getKey());
                 expected.name = field.getValue().asText();
-                assertThat(expected.name).isEqualTo("foo");
-                assertThat(Project.findByNameAndOwner("hobi", "nForge4java").tags.contains(expected)).isTrue();
+
+                assertThat(expected.name).isEqualTo("OS - linux");
+                assertThat(Project.findByOwnerAndProjectName("hobi", "nForge4java").tags.contains(expected)).isTrue();
             }
         });
     }
@@ -61,16 +63,15 @@ public class ProjectAppTest {
         running(fakeApplication(Helpers.inMemoryDatabase()), new Runnable() {
             public void run() {
                 //Given
-                Project project = Project.findByNameAndOwner("hobi", "nForge4java");
+                Project project = Project.findByOwnerAndProjectName("hobi", "nForge4java");
 
-                Tag tag1 = new Tag();
-                tag1.name = "foo";
+                Tag tag1 = new Tag("OS", "linux");
                 tag1.save();
                 project.tags.add(tag1);
                 project.update();
 
-                Tag tag2 = new Tag();
-                tag2.name = "bar";
+                // If null is given as the first parameter, "Tag" is chosen as the category.
+                Tag tag2 = new Tag(null, "foo");
                 tag2.save();
                 project.tags.add(tag2);
                 project.update();
@@ -87,8 +88,8 @@ public class ProjectAppTest {
                 JsonNode json = Json.parse(contentAsString(result));
                 assertThat(json.has(tag1.id.toString())).isTrue();
                 assertThat(json.has(tag2.id.toString())).isTrue();
-                assertThat(json.get(tag1.id.toString()).asText()).isEqualTo("foo");
-                assertThat(json.get(tag2.id.toString()).asText()).isEqualTo("bar");
+                assertThat(json.get(tag1.id.toString()).asText()).isEqualTo("OS - linux");
+                assertThat(json.get(tag2.id.toString()).asText()).isEqualTo("Tag - foo");
             }
         });
     }
@@ -98,10 +99,9 @@ public class ProjectAppTest {
         running(fakeApplication(Helpers.inMemoryDatabase()), new Runnable() {
             public void run() {
                 //Given
-                Project project = Project.findByNameAndOwner("hobi", "nForge4java");
+                Project project = Project.findByOwnerAndProjectName("hobi", "nForge4java");
 
-                Tag tag1 = new Tag();
-                tag1.name = "foo";
+                Tag tag1 = new Tag("OS", "linux");
                 tag1.save();
                 project.tags.add(tag1);
                 project.update();
@@ -124,7 +124,7 @@ public class ProjectAppTest {
 
                 //Then
                 assertThat(status(result)).isEqualTo(204);
-                assertThat(Project.findByNameAndOwner("hobi", "nForge4java").tags.contains(tag1)).isFalse();
+                assertThat(Project.findByOwnerAndProjectName("hobi", "nForge4java").tags.contains(tag1)).isFalse();
             }
         });
     }

@@ -1,6 +1,92 @@
+<a name="english"></a>
+[[한국어]](#korean)
 HIVE
 =======
 [![Build Status](https://travis-ci.org/nforge/hive.png?branch=master)](https://travis-ci.org/nforge/hive)
+
+
+
+HIVE, collaborative SW development platform.<br/>(Currently, unversioned - work in progress)
+
+
+What is HIVE?
+--
+
+HIVE, a brand new version of nFORGE, is a web-based collaborative platform for software development.
+HIVE offers many features to increase productivity and quality of your software: a bug tracker to manage bugs and issues, a wiki to share documents, a configuration management tool to control software version and so on.
+
+<img src="https://raw.github.com/nforge/hive/master/docs/hive_front.png">
+
+
+## Installation
+
+### check java version
+
+    java -version
+
+Required minimum java version is 7(1.7)
+
+### download playframework
+
+    curl -O http://downloads.typesafe.com/play/2.1.0/play-2.1.0.zip
+
+or
+
+    wget http://downloads.typesafe.com/play/2.1.0/play-2.1.0.zip
+
+### unzip
+
+    unzip play-2.1.0.zip
+
+### cd to unzipped directory
+
+    cd play-2.1.0
+
+### download hive
+
+    git clone https://github.com/nforge/hive.git
+
+You can also make your own hive directory in any other place. But in that case, you should add playframework home path to $PATH environment.
+
+
+### cd to cloned hive directory
+
+    cd hive
+
+
+### run play framework
+
+    ../play
+
+Required files will be download automatically. In the first time, it may take about 10 min or more.
+
+
+### type run command in console
+
+    run
+
+It will downloaded addtional files and compile sources.
+
+If you want to run hive in production mode, use **start** , not **run**.
+
+### connect by browser
+
+    http://127.0.0.1:9000
+
+If you want to change port, check your permission to use 80 port
+
+see [http://www.playframework.com/documentation/2.1.1/Production](http://www.playframework.com/documentation/2.1.1/Production)
+
+<br/>
+<br/>
+<br/>
+
+<a name="korean"></a>
+# for korean
+[[English]](#english)
+
+HIVE
+===========
 
 협업 개발 플랫폼 (현재 개발중이며 아직 공식 버전 넘버링이 안 된 상태입니다.)
 
@@ -18,8 +104,14 @@ HIVE는 GNU GPL v2로 배포되는 오픈소스입니다. (MIT 라이센스로 �
 
 ## 설치하기
 
+### java version 확인
+
+    java -version
+
+java 7(1.7) 이상이어야 합니다.
+
 ### playframework 내려 받기
-    
+
     curl -O http://downloads.typesafe.com/play/2.1.0/play-2.1.0.zip
 
 혹은
@@ -49,7 +141,7 @@ HIVE는 GNU GPL v2로 배포되는 오픈소스입니다. (MIT 라이센스로 �
 실행하면 필요한 파일들을 web에서 내려받습니다. 첫 실행시 네트워크 상황에 따라 10여분 가까이 소요될 수 있습니다.
 
 ### 콘솔이 뜨면 run 명령어로 기동
-    
+
     run
 
 추가로 필요한 파일들을 web에서 내려받은 다음 소스 파일들을 컴파일 후 개발 모드로 실행합니다.
@@ -59,5 +151,5 @@ HIVE는 GNU GPL v2로 배포되는 오픈소스입니다. (MIT 라이센스로 �
 
     http://127.0.0.1:9000
 
-80 포트 등으로 포트를 변경하고 싶을 경우에는 해당 포트가 사용가능한지 확인 한 다음 80 포트를 사용할 수 있는 계정으로 실행합니다. 
+80 포트 등으로 포트를 변경하고 싶을 경우에는 해당 포트가 사용가능한지 확인 한 다음 80 포트를 사용할 수 있는 계정으로 실행합니다.
 관련해서는 [http://www.playframework.com/documentation/2.1.1/Production](http://www.playframework.com/documentation/2.1.1/Production) 부분을 확인해 주세요.

@@ -46,10 +46,14 @@ public class ProjectUserTest extends ModelTest<ProjectUser> {
         // Given
         ProjectUser.assignRole(2l, 3l, 1l);
         flush();
+
         // When
+        Long userIdCase1 = 2l;
+        Long userIdCase2 = 5l;
+        
         // Then
-        assertThat(ProjectUser.checkOneMangerPerOneProject(1l)).isEqualTo(true);
-        assertThat(ProjectUser.checkOneMangerPerOneProject(3l)).isEqualTo(true);
+        assertThat(ProjectUser.checkOneMangerPerOneProject(userIdCase1, 3l)).isEqualTo(true);
+        assertThat(ProjectUser.checkOneMangerPerOneProject(userIdCase2, 3l)).isEqualTo(false);
     }
 
     @Test
@@ -85,7 +89,7 @@ public class ProjectUserTest extends ModelTest<ProjectUser> {
     public void roleOf() {
         // GIVEN
         String loginId = "hobi";
-        Project project = Project.findByNameAndOwner(loginId, "nForge4java");
+        Project project = Project.findByOwnerAndProjectName(loginId, "nForge4java");
         // WHEN
         String roleName = ProjectUser.roleOf(loginId, project);
         // THEN
@@ -116,7 +120,7 @@ public class ProjectUserTest extends ModelTest<ProjectUser> {
     public void isAllowedToSettings() {
         // GIVEN
         String loginId = "hobi";
-        Project project = Project.findByNameAndOwner(loginId, "nForge4java");
+        Project project = Project.findByOwnerAndProjectName(loginId, "nForge4java");
         // WHEN // THEN
         assertThat(ProjectUser.isAllowedToSettings(loginId, project)).isTrue();
         // WHEN // THEN

@@ -1,19 +1,19 @@
 # Messages
 title.newIssue = 새 이슈
 title.issueList = 이슈 목록
-title.issueDetail = 이슈 상세조회
+title.issueDetail = 이슈 상세보기
 title.editIssue = 이슈 수정
 title.newMilestone = 새 마일스톤
-title.milestoneList = 마일스톤 리스트
+title.milestoneList = 마일스톤 목록
 title.editMilestone = 마일스톤 수정
 title.milestoneManage = 마일스톤 관리
 title.projectHome = Overview
 title.newProject = 새 프로젝트 시작
 title.projectSetting = 프로젝트 설정
-title.memberList = 멤버 리스트
+title.memberList = 멤버 목록
 title.post.notExistingPage = 존재하지 않는 게시물
 title.siteSetting = 사이트 설정
-title.site.userEdit = 유저 설정
+title.site.userEdit = 사용자 설정
 title.login = 로그인
 title.logout = 로그아웃
 title.signup = 회원 가입
@@ -26,14 +26,11 @@ title.massMail = 대량 메일 발송
 title.projectList = 프로젝트 목록
 title.help = 도움말
 title.search = 검색
-title.resetPassword = 패스워드 재설정
+title.resetPassword = 비밀번호 재설정
 
 hive.name = HIVE
 hive.title = 협업개발 플랫폼
 hive.description = Make it better and simpler!
-
-orderby.name = 이름순
-orderby.recent = 생성일자순
 
 menu.home = 홈
 menu.board = 게시판
@@ -59,8 +56,8 @@ label.new = 새 라벨
 label.customColor = 색
 label.category = 분류
 label.name = 이름
-label.add = 추가
-label.manage = 라벨관리
+label.add = 라벨 추가
+label.manage = 라벨 관리
 label.confirm.delete = 라벨을 삭제하면 이슈에 지정한 라벨도 함께 제거됩니다. 정말 삭제하시겠습니까?
 label.select = 라벨 선택
 label.error.duplicated = 라벨 생성에 실패했습니다.\n이미 동일한 라벨이 존재할지도 모릅니다.
@@ -72,6 +69,8 @@ order.state = 상태순
 order.comments = 댓글순
 order.completionRate = 완료율순
 order.dueDate = 완료일순
+order.name = 이름순
+order.recent = 생성일자순
 
 button.save = 저장
 button.confirm = 확인
@@ -112,8 +111,6 @@ milestone.is.empty = 등록된 마일스톤이 없습니다
 milestone.menu.manage = 마일스톤 관리
 milestone.menu.new = 새 마일스톤
 milestone.none = 없음
-sort.by.dueDate = 완료일 순
-sort.by.completionRate = 완료율 순
 milestone.title.duplicated = 마일스톤 제목이 다른것과 중복 됩니다. 다른 제목을 사용하세요.
 milestone.form.title = 마일스톤 제목
 milestone.form.content = 내용을 입력해주세요
@@ -203,6 +200,9 @@ issue.title = 제목
 issue.createdDate = 작성일
 issue.attachment = 첨부파일
 issue.numOfComments = 댓글개수
+issue.update.state = 상태 변경
+issue.update.assignee = 담당자 변경
+issue.update.milestone = 마일스톤 변경
 
 #Post
 post.new = 새글
@@ -211,7 +211,8 @@ post.new.title = 제목
 post.new.contents = 내용
 post.new.filePath = 파일 경로
 post.author = 글쓴이
-post.notice = 공지
+post.notice = 공지사항
+post.notice.label = 이 글을 공지사항으로 설정합니다
 post.age = 나이
 post.menu.search = 검색
 post.delete.confirm = 해당 게시물이 삭제되면 영원히 복구할 수 없습니다. 그래도 삭제하시겠습니까?
@@ -224,6 +225,8 @@ post.title = 제목
 post.createdDate = 작성일
 post.attachment = 첨부파일
 post.numOfComments = 댓글개수
+post.error.emptyTitle = 글 제목을 입력해주세요
+post.error.emptyBody = 글 내용을 입력해주세요
 
 #Project
 project.myproject = 내 프로젝트
@@ -254,9 +257,9 @@ project.members = 개발자
 project.members.addMember = 새로운 멤버의 아이디를 입력하세요
 project.member.isManager = 프로젝트 관리자 권한이 필요합니다
 project.member.alreadyMember = 이미 프로젝트에 가입되어 있는 멤버입니다.
-project.member.deleteConfirm = 정말로 해당 유저를 프로젝트에서 탈퇴시키겠습니까?
-project.member.delete = 프로젝트 유저 삭제
-project.member.notExist = 존재하지 않는 유저입니다.
+project.member.deleteConfirm = 정말로 해당 사용자를 프로젝트에서 탈퇴시키겠습니까?
+project.member.delete = 프로젝트 사용자 삭제
+project.member.notExist = 존재하지 않는 사용자입니다.
 project.member.ownerCannotLeave = 프로젝트 소유자는 탈퇴할 수 없습니다.
 project.member.ownerMustBeAManager = 프로젝트 소유자는 관리 권한을 가져야 합니다.
 project.sidebar = 프로젝트 설정
@@ -265,11 +268,11 @@ project.member = 멤버
 project.milestone = 마일스톤
 project.sidebar.plugin = 플러그인
 project.sidebar.help = 도움말
-project.logo.type = 파일형식:
+project.logo.type = 파일형식
 project.logo.maxFileSize = 최대파일크기
 project.logo.fileSizeAlert = 이미지 용량은 1MB 이하여야 합니다.
 project.logo.size = 사이즈
-project.logo = 로고
+project.logo = 프로젝트 로고
 project.logo.alert = 이미지 파일이 아닙니다.
 project.siteurl = 사이트 주소
 project.siteurl.alert = 사이트 URL은 http://로 시작해야 합니다.
@@ -288,11 +291,19 @@ project.wrongName = 프로젝트 이름이 올바르지 않습니다.
 project.tags = 태그
 project.license = 라이센스
 project.codeLanguage = 프로그래밍 언어
+project.onmember = <strong>{0}명</strong> 참여 중
+project.lastUpdate = 마지막 업데이트
+
+# project.history.item: {0}=누가,{1}=무엇을,{2}=어떻게
+project.history.item = {0}님이 {1} {2}  
+project.history.type.commit = 코드를 커밋했습니다
+project.history.type.issue = 새 이슈를 등록했습니다
+project.history.type.post = 새 글을 작성했습니다
 
 #Site
 site.sidebar = 사이트 관리
 site.sidebar.setting = 설정
-site.sidebar.userList = 유저
+site.sidebar.userList = 사용자
 site.sidebar.postList = 게시물
 site.sidebar.issueList = 이슈
 site.sidebar.projectList = 프로젝트 설정
@@ -303,12 +314,12 @@ site.project.filter = 찾으려는 프로젝트 이름을 입력하세요
 site.userList.search = 찾으려는 사용자의 ID를 입력하세요
 site.userList.isActive = 활성 상태
 site.userList.deleteAlert = 프로젝트의 유일한 관리자이므로 사이트에서 삭제할 수 없습니다.
-site.user.delete = 유저 삭제
-site.user.deleteConfirm = 정말로 해당 유저를 사이트에서 탈퇴시키겠습니까?
+site.user.delete = 사용자 삭제
+site.user.deleteConfirm = 정말로 해당 사용자를 사이트에서 탈퇴시키겠습니까?
 site.project.delete = 프로젝트 삭제
 site.project.deleteConfirm = 정말로 해당 프로젝트를 사이트에서 삭제하겠습니까?
-site.userlist.unlocked = 활성화된 유저 목록
-site.userlist.locked = 계정이 잠긴 유저 목록
+site.userlist.unlocked = 활성화된 사용자 목록
+site.userlist.locked = 계정이 잠긴 사용자 목록
 site.massMail.toAll = 모두에게
 site.massMail.toProjects = 특정 프로젝트의 멤버들에게
 site.massMail.loading = 불러오는중...
@@ -321,6 +332,7 @@ user.wrongloginId.alert = 올바른 아이디를 입력하세요.
 user.loginId.duplicate = 이미 존재하는 아이디입니다.
 user.login.alert = 로그인이 필요합니다.
 user.password = 비밀번호
+user.currentPassword = 현재 비밀번호
 user.newPassword = 신규 비밀번호
 user.confirmPassword = 비밀번호 확인
 user.confirmPassword.alert = 입력한 두 비밀번호가 서로 일치하지 않습니다
@@ -328,6 +340,7 @@ user.wrongPassword.alert = 잘못된 비밀번호입니다!
 user.name = 이름
 user.email = 이메일
 user.yourEmail = yourEmail@address.com
+user.email.duplicate = 이미 존재하는 이메일입니다.
 user.wrongEmail.alert = 이메일이 잘못되었습니다.
 user.login.failed = 아이디 또는 비밀번호가 잘못되었습니다.
 user.logout.success = 로그아웃했습니다
@@ -335,10 +348,10 @@ user.isAlreadySignupUser = 이미 가입하셨나요?
 user.signupId = 아이디
 user.signupBtn = 참여하기
 user.loginWithNewPassword = 새로 설정한 비밀번호로 로그인 하세요
-user.notExists.name = 존재하지 않는 유저입니다.
+user.notExists.name = 존재하지 않는 사용자입니다.
 user.locked = 잠긴 사용자 계정입니다.
 user.isLocked = 잠김여부
-user.signup.requested = 하이브 가입이 요청되었습니다. 사이트 관리자가 검토/승인 후 사용가능합니다. 감사합니다.
+user.signup.requested = HIVE 가입이 요청되었습니다. 사이트 관리자가 검토/승인 후 사용가능합니다. 감사합니다.
 
 #Role
 role.manager = 관리자
@@ -363,7 +376,7 @@ board.post.empty = 제목과 본문에 빈칸이 있습니다.
 board.post.notExist = 존재하지 않는 게시물입니다.
 board.post.new = 새 게시물
 board.post.modify = 게시물 수정
-board.comment.empty = 댓글내용은 반드시 쓰셔야 합니다.
+board.comment.empty = 댓글 내용은 반드시 입력해야 합니다.
 board.notAuthor = 글쓴이가 아닙니다.
 
 #Search
@@ -410,6 +423,8 @@ mail.write = 메일 쓰기
 mail.fail = 메일 발송에 실패했습니다.
 mail.sended = 메일을 발송하였습니다.
 
+state = 상태
+label = 라벨
 author = 작성자
 assignee = 담당자
 milestone = 마일스톤
@@ -417,6 +432,7 @@ none = 없음
 comment = 댓글
 noAssignee = 담당자 없음
 noMilestone = 마일스톤 없음
+noChange = 변경 없음
 
 #validation
 validation.tooShortPassword = 비밀번호를 4자 이상으로 만들어 주세요!
@@ -426,6 +442,7 @@ validation.invalidEmail = 올바른 이메일을 입력해 주세요.
 validation.required = 필수 항목 입니다.
 validation.duplicated = 이미 존재합니다!
 validation.allowedCharsForLoginId = 아이디는 알파벳 숫자 - _ . 를 포함할 수 있으나 _ . 로 시작하거나 끝날 수 없습니다.
+validation.reservedWord = 예약어는 사용할 수 없습니다.
 
 #Unauthorized
 auth.unauthorized.title = 접근 권한 오류
@@ -433,10 +450,22 @@ auth.unauthorized.waringMessage = 권한이 없거나 로그인을 하지 않았
 auth.unauthorized.comment = 로그인 후 댓글 입력이 가능합니다.
 
 #userinfo
+userinfo.profile = 프로필
+userinfo.accountSetting = 설정
 userinfo.myProjects = 내 프로젝트
 userinfo.starredProjects = 관심 프로젝트
+userinfo.editProfile = 프로필 수정
+userinfo.changePassword = 비밀번호 변경
+userinfo.changeAvatar = 아바타 변경
+userinfo.changeAvatarHelp = 프로필 수정 버튼을 누르면<br>새 아바타가 반영됩니다
+userinfo.since = 가입일
+userinfo.leaveProject = 프로젝트 탈퇴
+userinfo.leaveProject.confirm = 정말 {0} 프로젝트에서 탈퇴하시겠습니까?
 
 #Admin
-admin.resetPasswordEmail.title = [HIVE] 패스워드 재 설정
+admin.resetPasswordEmail.title = [HIVE] 비밀번호 재 설정
 admin.resetPasswordEmail.mailcontents = 아래 URL을 브라우저 주소창에 붙여 넣으세요
-admin.resetPasswordEmail.invalidRequest = 잘못된 패스워드 재 설정 요청입니다.
+admin.resetPasswordEmail.invalidRequest = 잘못된 비밀번호 재 설정 요청입니다.
+
+#Attachment
+attach.attachIfYouSave = 저장하면 첨부됩니다

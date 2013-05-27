@@ -156,9 +156,9 @@ public class IssueApp extends AbstractPostingApp {
         return ok(excelData);
     }
 
-    public static Result issue(String userName, String projectName, Long issueId) {
+    public static Result issue(String userName, String projectName, Long number) {
         Project project = ProjectApp.getProject(userName, projectName);
-        Issue issueInfo = Issue.finder.byId(issueId);
+        Issue issueInfo = Issue.findByNumber(project, number);
 
         if (!AccessControl.isAllowed(UserApp.currentUser(), issueInfo.asResource(), Operation.READ)) {
             return forbidden(unauthorized.render(project));
@@ -173,7 +173,7 @@ public class IssueApp extends AbstractPostingApp {
         }
 
         Form<Comment> commentForm = new Form<Comment>(Comment.class);
-        Form<Issue> editForm = new Form<Issue>(Issue.class).fill(Issue.finder.byId(issueId));
+        Form<Issue> editForm = new Form<Issue>(Issue.class).fill(Issue.findByNumber(project, number));
 
         return ok(issue.render("title.issueDetail", issueInfo, editForm, commentForm, project));
     }
@@ -185,11 +185,71 @@ public class IssueApp extends AbstractPostingApp {
                 newIssue.render("title.newIssue", new Form<Issue>(Issue.class), project));
     }
 
+    /**
+     * 여러 이슈를 한번에 갱신하려는 요청에 응답한다.
+     *
+     * when: 이슈 목록 페이지에서 이슈를 체크하고 상단의 갱신 드롭박스를 이용해 체크한 이슈들을 갱신할 때
+     *
+     * 갱신을 시도한 이슈들 중 하나 이상 갱신에 성공했다면 이슈 목록 페이지로 리다이렉트한다. (303 See Other)
+     * 어떤 이슈에 대한 갱신 요청이든 모두 실패했으며, 그 중 권한 문제로 실패한 것이 한 개 이상 있다면 403
+     * Forbidden 으로 응답한다.
+     * 갱신 요청이 잘못된 경우엔 400 Bad Request 로 응답한다.
+     *
+     * @param ownerName 프로젝트 소유자 이름
+     * @param projectName 프로젝트 이름
+     * @return
+     * @throws IOException
+     */
+    public static Result massUpdate(String ownerName, String projectName) throws IOException {
+        Form<IssueMassUpdate> issueMassUpdateForm
+                = new Form<IssueMassUpdate>(IssueMassUpdate.class).bindFromRequest();
+        if (issueMassUpdateForm.hasErrors()) {
+            return badRequest(issueMassUpdateForm.errorsAsJson());
+        }
+        IssueMassUpdate issueMassUpdate = issueMassUpdateForm.get();
+
+        Project project = Project.findByOwnerAndProjectName(ownerName, projectName);
+
+        int updatedItems = 0;
+        int rejectedByPermission = 0;
+
+        for (Issue issue : issueMassUpdate.issues) {
+
+            if (!AccessControl.isAllowed(UserApp.currentUser(), issue.asResource(),
+                    Operation.UPDATE)) {
+                rejectedByPermission++;
+                continue;
+            }
+
+            if (issueMassUpdate.assignee != null) {
+                issue.assignee = Assignee.add(issueMassUpdate.assignee.id, project.id);
+            }
+
+            if (issueMassUpdate.state != null) {
+                issue.state = issueMassUpdate.state;
+            }
+
+            if (issueMassUpdate.milestone != null) {
+                issue.milestone = issueMassUpdate.milestone;
+            }
+
+            issue.update();
+            updatedItems++;
+        }
+
+        if (updatedItems == 0 && rejectedByPermission > 0) {
+            return forbidden(unauthorized.render(project));
+        }
+
+        return redirect(
+                routes.IssueApp.issues(ownerName, projectName, "all", "html", 1));
+    }
+
     public static Result newIssue(String ownerName, String projectName) throws IOException {
         Form<Issue> issueForm = new Form<Issue>(Issue.class).bindFromRequest();
         Project project = ProjectApp.getProject(ownerName, projectName);
 
-        if (!AccessControl.isCreatable(UserApp.currentUser(), project, ResourceType.ISSUE_POST)) {
+        if (!AccessControl.isProjectResourceCreatable(UserApp.currentUser(), project, ResourceType.ISSUE_POST)) {
             return forbidden(unauthorized.render(project));
         }
 
@@ -210,15 +270,15 @@ public class IssueApp extends AbstractPostingApp {
         newIssue.save();
 
         // Attach all of the files in the current user's temporary storage.
-        Attachment.attachFiles(UserApp.currentUser().id, newIssue.asResource());
+        Attachment.moveAll(UserApp.currentUser().asResource(), newIssue.asResource());
 
         return redirect(routes.IssueApp.issues(project.owner, project.name,
                 State.OPEN.state(), "html", 1));
     }
 
-    public static Result editIssueForm(String userName, String projectName, Long id) {
-        Issue issue = Issue.finder.byId(id);
+    public static Result editIssueForm(String userName, String projectName, Long number) {
         Project project = ProjectApp.getProject(userName, projectName);
+        Issue issue = Issue.findByNumber(project, number);
 
         if (!AccessControl.isAllowed(UserApp.currentUser(), issue.asResource(), Operation.UPDATE)) {
             return forbidden(unauthorized.render(project));
@@ -229,12 +289,12 @@ public class IssueApp extends AbstractPostingApp {
         return ok(editIssue.render("title.editIssue", editForm, issue, project));
     }
 
-    public static Result editIssue(String userName, String projectName, Long id) throws IOException {
+    public static Result editIssue(String userName, String projectName, Long number) throws IOException {
         Form<Issue> issueForm = new Form<Issue>(Issue.class).bindFromRequest();
         final Issue issue = issueForm.get();
         setMilestone(issueForm, issue);
-        final Issue originalIssue = Issue.finder.byId(id);
-        final Project project = originalIssue.project;
+        final Project project = ProjectApp.getProject(userName, projectName);
+        final Issue originalIssue = Issue.findByNumber(project, number);
         Call redirectTo =
                 routes.IssueApp.issues(project.owner, project.name, State.OPEN.name(), "html", 1);
 
@@ -258,19 +318,19 @@ public class IssueApp extends AbstractPostingApp {
         }
     }
 
-    public static Result deleteIssue(String userName, String projectName, Long issueId) {
-        Issue issue = Issue.finder.byId(issueId);
-        Project project = issue.project;
+    public static Result deleteIssue(String userName, String projectName, Long number) {
+        Project project = ProjectApp.getProject(userName, projectName);
+        Issue issue = Issue.findByNumber(project, number);
         Call redirectTo =
             routes.IssueApp.issues(project.owner, project.name, State.OPEN.state(), "html", 1);
 
         return delete(issue, issue.asResource(), redirectTo);
     }
 
-    public static Result newComment(String userName, String projectName, Long issueId) throws IOException {
-        final Issue issue = Issue.finder.byId(issueId);
+    public static Result newComment(String userName, String projectName, Long number) throws IOException {
+        final Issue issue = Issue.finder.byId(number);
         Project project = issue.project;
-        Call redirectTo = routes.IssueApp.issue(project.owner, project.name, issueId);
+        Call redirectTo = routes.IssueApp.issue(project.owner, project.name, number);
         Form<IssueComment> commentForm = new Form<IssueComment>(IssueComment.class)
                 .bindFromRequest();
 
@@ -288,7 +348,7 @@ public class IssueApp extends AbstractPostingApp {
         });
     }
 
-    public static Result deleteComment(String userName, String projectName, Long issueId,
+    public static Result deleteComment(String userName, String projectName, Long issueNumber,
             Long commentId) {
         Comment comment = IssueComment.find.byId(commentId);
         Project project = comment.asResource().getProject();
