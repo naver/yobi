@@ -1,5 +1,144 @@
 @(message: String)
 
 @siteMngMain(message) {
-    TODO
+	<div class="title_area">
+		<h2 class="fl">유저관리</h2>
+		<form class="form-search fr" action="@routes.SiteApp.searchUser()">
+			<input type="text" class="input-medium search-query input-xlarge" name="loginId" placeholder="@Messages("site.userList.search")">
+			<button type="submit" class="btn">SEASRCH</button>
+		</form>
+	</div>
+	<div class="section39">
+		<h3 class="h_setting">계정이 잠긴 유저 목록</h3>
+		<p class="no_date">
+			아래항목에서 선택된 계정잠긴 유저리스트가 보여지게 됩니다.
+		</p>
+	</div>
+	<div class="section0">
+		<h3 class="h_setting">활성화된 유저 목록</h3>
+		<table class="bbs_type1">
+		<caption>활성화된 유저 목록</caption>
+		<colgroup>
+		<col style="width:16%" />
+		<col style="width:16%" />
+		<col style="width:28%" />
+		<col style="width:12%" />
+		<col />
+		</colgroup>
+		<thead>
+		<tr>
+		<th scope="col">아이디</th>
+		<th scope="col">사용자</th>
+		<th scope="col">이메일</th>
+		<th scope="col">잠김여부</th>
+		<th scope="col" class="last">&nbsp;</th>
+		</tr>
+		</thead>
+		<tbody>
+		<tr>
+		<td>dorrttsdo</td>
+		<td class="c">홍길동명명</td>
+		<td>dorrttsdor.gmail.com</td>
+		<td class="c">false</td>
+		<td class="btn_area c">
+			<a class="btn" href="#">계정잠그기</a>
+			<a class="btn btn-danger" href="#">삭제</a>
+		</td>
+		</tr>
+		<tr>
+		<td>dortts</td>
+		<td class="c">이응준</td>
+		<td>nori.nhn.com</td>
+		<td class="c">false</td>
+		<td class="btn_area c">
+			<a class="btn" href="#">계정잠그기</a>
+			<a class="btn btn-danger" href="#">삭제</a>
+		</td>
+		</tr>
+		<tr>
+		<td>semtlnori</td>
+		<td class="c">채수원</td>
+		<td>dorrtts.gmail.com</td>
+		<td class="c">false</td>
+		<td class="btn_area c">
+			<a class="btn" href="#">계정잠그기</a>
+			<a class="btn btn-danger" href="#">삭제</a>
+		</td>
+		</tr>
+		<tr>
+		<td>dortts</td>
+		<td class="c">이응준</td>
+		<td>nori.nhn.com</td>
+		<td class="c">false</td>
+		<td class="btn_area c">
+			<a class="btn" href="#">계정잠그기</a>
+			<a class="btn btn-danger" href="#">삭제</a>
+		</td>
+		</tr>
+		<tr>
+		<td>semtlnori</td>
+		<td class="c">채수원</td>
+		<td>dorrtts.gmail.com</td>
+		<td class="c">false</td>
+		<td class="btn_area c">
+			<a class="btn" href="#">계정잠그기</a>
+			<a class="btn btn-danger" href="#">삭제</a>
+		</td>
+		</tr>
+		<tr>
+		<td>dortts</td>
+		<td class="c">이응준</td>
+		<td>nori.nhn.com</td>
+		<td class="c">false</td>
+		<td class="btn_area c">
+			<a class="btn" href="#">계정잠그기</a>
+			<a class="btn btn-danger" href="#">삭제</a>
+		</td>
+		</tr>
+		<tr>
+		<td>semtlnori</td>
+		<td class="c">채수원</td>
+		<td>dorrtts.gmail.com</td>
+		<td class="c">false</td>
+		<td class="btn_area c">
+			<a class="btn" href="#">계정잠그기</a>
+			<a class="btn btn-danger" href="#">삭제</a>
+		</td>
+		</tr>
+		<tr>
+		<td>dortts</td>
+		<td class="c">이응준</td>
+		<td>nori.nhn.com</td>
+		<td class="c">false</td>
+		<td class="btn_area c">
+			<a class="btn" href="#">계정잠그기</a>
+			<a class="btn btn-danger" href="#">삭제</a>
+		</td>
+		</tr>
+		<tr>
+		<td>semtlnori</td>
+		<td class="c">채수원</td>
+		<td>dorrtts.gmail.com</td>
+		<td class="c">false</td>
+		<td class="btn_area c">
+			<a class="btn" href="#">계정잠그기</a>
+			<a class="btn btn-danger" href="#">삭제</a>
+		</td>
+		</tr>
+		<tr>
+		<td>dortts</td>
+		<td class="c">이응준</td>
+		<td>nori.nhn.com</td>
+		<td class="c">false</td>
+		<td class="btn_area c">
+			<a class="btn" href="#">계정잠그기</a>
+			<a class="btn btn-danger" href="#">삭제</a>
+		</td>
+		</tr>
+		</tbody>
+		</table>
+		<div class="row-fluid mt30">
+			<center>페이징 영역입니다</center>
+		</div>
+	</div>
 }
