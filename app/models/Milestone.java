@@ -1,6 +1,7 @@
 package models;
 
 import models.enumeration.*;
+import models.resource.Resource;
 import models.support.*;
 import org.joda.time.DateTime;
 import org.joda.time.Duration;
@@ -24,6 +25,8 @@ public class Milestone extends Model {
 
     public static String DEFAULT_SORTER = "dueDate";
 
+    public static final Long NULL_MILESTONE_ID = -1l;
+
     @Id
     public Long id;
 
@@ -42,7 +45,7 @@ public class Milestone extends Model {
     @ManyToOne
     public Project project;
 
-    @OneToMany
+    @OneToMany(mappedBy = "milestone")
     public Set<Issue> issues;
 
     public void delete() {
@@ -216,4 +219,38 @@ public class Milestone extends Model {
             return Messages.get("time.after", days);
         }
     }
+
+    public Resource asResource() {
+        return new Resource() {
+            @Override
+            public Long getId() {
+                return id;
+            }
+
+            @Override
+            public Project getProject() {
+                return project;
+            }
+
+            @Override
+            public ResourceType getType() {
+                return ResourceType.MILESTONE;
+            }
+        };
+    }
+
+    public void open() {
+        this.state = State.OPEN;
+        super.update();
+    }
+
+    public void close() {
+        this.state = State.CLOSED;
+        super.update();
+    }
+
+    public boolean isNullMilestone() {
+        return this.id.equals(NULL_MILESTONE_ID);
+    }
+
 }
