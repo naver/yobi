@@ -24,6 +24,8 @@ import javax.servlet.ServletException;
 import java.io.IOException;
 import java.util.*;
 
+import org.codehaus.jackson.annotate.*;
+
 /**
  * Project.
  */
@@ -53,10 +55,12 @@ public class Project extends Model {
 
     /** 프로젝트 이슈 **/
     @OneToMany(mappedBy = "project", cascade = CascadeType.ALL)
+    @JsonIgnore
     public Set<Issue> issues;
 
     /** 프로젝트 멤버 */
     @OneToMany(mappedBy = "project", cascade = CascadeType.ALL)
+    @JsonIgnore
     public List<ProjectUser> projectUser;
 
     /** 프로젝트 게시물 */
@@ -81,6 +85,7 @@ public class Project extends Model {
     private long lastPostingNumber;
 
     @ManyToMany
+    @JsonIgnore
     public Set<Label> labels;
 
     @ManyToOne

@@ -1,89 +1,88 @@
 @(projects:List[Project], orderString:String)
-@import utils.TemplateHelper._
+@import org.codehaus.jackson.map.ObjectMapper
 
-@countProjectCreated = @{
-    Project.findProjectsCreatedByUser(session.get("loginId"), "name").size()
-}
+<!-- 01. include angularjs and lodash(faster underscore)-->
+<script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.0.7/angular.min.js"></script>
+<script src="//cdnjs.cloudflare.com/ajax/libs/lodash.js/1.2.1/lodash.min.js"></script>
 
-@countProjectBelongs(projects:List[Project]) = @{
-    projects.size() - Project.findProjectsCreatedByUser(session.get("loginId"), "name").size()
-}
+<!-- 02. projects:List to JSON -->
+@mapper = @{new ObjectMapper}
+@jsonProjects = @{mapper.writeValueAsString(projects)}
+<script type="text/javascript">
+  var projects = @{Html(jsonProjects)};
+  var user = '@{session.get("loginId")}';
+</script>
 
-@if(projects != null){
+<!-- 03. include Controller -->
+<script type="text/javascript">
+  var MyProjectListCtrl = function($scope, $filter) {
+    $scope.projects = projects;
+    $scope.createdProjects = $filter('filter')($scope.projects, {owner: user});
+    $scope.belongedProjects = _.difference($scope.projects, $scope.createdProjects);
+    $scope.predicate = "";
+    $scope.reverse = false;
+    $scope.orderByDate = function() {
+      $scope.predicate = "createdDate";
+      $scope.reverse = !$scope.reverse;
+    };
+    $scope.orderByName = function() {
+      $scope.predicate = "name";
+      $scope.reverse = !$scope.reverse;
+    };
+  };
+</script>
 
-<ul class="nav nav-tabs my-projects-tab">
-	<li class="active">
-	   <a href="#createdProjects" data-toggle="tab">@Messages("project.createdByMe") <span class="num-badge">@countProjectCreated</span></a>
-	</li>
-	<li>
-	   <a href="#belongedProjects" data-toggle="tab">@Messages("project.belongsToMe") <span class="num-badge">@countProjectBelongs(projects)</span></a>
-    </li>
-</ul>
+<div class="row" ng-app ng-controller="MyProjectListCtrl" ng-show="projects.length > 0">
+  <ul class="nav nav-tabs my-projects-tab">
+    <li class="active"><a href="#createdProjects" data-toggle="tab">@Messages("project.createdByMe") <span class="num-badge">{{createdProjects.length}}</span></a></li>
+    <li><a href="#belongedProjects" data-toggle="tab">@Messages("project.belongsToMe") <span class="num-badge">{{belongedProjects.length}}</span></a></li>
+  </ul>
 
-<div class="my-projects">
+  <div class="my-projects">
     <div class="filters">
-        <span class="ordertype-date">
-            @if(orderString == "createdDate desc"){
-                <a href="@routes.Application.index()?order=createdDate"><strong>@Messages("order.recent")</strong> <i class="icon-chevron-down"></i></a>
-            } else {
-                @if(orderString == "createdDate"){
-                <a href="@routes.Application.index()?order=createdDate desc"><strong>@Messages("order.recent")</strong> <i class="icon-chevron-up"></i></a>
-                } else {
-                <a href="@routes.Application.index()?order=createdDate">@Messages("order.recent")</a>
-                }
-            }
-        </span>
+      <span class="ordertype-date">
+        <a href="" ng-click="orderByDate()"><strong>@Messages("order.recent")</strong>
+        <i class="icon-chevron-down" ng-show="predicate == 'createdDate' && reverse"></i>
+        <i class="icon-chevron-up" ng-show="predicate == 'createdDate' && !reverse"></i>
+      </span>
+      <span class="delimeter"> | </span>
 
-        <span class="delimeter"> | </span>
-        
-        <span class="ordertype-name">
-            @if(orderString == "name desc"){
-                <a href="@routes.Application.index()?order=name"><strong>@Messages("order.name")</strong> <i class="icon-chevron-down"></i></a>
-            } else {
-                @if(orderString == "name"){
-                <a href="@routes.Application.index()?order=name desc"><strong>@Messages("order.name")</strong> <i class="icon-chevron-up"></i></a>
-                } else {
-                <a href="@routes.Application.index()?order=name">@Messages("order.name")</a>
-                }
-            }
-        </span>
+      <span class="ordertype-name">
+        <a href="" ng-click="orderByName()"><strong>@Messages("order.name")</strong>
+        <i class="icon-chevron-down" ng-show="predicate == 'name' && reverse"></i>
+        <i class="icon-chevron-up" ng-show="predicate == 'name' && !reverse"></i>
+        </a>
+      </span>
     </div>
 
     <div class="tab-content">
-	    <ul id="createdProjects" class="unstyled tab-pane active">
-	    @for(project <- projects){
-	        @if(project.isOwner(User.findByLoginId(session.get("loginId")))){
-	        <li class="my-project">
-	            <div class="project-header">
-	                <div class="name-wrap">
-	                    <a href="@routes.ProjectApp.project(project.owner, project.name)" class="project-name">
-	                        <strong>@project.name @if(!project.isPublic){ <i class="ico ico-lock"></i> }</strong><!-- 
-	                     --><i class="ico ico-gray-arrow-right"></i>
-	                    </a>
-	                </div>
-	        </li>
-	        }
-	    }
-	    </ul>
-	
-	    <ul id="belongedProjects" class="unstyled tab-pane">
-	    @for(project <- projects){
-	        @if(!project.isOwner(User.findByLoginId(session.get("loginId")))){
-	            <li class="my-project">
-	                <div class="project-header">
-	                    <div class="name-wrap">
-	                        <a href="@routes.UserApp.userInfo(project.owner)">@project.owner</a> /
-	                        <a href="@routes.ProjectApp.project(project.owner, project.name)" class="project-name">
-	                            <strong>@project.name @if(!project.isPublic){ <i class="ico ico-lock"></i> }</strong><!-- 
-	                         --><i class="ico ico-gray-arrow-right"></i>
-	                        </a>
-	                    </a>
-	                </div>
-	            </li>
-	        }
-	    }
-	    </ul>
+      <ul id="createdProjects" class="unstyled tab-pane active">
+        <li class="my-project" ng-repeat="project in createdProjects | orderBy:predicate:reverse">
+        <div class="project-header">
+          <div class="name-wrap">
+            <a href="/{{project.owner}}/{{project.name}}" class="project-name">
+              <strong>{{project.name}}<i class="ico ico-lock" ng-show="!project.isPublic"></i></strong><!--
+                --><i class="ico ico-gray-arrow-right"></i>
+            </a>
+          </div>
+        </div>
+        </li>
+        <li class="my-project" ng-show="createdProjects.length == 0">생성한 프로젝트가 없습니다.</li>
+      </ul>
+      <ul id="belongedProjects" class="unstyled tab-pane">
+        <li class="my-project" ng-repeat="project in belongedProjects">
+        <div class="project-header">
+          <div class="name-wrap">
+            <a href="/{{project.owner}}">{{project.owner}}</a> /
+            <a href="/{{project.owner}}/{{project.name}}" class="project-name">
+              <strong>{{project.name}}<i class="ico ico-lock" ng-show="!project.isPublic"></i></strong><!--
+                --><i class="ico ico-gray-arrow-right"></i>
+            </a>
+          </a>
+        </div>
+        </li>
+        <li class="my-project" ng-show="belongedProjects.length == 0">프로젝트 맴버가 없습니다.</li>
+      </ul>
     </div>
+  </div>
 </div>
-
-}
