@@ -1,43 +1,23 @@
 @(projects:List[Project], orderString:String)
+
+@import utils.TemplateHelper._
 @import org.codehaus.jackson.map.ObjectMapper
 
-<!-- 01. include angularjs and lodash(faster underscore)-->
-<script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.0.7/angular.min.js"></script>
-<script src="//cdnjs.cloudflare.com/ajax/libs/lodash.js/1.2.1/lodash.min.js"></script>
-
-<!-- 02. projects:List to JSON -->
+<!-- projects:List to JSON, TODO: refactoring -->
 @mapper = @{new ObjectMapper}
 @jsonProjects = @{mapper.writeValueAsString(projects)}
 <script type="text/javascript">
   var projects = @{Html(jsonProjects)};
-  var user = '@{session.get("loginId")}';
+  var loginId = '@{session.get("loginId")}';
 </script>
 
-<!-- 03. include Controller -->
-<script type="text/javascript">
-  var MyProjectListCtrl = function($scope, $filter) {
-    $scope.projects = projects;
-    $scope.createdProjects = $filter('filter')($scope.projects, {owner: user});
-    $scope.belongedProjects = _.difference($scope.projects, $scope.createdProjects);
-    $scope.predicate = "";
-    $scope.reverse = false;
-    $scope.orderByDate = function() {
-      $scope.predicate = "createdDate";
-      $scope.reverse = !$scope.reverse;
-    };
-    $scope.orderByName = function() {
-      $scope.predicate = "name";
-      $scope.reverse = !$scope.reverse;
-    };
-  };
-</script>
-
+<!-- MyProjectList -->
+<script type="text/javascript" src="@getJSLink("controller/hive.MyProjectListCtrl")"></script>
 <div class="row" ng-app ng-controller="MyProjectListCtrl" ng-show="projects.length > 0">
   <ul class="nav nav-tabs my-projects-tab">
     <li class="active"><a href="#createdProjects" data-toggle="tab">@Messages("project.createdByMe") <span class="num-badge">{{createdProjects.length}}</span></a></li>
     <li><a href="#belongedProjects" data-toggle="tab">@Messages("project.belongsToMe") <span class="num-badge">{{belongedProjects.length}}</span></a></li>
   </ul>
-
   <div class="my-projects">
     <div class="filters">
       <span class="ordertype-date">
