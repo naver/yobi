@@ -3,7 +3,7 @@
 @import utils.TemplateHelper._
 @import org.codehaus.jackson.map.ObjectMapper
 
-<!-- projects:List to JSON, TODO: refactoring -->
+<!-- projects:List to JSON, TODO: refactoring, extract below scripts to some where -->
 @mapper = @{new ObjectMapper}
 @jsonProjects = @{mapper.writeValueAsString(projects)}
 <script type="text/javascript">
@@ -47,7 +47,7 @@
           </div>
         </div>
         </li>
-        <li class="my-project" ng-show="createdProjects.length == 0">생성한 프로젝트가 없습니다.</li>
+        <li class="my-project" ng-show="createdProjects.length == 0">@Messages("title.projectList.is.empty")</li>
       </ul>
       <ul id="belongedProjects" class="unstyled tab-pane">
         <li class="my-project" ng-repeat="project in belongedProjects">
@@ -61,7 +61,7 @@
           </a>
         </div>
         </li>
-        <li class="my-project" ng-show="belongedProjects.length == 0">프로젝트 맴버가 없습니다.</li>
+        <li class="my-project" ng-show="belongedProjects.length == 0">@Messages("title.memberList.is.empty")</li>
       </ul>
     </div>
   </div>
