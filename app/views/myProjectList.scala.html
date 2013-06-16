@@ -12,7 +12,7 @@
 </script>
 
 <!-- MyProjectList -->
-<script type="text/javascript" src="@getJSLink("controller/hive.MyProjectListCtrl")"></script>
+<script type="text/javascript" src="@getJSLink("jsController/hive.MyProjectListCtrl")"></script>
 <div class="row" ng-app ng-controller="MyProjectListCtrl" ng-show="projects.length > 0">
   <ul class="nav nav-tabs my-projects-tab">
     <li class="active"><a href="#createdProjects" data-toggle="tab">@Messages("project.createdByMe") <span class="num-badge">{{createdProjects.length}}</span></a></li>
