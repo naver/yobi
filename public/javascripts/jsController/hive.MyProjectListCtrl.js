@@ -2,25 +2,25 @@
  * MyProjectListCtrl
  */
 var MyProjectListCtrl = function($scope, $filter) {
-  $scope.projects = projects;
-  $scope.createdProjects = $filter('filter')($scope.projects, {owner: loginId});
-  $scope.belongedProjects = _.difference($scope.projects, $scope.createdProjects);
-  $scope.predicate = "";
-  $scope.reverse = false;
+  $scope.aProject = aProject;
+  $scope.aCreatedProject = $filter('filter')($scope.aProject, {owner: sLoginId});
+  $scope.aBelongedProject = _.difference($scope.aProject, $scope.aCreatedProject);
+  $scope.sPredicate = "";
+  $scope.bReverse = false;
 
   /**
    * orderByDate
    */
   $scope.orderByDate = function() {
-    $scope.predicate = "createdDate";
-    $scope.reverse = !$scope.reverse;
+    $scope.sPredicate = "createdDate";
+    $scope.bReverse = !$scope.bReverse;
   };  
 
   /**
    * orderByName
    */
   $scope.orderByName = function() {
-    $scope.predicate = "name";
-    $scope.reverse = !$scope.reverse;
+    $scope.sPredicate = "name";
+    $scope.bReverse = !$scope.bReverse;
   };
 };
