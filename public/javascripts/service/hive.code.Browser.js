@@ -226,7 +226,8 @@
 			var welWrapDirectory = $(".directory-wrap");
 			var waWrapFile = $(".file-wrap"); // fileList, fileView
             var draggable = true;
-
+            var nWrapWidth = $(".code-browse-wrap").width() - 10;
+            
             welBtnResize.mousedown(function () {
                 if(draggable) {
                 	$(window).bind("mousemove", _resizeList);
@@ -242,29 +243,29 @@
 				return false;
 			});
 			$(window).click(function(){ // for IE
-                console.log('click');
 				$(window).unbind("mousemove", _resizeList);
 			});
 
 			// 더블클릭하면 디렉토리 목록 숨김
 			welBtnResize.dblclick(function(){
+			    $(window).unbind("mousemove", _resizeList);
 				if(welWrapDirectory.css("display") == "none"){
                     draggable = true;
 					welWrapDirectory.show();
-					waWrapFile.width(930 - welWrapDirectory.width());
+					waWrapFile.width(nWrapWidth - welWrapDirectory.width());
 				} else {
                     draggable = false;
                     $(window).unbind("mousemove", _resizeList);
 					welWrapDirectory.hide();
-					waWrapFile.width(930);
+					waWrapFile.width(nWrapWidth + 20);
 				}
 			});
 
 			function _resizeList(weEvt){
 				var nWidth = weEvt.clientX - nFolderListX;
-				$(".directory-wrap").width(nWidth);
-                $(".directories").width(nWidth);
-				$(".file-wrap").width(930 - nWidth);
+				$(".directory-wrap").width(nWidth - 10);
+                $(".directories").width(nWidth - 10);
+				$(".file-wrap").width(nWrapWidth - nWidth);
 			}
 		}
 
