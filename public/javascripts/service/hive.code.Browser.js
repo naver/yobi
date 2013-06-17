@@ -45,6 +45,9 @@
 		                  handleFolder(data);
 		                break;
 		            }
+
+		            $('.btnResize').height($('.code-container').height());
+
 		          },
 		          error : function(){
 		            $("#codeError").show();
@@ -221,52 +224,40 @@
 
 		/** resize list **/
 		function _initResizeList(){
-			var nFolderListX = $("#folderList").offset().left;
-			var welBtnResize = $(".btnResize");
-			var welWrapDirectory = $(".directory-wrap");
-			var waWrapFile = $(".file-wrap"); // fileList, fileView
-            var draggable = true;
+			var welBtnResize = $('.btnResize');
+			var welContainerCode = $('.code-container');
+			var welWrapDirectory = $('.code-direcoty-wrap');
+			var welWrapCodeFile = $('.code-file-wrap');
+			
+			var nDirectoryPositionLeft = welWrapDirectory.position().left;
 
-            welBtnResize.mousedown(function () {
-                if(draggable) {
-                	$(window).bind("mousemove", _resizeList);
-                }
-                return false;
-            });
-            welBtnResize.mouseup(function () {
-                $(window).unbind("mousemove", _resizeList);
-                return false;
-            });
-            $(".directory-wrap").mouseup(function(){
-				$(window).unbind("mousemove", _resizeList);
-				return false;
-			});
-			$(window).click(function(){ // for IE
-                console.log('click');
-				$(window).unbind("mousemove", _resizeList);
-			});
+			// jquery drag plugin 을 사용하여 핸들링 되게 수정.
+			welBtnResize.on('drag',_resizeList);
 
 			// 더블클릭하면 디렉토리 목록 숨김
-			welBtnResize.dblclick(function(){
-				if(welWrapDirectory.css("display") == "none"){
-                    draggable = true;
-					welWrapDirectory.show();
-					waWrapFile.width(930 - welWrapDirectory.width());
-				} else {
-                    draggable = false;
-                    $(window).unbind("mousemove", _resizeList);
-					welWrapDirectory.hide();
-					waWrapFile.width(930);
-				}
-			});
+			welBtnResize.on('dblclick',function(){
+				var nDirectoryWidth = $('.code-direcoty-wrap').width();
 
-			function _resizeList(weEvt){
-				var nWidth = weEvt.clientX - nFolderListX;
-				$(".directory-wrap").width(nWidth);
-                $(".directories").width(nWidth);
-				$(".file-wrap").width(930 - nWidth);
+				if(nDirectoryWidth === 1) {
+					_changeCodeWrapWidth(259);
+				} else {
+					_changeCodeWrapWidth(1);
+				}
+			});			
+
+			function _resizeList(weEvt){				
+				var nWidth = (nDirectoryPositionLeft >= weEvt.clientX ) ? 1 : Math.ceil(weEvt.clientX - nDirectoryPositionLeft);
+				
+				_changeCodeWrapWidth(nWidth);
+			}
+
+			function _changeCodeWrapWidth(nWidth) {
+				welWrapDirectory.width( nWidth );			
+				welWrapCodeFile.width( Math.ceil(welContainerCode.width() - nWidth) -11 );
 			}
 		}
+
+		
 
 		_initResizeList();
 		/** end of resize list **/
