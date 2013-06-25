@@ -1,89 +1,68 @@
 @(projects:List[Project], orderString:String)
+
 @import utils.TemplateHelper._
+@import org.codehaus.jackson.map.ObjectMapper
 
-@countProjectCreated = @{
-    Project.findProjectsCreatedByUser(session.get("loginId"), "name").size()
-}
+<!-- projects:List to JSON, TODO: refactoring, extract below scripts to some where -->
+@mapper = @{new ObjectMapper}
+@jsonProjects = @{mapper.writeValueAsString(projects)}
+<script type="text/javascript">
+  var aProject = @{Html(jsonProjects)};
+  var sLoginId = '@{session.get("loginId")}';
+</script>
 
-@countProjectBelongs(projects:List[Project]) = @{
-    projects.size() - Project.findProjectsCreatedByUser(session.get("loginId"), "name").size()
-}
-
-@if(projects != null){
-
-<ul class="nav nav-tabs my-projects-tab">
-	<li class="active">
-	   <a href="#createdProjects" data-toggle="tab">@Messages("project.createdByMe") <span class="num-badge">@countProjectCreated</span></a>
-	</li>
-	<li>
-	   <a href="#belongedProjects" data-toggle="tab">@Messages("project.belongsToMe") <span class="num-badge">@countProjectBelongs(projects)</span></a>
-    </li>
-</ul>
-
-<div class="my-projects">
+<!-- MyProjectList -->
+<script type="text/javascript" src="@getJSLink("jsController/hive.MyProjectListCtrl")"></script>
+<div class="row" ng-app ng-controller="MyProjectListCtrl" ng-show="aProject.length > 0">
+  <ul class="nav nav-tabs my-projects-tab">
+    <li class="active"><a href="#createdProjects" data-toggle="tab">@Messages("project.createdByMe") <span class="num-badge">{{aCreatedProject.length}}</span></a></li>
+    <li><a href="#belongedProjects" data-toggle="tab">@Messages("project.belongsToMe") <span class="num-badge">{{aBelongedProject.length}}</span></a></li>
+  </ul>
+  <div class="my-projects">
     <div class="filters">
-        <span class="ordertype-date">
-            @if(orderString == "createdDate desc"){
-                <a href="@routes.Application.index()?order=createdDate"><strong>@Messages("order.recent")</strong> <i class="icon-chevron-down"></i></a>
-            } else {
-                @if(orderString == "createdDate"){
-                <a href="@routes.Application.index()?order=createdDate desc"><strong>@Messages("order.recent")</strong> <i class="icon-chevron-up"></i></a>
-                } else {
-                <a href="@routes.Application.index()?order=createdDate">@Messages("order.recent")</a>
-                }
-            }
-        </span>
+      <span class="ordertype-date">
+        <a href="" ng-click="orderByDate()"><strong>@Messages("order.recent")</strong>
+        <i class="icon-chevron-down" ng-show="sPredicate == 'createdDate' && bReverse"></i>
+        <i class="icon-chevron-up" ng-show="sPredicate == 'createdDate' && !bReverse"></i>
+      </span>
+      <span class="delimeter"> | </span>
 
-        <span class="delimeter"> | </span>
-        
-        <span class="ordertype-name">
-            @if(orderString == "name desc"){
-                <a href="@routes.Application.index()?order=name"><strong>@Messages("order.name")</strong> <i class="icon-chevron-down"></i></a>
-            } else {
-                @if(orderString == "name"){
-                <a href="@routes.Application.index()?order=name desc"><strong>@Messages("order.name")</strong> <i class="icon-chevron-up"></i></a>
-                } else {
-                <a href="@routes.Application.index()?order=name">@Messages("order.name")</a>
-                }
-            }
-        </span>
+      <span class="ordertype-name">
+        <a href="" ng-click="orderByName()"><strong>@Messages("order.name")</strong>
+        <i class="icon-chevron-down" ng-show="sPredicate == 'name' && bReverse"></i>
+        <i class="icon-chevron-up" ng-show="sPredicate == 'name' && !bReverse"></i>
+        </a>
+      </span>
     </div>
 
     <div class="tab-content">
-	    <ul id="createdProjects" class="unstyled tab-pane active">
-	    @for(project <- projects){
-	        @if(project.isOwner(User.findByLoginId(session.get("loginId")))){
-	        <li class="my-project">
-	            <div class="project-header">
-	                <div class="name-wrap">
-	                    <a href="@routes.ProjectApp.project(project.owner, project.name)" class="project-name">
-	                        <strong>@project.name @if(!project.isPublic){ <i class="ico ico-lock"></i> }</strong><!-- 
-	                     --><i class="ico ico-gray-arrow-right"></i>
-	                    </a>
-	                </div>
-	        </li>
-	        }
-	    }
-	    </ul>
-	
-	    <ul id="belongedProjects" class="unstyled tab-pane">
-	    @for(project <- projects){
-	        @if(!project.isOwner(User.findByLoginId(session.get("loginId")))){
-	            <li class="my-project">
-	                <div class="project-header">
-	                    <div class="name-wrap">
-	                        <a href="@routes.UserApp.userInfo(project.owner)">@project.owner</a> /
-	                        <a href="@routes.ProjectApp.project(project.owner, project.name)" class="project-name">
-	                            <strong>@project.name @if(!project.isPublic){ <i class="ico ico-lock"></i> }</strong><!-- 
-	                         --><i class="ico ico-gray-arrow-right"></i>
-	                        </a>
-	                    </a>
-	                </div>
-	            </li>
-	        }
-	    }
-	    </ul>
+      <ul id="createdProjects" class="unstyled tab-pane active">
+        <li class="my-project" ng-repeat="oProject in aCreatedProject | orderBy:sPredicate:bReverse">
+        <div class="project-header">
+          <div class="name-wrap">
+            <a href="/{{oProject.owner}}/{{oProject.name}}" class="project-name">
+              <strong>{{oProject.name}}<i class="ico ico-lock" ng-show="!oProject.isPublic"></i></strong><!--
+                --><i class="ico ico-gray-arrow-right"></i>
+            </a>
+          </div>
+        </div>
+        </li>
+        <li class="my-project" ng-show="aCreatedProject.length == 0">@Messages("title.projectList.is.empty")</li>
+      </ul>
+      <ul id="belongedProjects" class="unstyled tab-pane">
+        <li class="my-project" ng-repeat="oProject in aBelongedProject">
+        <div class="project-header">
+          <div class="name-wrap">
+            <a href="/{{oProject.owner}}">{{oProject.owner}}</a> /
+            <a href="/{{oProject.owner}}/{{project.name}}" class="project-name">
+              <strong>{{oProject.name}}<i class="ico ico-lock" ng-show="!oProject.isPublic"></i></strong><!--
+                --><i class="ico ico-gray-arrow-right"></i>
+            </a>
+          </a>
+        </div>
+        </li>
+        <li class="my-project" ng-show="aBelongedProject.length == 0">@Messages("title.memberList.is.empty")</li>
+      </ul>
     </div>
+  </div>
 </div>
-
-}
