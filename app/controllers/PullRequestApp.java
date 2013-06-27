@@ -1,9 +1,6 @@
 package controllers;
 
-import models.Project;
-import models.ProjectUser;
-import models.PullRequest;
-import models.User;
+import models.*;
 import models.enumeration.ResourceType;
 import models.enumeration.RoleType;
 import models.enumeration.State;
@@ -352,7 +349,8 @@ public class PullRequestApp extends Controller {
             });
         }
 
-        return ok(view.render(project, pullRequest, isSafe[0], commits));
+        List<SimpleComment> comments = SimpleComment.findByResourceKey("pull_request_" + pullRequestId);
+        return ok(view.render(project, pullRequest, isSafe[0], commits, comments));
     }
 
     /**
