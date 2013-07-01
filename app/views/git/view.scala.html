@@ -3,6 +3,7 @@
 @import utils.JodaDateUtil._
 @import utils.TemplateHelper._
 @import utils.AccessControl._
+@import models.enumeration
 
 @main(Messages("menu.pullRequest"), project, utils.MenuType.PULL_REQUEST) {
     <div class="page">
@@ -152,7 +153,7 @@
                 }
             </ul>
             }
-            <form id="comment-form" action="@routes.SimpleCommentApp.newComment("pull_request_" + pull.id)" method="post" enctype="multipart/form-data">
+            <form id="comment-form" action="@routes.SimpleCommentApp.newComment(ResourceType.Pull_REQUEST.resource() + "_" + pull.id)" method="post" enctype="multipart/form-data">
             <div class="write-comment-box">
                 <div class="write-comment-wrap">
                     <textarea id="comment-editor" name="contents" class="text comment" markdown="true"></textarea>

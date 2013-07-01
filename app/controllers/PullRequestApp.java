@@ -349,7 +349,8 @@ public class PullRequestApp extends Controller {
             });
         }
 
-        List<SimpleComment> comments = SimpleComment.findByResourceKey("pull_request_" + pullRequestId);
+        List<SimpleComment> comments = SimpleComment
+                .findByResourceKey(ResourceType.Pull_REQUEST.resource() + Constants.RESOURCE_KEY_DELIM + pullRequestId);
         return ok(view.render(project, pullRequest, isSafe[0], commits, comments));
     }
 
