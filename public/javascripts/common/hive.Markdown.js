@@ -50,26 +50,27 @@ hive.Markdown = function(htOptions){
 		htVar.sTplSwitch = htOptions.sTplSwitch;
         htVar.sIssuesUrl = htOptions.sIssuesUrl;
         htVar.sProjectUrl = htOptions.sProjectUrl;
-	}
-	
-	/**
-	 * initialize element
-     * @param {Hash Table} htOptions
-	 */
-	function _initElement(htOptions){
-		htElement.waTarget = $(htOptions.aTarget) || $("[markdown]");
-	}
-	
-	/**
-	 * Render as Markdown document
-     * @require showdown.js
-     * @require hljs.js
-	 * @param {String} sText
-	 * @return {String}
-	 */
-	function _renderMarkdown(sText) {
-    		
-		var options = {
+
+    htVar.htOptSpinner = {
+	      lines: 10,    // The number of lines to draw
+	      length: 8,    // The length of each line
+	      width: 4,     // The line thickness
+	      radius: 8,    // The radius of the inner circle
+	      corners: 1,   // Corner roundness (0..1)
+	      rotate: 0,    // The rotation offset
+	      direction: 1, // 1: clockwise, -1: counterclockwise
+	      color: '#000',  // #rgb or #rrggbb
+	      speed: 1.5,     // Rounds per second
+	      trail: 60,      // Afterglow percentage
+	      shadow: false,  // Whether to render a shadow
+	      hwaccel: false, // Whether to use hardware acceleration
+	      className: 'spinner', // The CSS class to assign to the spinner
+	      zIndex: 2e9, // The z-index (defaults to 2000000000)
+	      top: 'auto', // Top position relative to parent in px
+	      left: 'auto' // Left position relative to parent in px
+	  };    
+
+	  htVar.htOptMarked = {
 		  gfm: true,
 		  tables: true,
 		  breaks: false,
@@ -84,10 +85,28 @@ hive.Markdown = function(htOptions){
 		    return code;
 		  }
 		};
-		
-		var lexer = new marked.Lexer(options);
-		var tokens = lexer.lex(sText);
-		var sHTML = marked.parser(tokens);
+	}
+	
+	/**
+	 * initialize element
+     * @param {Hash Table} htOptions
+	 */
+	function _initElement(htOptions){
+		htElement.waTarget = $(htOptions.aTarget) || $("[markdown]");
+		htElement.elSpinTarget = document.getElementById('spin');
+	}
+	
+	/**
+	 * Render as Markdown document
+     * @require showdown.js
+     * @require hljs.js
+	 * @param {String} sText
+	 * @return {String}
+	 */
+	function _renderMarkdown(sText) {
+    var htLexer = new marked.Lexer(htVar.htOptMarked);
+		var htTokens = htLexer.lex(sText);
+		var sHTML = marked.parser(htTokens);
 
 		return sHTML;
 	}
@@ -126,7 +145,10 @@ hive.Markdown = function(htOptions){
 	 * @param {Wrapped Element} welTarget is not <textarea> or <input>
 	 */
 	function _setViewer(welTarget) {
-		welTarget.html(_renderMarkdown(welTarget.text())).show();
+		welTarget.html(function() { 
+			_startSpinner();
+			return _renderMarkdown(welTarget.text());
+		}).show('show',_stopSpinner);
 	}
 	
 	/**
@@ -145,6 +167,24 @@ hive.Markdown = function(htOptions){
 				_setViewer($(elTarget));
 			}
 		});
+	}
+
+	/**
+	 * Spinner 시작
+	 */
+	function _startSpinner(){
+    htVar.oSpinner = new Spinner(htVar.htOptSpinner)
+    htVar.oSpinner.spin(htElement.elSpinTarget);
+	}
+	
+	/**
+	 * Spinner 종료
+	 */
+	function _stopSpinner(){
+    if(htVar.oSpinner){
+        htVar.oSpinner.stop();
+    }
+    htVar.oSpinner = null;
 	}
 
 	// initialize
