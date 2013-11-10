@@ -17,6 +17,7 @@ import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.api.errors.NoHeadException;
 import org.joda.time.Duration;
 import org.tmatesoft.svn.core.SVNException;
+
 import play.data.validation.Constraints;
 import play.db.ebean.Model;
 import play.db.ebean.Transactional;
@@ -25,6 +26,7 @@ import utils.JodaDateUtil;
 
 import javax.persistence.*;
 import javax.servlet.ServletException;
+
 import java.io.IOException;
 import java.util.*;
 
@@ -43,6 +45,9 @@ public class Project extends Model implements LabelOwner {
     @Constraints.Pattern("^[-a-zA-Z0-9_]*$")
     @Constraints.MinLength(2)
     public String name;
+
+    /** 기본 브랜치명 */
+    public String defaultBranch;
 
     public String overview;
     /** 프로젝트에서 사용하는 vcs */
@@ -368,7 +373,7 @@ public class Project extends Model implements LabelOwner {
     public String readme() {
         try {
             return new String(RepositoryService.getRepository(this).getRawFile
-                    ("HEAD", getReadmeFileName()), "UTF-8");
+                    (defaultBranch, getReadmeFileName()), "UTF-8");
         } catch (Exception e) {
             return null;
         }
@@ -393,23 +398,23 @@ public class Project extends Model implements LabelOwner {
 
         PlayRepository repo = RepositoryService.getRepository(this);
 
-        if (repo.isFile(baseFileName)) {
+        if (repo.isFile(baseFileName, defaultBranch)) {
             return baseFileName;
         }
 
-        if (repo.isFile(baseFileName.toLowerCase())) {
+        if (repo.isFile(baseFileName.toLowerCase(), defaultBranch)) {
             return baseFileName.toLowerCase();
         }
 
         // SVN은 /trunk/readme.md 까지 찾아본다.
         if(repo instanceof SVNRepository) {
             baseFileName = "/trunk/" + baseFileName;
-            if(repo.isFile(baseFileName)) {
+            if(repo.isFile(baseFileName, defaultBranch)) {
                 return baseFileName;
             }
 
             baseFileName = baseFileName.toLowerCase();
-            if(repo.isFile(baseFileName)) {
+            if(repo.isFile(baseFileName, defaultBranch)) {
                 return baseFileName;
             }
         }

@@ -461,6 +461,9 @@ public class GitRepository implements PlayRepository {
      */
     @Override
     public byte[] getRawFile(String revision, String path) throws IOException {
+        if (revision == null) {
+            revision = Constants.HEAD;
+        }
         RevTree tree = new RevWalk(repository).parseTree(repository.resolve(revision));
         TreeWalk treeWalk = TreeWalk.forPath(repository, path, tree);
         if (treeWalk.isSubtree()) {
