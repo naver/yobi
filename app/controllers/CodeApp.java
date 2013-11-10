@@ -59,7 +59,8 @@ public class CodeApp extends Controller {
             }
         }
 
-        return redirect(routes.CodeApp.codeBrowserWithBranch(userName, projectName, "HEAD", ""));
+        String branch = project.defaultBranch == null ? "HEAD" : project.defaultBranch;
+        return redirect(routes.CodeApp.codeBrowserWithBranch(userName, projectName, branch, ""));
     }
 
     /**
