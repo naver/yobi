@@ -51,24 +51,24 @@
 }
 @defining(User.findByLoginId(event.senderLoginId)) { user =>
     @event.eventType match {
-        case EventType.PULL_REQUEST_REVIEWED => {
-        <li class="event" id="comment-@event.id">
-            <span class="state changed">@Messages("pullRequest.reviewed")</span>
-            @Html(Messages("notification.pullrequest.reviewed",linkToUser(user.loginId, user.name)))
-            <span class="date">
-                <a href="#event-@event.id">@momentFromNow(event.getDate(), lang.language)</a>
-            </span>
-        </li>
-        }
-
-        case EventType.PULL_REQUEST_UNREVIEWED => {
-        <li class="event" id="comment-@event.id">
-            <span class="state changed">@Messages("pullRequest.unreviewed")</span>
-            @Html(Messages("notification.pullrequest.unreviewed", linkToUser(user.loginId, user.name)))
-            <span class="date">
-                <a href="#event-@event.id">@momentFromNow(event.getDate(), lang.language)</a>
-            </span>
-        </li>
+        case EventType.PULL_REQUEST_REVIEW_STATE_CHANGED => {
+            @if(event.newValue == PullRequestReviewAction.DONE.name) {
+            <li class="event" id="comment-@event.id">
+                <span class="state changed">@Messages("pullRequest.review")</span>
+                @Html(Messages("notification.pullrequest.reviewed",linkToUser(user.loginId, user.name)))
+                <span class="date">
+                    <a href="#event-@event.id" title="@getDateString(event.getDate())">@agoOrDateString(event.getDate())</a>
+                </span>
+            </li>
+            } else {
+            <li class="event" id="comment-@event.id">
+                <span class="state changed">@Messages("pullRequest.unreview")</span>
+                @Html(Messages("notification.pullrequest.unreviewed", linkToUser(user.loginId, user.name)))
+                <span class="date">
+                    <a href="#event-@event.id" title="@getDateString(event.getDate())">@agoOrDateString(event.getDate())</a>
+                </span>
+            </li>
+            }
         }
         case EventType.PULL_REQUEST_STATE_CHANGED => {
         <li class="event" id="comment-@event.id">
@@ -83,7 +83,7 @@
                 }
             }
             <span class="date">
-                <a href="#event-@event.id">@momentFromNow(event.getDate(), lang.language)</a>
+                <a href="#event-@event.id" title="@getDateString(event.getDate())">@agoOrDateString(event.getDate())</a>
             </span>
         </li>
         }
@@ -93,7 +93,7 @@
             <span class="state @event.newValue">@Messages("pullRequest.event." + event.newValue)</span>
             @Html(Messages("pullRequest.event.message." + event.newValue, linkToUser(user.loginId, user.name)))
             <span class="date">
-                <a href="#event-@event.id">@momentFromNow(event.getDate(), lang.language)</a>
+                <a href="#event-@event.id" title="@getDateString(event.getDate())">@agoOrDateString(event.getDate())</a>
             </span>
         </li>
         }
@@ -103,7 +103,7 @@
             <span class="state changed">@Messages("pullRequest.event.commit")</span>
             @Html(Messages("pullRequest.event.message.commit", linkToUser(user.loginId, user.name)))
             <span class="date">
-                <a href="#event-@event.id">@momentFromNow(event.getDate(), lang.language)</a>
+                <a href="#event-@event.id" title="@getDateString(event.getDate())">@agoOrDateString(event.getDate())</a>
             </span>
             @if(event.oldValue != null) {
             <a href="@urlToCompare(pull.toProject, event.oldValue)" class="ybtn ybtn-mini">@Messages("pullRequest.additional.changes")</a>
@@ -113,20 +113,20 @@
             @for(commit <- event.getPullRequestCommits) {
                 <li class="comment-body commit-info @if(commit.state == PullRequestCommit.State.PRIOR){ outdated }">
                 @defining(User.findByEmail(commit.authorEmail)) { author =>
-                    <a href="@routes.PullRequestApp.commitView(pull.toProject.owner, pull.toProject.name, pull.number, commit.commitId)" class="commit-id">
+                    <a href="@routes.PullRequestApp.specificChange(pull.toProject.owner, pull.toProject.name, pull.number, commit.commitId)" class="commit-id">
                         @commit.commitShortId
                     </a>
                     @if(!author.isAnonymous()) {
                     <a href="@routes.UserApp.userInfo(author.loginId)" class="avatar-wrap small" data-toggle="tooltip" data-placement="top" title="@User.findByLoginId(author.loginId).name">
                         <img src="@author.avatarUrl"  alt="@author.name"> @commit.authorEmail
                     </a>
-                    <div class="date">@utils.TemplateHelper.agoString(ago(commit.authorDate))</div>
                     } else {
                         <img src="@urlToPicture(commit.getAuthorEmail, 32)" class="avatar-wrap small">
                     }
-
+                    <div class="date" title="@getDateString(commit.authorDate)">@utils.TemplateHelper.agoOrDateString(commit.authorDate)</div>
+                    
                     @common.commitMsg(commit.commitMessage.split("\n")(0), commit.commitMessage,
-                        routes.PullRequestApp.commitView(pull.toProject.owner, pull.toProject.name, pull.number, commit.commitId).toString)
+                        routes.PullRequestApp.specificChange(pull.toProject.owner, pull.toProject.name, pull.number, commit.commitId).toString)
                 }
                 </li>
             }

@@ -1,4 +1,26 @@
-@(section:String, project:Project)
+@**
+* Yobi, Project Hosting SW
+*
+* Copyright 2013 NAVER Corp.
+* http://yobi.io
+*
+* @Author JiHan Kim
+*
+* Licensed under the Apache License, Version 2.0 (the "License");
+* you may not use this file except in compliance with the License.
+* You may obtain a copy of the License at
+*
+*   http://www.apache.org/licenses/LICENSE-2.0
+*
+* Unless required by applicable law or agreed to in writing, software
+* distributed under the License is distributed on an "AS IS" BASIS,
+* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+* See the License for the specific language governing permissions and
+* limitations under the License.
+**@
+@(section:String, project:Project)(implicit request: play.api.mvc.RequestHeader)
+
+@ctrl = @{if(request.headers.get("User-Agent").getOrElse("").contains("Macintosh")){"⌘"}else{"CTRL"}}
 
 <div class="pull-right" style="padding:10px 0;">
     <a href="#helpKeys" data-toggle="modal" class="ybtn ybtn-inverse ybtn-mini">
@@ -7,7 +29,7 @@
 
     <div id="helpKeys" class="modal hide fade keymap-help" tabindex="-1" role="dialog">
         <div class="row-fluid">
-            <div class="span4">
+            <div class="span3">
                 <h5>@Messages("project.projects")</h5>
 	            <span class="ybtn ybtn-small">H</span>
 	            <span class="help-inline">@Messages("menu.home")</span><br>
@@ -69,20 +91,20 @@
 	            }
 
                 @if(section == "issueList"){
-                <span class="ybtn ybtn-small">CTRL</span>+ <span class="ybtn ybtn-small">A</span>
+                <span class="ybtn ybtn-small">@ctrl</span>+ <span class="ybtn ybtn-small">A</span>
                 <span class="help-inline">@Messages("button.selectAll")</span><br>
                 }
             </div>
 
-            <div class="span4">
+            <div class="span5">
 	            <h5>@Messages("site")</h5>
 	            <span class="ybtn ybtn-small">P</span>
 	            <span class="help-inline">@Messages("userinfo.profile")</span><br>
 
-                <span class="ybtn ybtn-small">ALT</span>+ <span class="ybtn ybtn-small">S</span>
+                <span class="ybtn ybtn-small">ALT</span> + <span class="ybtn ybtn-small">S</span>
                 <span class="help-inline">@Messages("site.search")</span><br>
 
-	            <span class="ybtn ybtn-small">CTRL</span>+ <span class="ybtn ybtn-small">ENTER</span>
+	            <span class="ybtn ybtn-small">@ctrl</span> + <span class="ybtn ybtn-small">ENTER</span>
 	            <span class="help-inline">@Messages("button.submitForm")</span><br>
             </div>
         </div>

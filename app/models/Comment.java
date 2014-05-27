@@ -1,7 +1,30 @@
+/**
+ * Yobi, Project Hosting SW
+ *
+ * Copyright 2012 NAVER Corp.
+ * http://yobi.io
+ *
+ * @Author Ahn Hyeok Jun
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *   http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package models;
 
+import com.avaje.ebean.annotation.Transactional;
 import models.resource.Resource;
 import models.resource.ResourceConvertible;
+import org.apache.commons.lang3.builder.EqualsBuilder;
+import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.joda.time.Duration;
 import play.data.validation.Constraints;
 import play.db.ebean.Model;
@@ -92,9 +115,15 @@ abstract public class Comment extends Model implements TimelineItem, ResourceCon
      *
      * <p>그 후 이 댓글을 갖고 게시글도 갱신한다.</p>
      */
+    @Transactional
     public void save() {
         super.save();
+        updateMention();
         getParent().update();
+    }
+
+    protected void updateMention() {
+        Mention.add(this.asResource(), NotificationEvent.getMentionedUsers(this.contents));
     }
 
     /**
@@ -120,5 +149,42 @@ abstract public class Comment extends Model implements TimelineItem, ResourceCon
 
     public Date getDate() {
         return createdDate;
+    }
+
+
+    @Override
+    public boolean equals(Object obj) {
+        if (obj == null) {
+            return false;
+        }
+        if (obj == this) {
+            return true;
+        }
+        if (obj.getClass() != getClass()) {
+            return false;
+        }
+        Comment rhs = (Comment) obj;
+        return new EqualsBuilder()
+                .appendSuper(super.equals(obj))
+                .append(this.id, rhs.id)
+                .append(this.contents, rhs.contents)
+                .append(this.createdDate, rhs.createdDate)
+                .append(this.authorId, rhs.authorId)
+                .append(this.authorLoginId, rhs.authorLoginId)
+                .append(this.authorName, rhs.authorName)
+                .isEquals();
+    }
+
+    @Override
+    public int hashCode() {
+        return new HashCodeBuilder()
+                .appendSuper(super.hashCode())
+                .append(id)
+                .append(contents)
+                .append(createdDate)
+                .append(authorId)
+                .append(authorLoginId)
+                .append(authorName)
+                .toHashCode();
     }
 }

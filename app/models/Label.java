@@ -1,3 +1,23 @@
+/**
+ * Yobi, Project Hosting SW
+ *
+ * Copyright 2013 NAVER Corp.
+ * http://yobi.io
+ *
+ * @Author Yi EungJun
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *   http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package models;
 
 import models.enumeration.ResourceType;
@@ -17,9 +37,6 @@ import java.util.Set;
 @Table(uniqueConstraints = @UniqueConstraint(columnNames = {"category", "name"}))
 public class Label extends Model implements ResourceConvertible {
 
-    /**
-     *
-     */
     private static final long serialVersionUID = -35487506476718498L;
     public static final Finder<Long, Label> find = new Finder<>(Long.class, Label.class);
 
@@ -46,21 +63,6 @@ public class Label extends Model implements ResourceConvertible {
         }
         this.category = category;
         this.name = name;
-    }
-
-    /**
-     * 현재 인스턴스와 같은 라벨가 있는지의 여부를 반환한다.
-     *
-     * when: 사용자가 라벨를 추가하려고 했을 때, 중복 여부를 검사하고자 할 때 사용하고 있다.
-     *
-     * 이 인스턴스의 {@link Label#category}와 {@link Label#name}가 모두 같은 라벨가 DB에 존재하는지 확인한다.
-     *
-     * @return 같은 것이 존재하면 {@code true}, 아니면 {@code false}
-     */
-    @Transient
-    public boolean exists() {
-        return find.where().eq("category", category).eq("name", name)
-            .findRowCount() > 0;
     }
 
     /**

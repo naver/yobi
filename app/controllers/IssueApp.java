@@ -1,3 +1,23 @@
+/**
+ * Yobi, Project Hosting SW
+ *
+ * Copyright 2012 NAVER Corp.
+ * http://yobi.io
+ *
+ * @Author Tae
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *   http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package controllers;
 
 import actions.NullProjectCheckAction;
@@ -14,6 +34,7 @@ import models.enumeration.State;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.tika.Tika;
 import org.codehaus.jackson.node.ObjectNode;
+import play.api.templates.Html;
 import play.data.Form;
 import play.data.validation.ValidationError;
 import play.db.ebean.Transactional;
@@ -56,7 +77,7 @@ public class IssueApp extends AbstractPostingApp {
         // SearchCondition from param
         Form<models.support.SearchCondition> issueParamForm = new Form<>(models.support.SearchCondition.class);
         models.support.SearchCondition searchCondition = issueParamForm.bindFromRequest().get();
-        if( searchCondition.assigneeId == null &&  searchCondition.authorId == null) {
+        if (hasNotConditions(searchCondition)) {
             searchCondition.assigneeId = UserApp.currentUser().id;
         }
         searchCondition.pageNum = pageNum - 1;
@@ -84,6 +105,10 @@ public class IssueApp extends AbstractPostingApp {
             default:
                 return issuesAsHTML(project, issues, searchCondition);
         }
+    }
+
+    private static boolean hasNotConditions(models.support.SearchCondition searchCondition) {
+        return searchCondition.assigneeId == null && searchCondition.authorId == null && searchCondition.mentionId == null;
     }
 
     /**
@@ -446,24 +471,27 @@ public class IssueApp extends AbstractPostingApp {
             }
 
             if (issueMassUpdate.attachingLabel != null) {
-                issue.labels.add(issueMassUpdate.attachingLabel);
+                for (IssueLabel label : issueMassUpdate.attachingLabel) {
+                    issue.labels.add(label);
+                }
             }
 
             if (issueMassUpdate.detachingLabel != null) {
-                issue.labels.remove(issueMassUpdate.detachingLabel);
+                for (IssueLabel label : issueMassUpdate.detachingLabel) {
+                    issue.labels.remove(label);
+                }
             }
 
             issue.updatedDate = JodaDateUtil.now();
             issue.update();
             updatedItems++;
 
-            Issue updatedIssue = Issue.finder.byId(issue.id);
             if(assigneeChanged) {
-                NotificationEvent notiEvent = NotificationEvent.afterAssigneeChanged(oldAssignee, updatedIssue);
+                NotificationEvent notiEvent = NotificationEvent.afterAssigneeChanged(oldAssignee, issue);
                 IssueEvent.addFromNotificationEvent(notiEvent, issue, UserApp.currentUser().loginId);
             }
             if(stateChanged) {
-                NotificationEvent notiEvent = NotificationEvent.afterStateChanged(oldState, updatedIssue);
+                NotificationEvent notiEvent = NotificationEvent.afterStateChanged(oldState, issue);
                 IssueEvent.addFromNotificationEvent(notiEvent, issue, UserApp.currentUser().loginId);
             }
         }
@@ -535,13 +563,13 @@ public class IssueApp extends AbstractPostingApp {
     }
 
     private static void removeAnonymousAssignee(Issue issue) {
-        if(hasAssignee(issue) && isAnonymousAssignee(issue)){
+        if(hasAssignee(issue) && isAnonymousAssignee(issue)) {
             issue.assignee = null;
         }
     }
 
     private static boolean isAnonymousAssignee(Issue issue) {
-        return issue.assignee.user != null && issue.assignee.user.id == User.anonymous.id;
+        return issue.assignee.user != null && issue.assignee.user.isAnonymous();
     }
 
     private static boolean hasAssignee(Issue issue) {
@@ -560,11 +588,15 @@ public class IssueApp extends AbstractPostingApp {
      * @param number 이슈 번호
      * @return
      */
-    @With(AnonymousCheckAction.class)
-    @IsAllowed(resourceType = ResourceType.ISSUE_POST, value = Operation.UPDATE)
+    @With(NullProjectCheckAction.class)
     public static Result editIssueForm(String ownerName, String projectName, Long number) {
         Project project = ProjectApp.getProject(ownerName, projectName);
         Issue issue = Issue.findByNumber(project, number);
+
+        if (!AccessControl.isAllowed(UserApp.currentUser(), issue.asResource(), Operation.UPDATE)) {
+            return forbidden(ErrorViews.Forbidden.render("error.forbidden", project));
+        }
+
         Form<Issue> editForm = new Form<>(Issue.class).fill(issue);
 
         return ok(edit.render("title.editIssue", editForm, issue, project));
@@ -598,30 +630,27 @@ public class IssueApp extends AbstractPostingApp {
         return redirect(redirectTo);
     }
 
-    private static void addAssigneeChangedNotification(Issue modifiedIssue, Issue originalIssue, Call redirectTo) {
+    private static void addAssigneeChangedNotification(Issue modifiedIssue, Issue originalIssue) {
         if(!originalIssue.assignedUserEquals(modifiedIssue.assignee)) {
-            Issue updatedIssue = Issue.finder.byId(originalIssue.id);
             User oldAssignee = null;
             if(hasAssignee(originalIssue)) {
                 oldAssignee = originalIssue.assignee.user;
             }
-            NotificationEvent notiEvent = NotificationEvent.afterAssigneeChanged(oldAssignee, updatedIssue);
+            NotificationEvent notiEvent = NotificationEvent.afterAssigneeChanged(oldAssignee, modifiedIssue);
             IssueEvent.addFromNotificationEvent(notiEvent, modifiedIssue, UserApp.currentUser().loginId);
         }
     }
 
-    private static void addStateChangedNotification(Issue modifiedIssue, Issue originalIssue, Call redirectTo) {
+    private static void addStateChangedNotification(Issue modifiedIssue, Issue originalIssue) {
         if(modifiedIssue.state != originalIssue.state) {
-            Issue updatedIssue = Issue.finder.byId(originalIssue.id);
-            NotificationEvent notiEvent = NotificationEvent.afterStateChanged(originalIssue.state, updatedIssue);
+            NotificationEvent notiEvent = NotificationEvent.afterStateChanged(originalIssue.state, modifiedIssue);
             IssueEvent.addFromNotificationEvent(notiEvent, modifiedIssue, UserApp.currentUser().loginId);
         }
     }
 
-    private static void addBodyChangedNotification(Issue modifiedIssue, Issue originalIssue, Call redirectTo) {
+    private static void addBodyChangedNotification(Issue modifiedIssue, Issue originalIssue) {
         if (!modifiedIssue.body.equals(originalIssue.body)) {
-            Issue updatedIssue = Issue.finder.byId(originalIssue.id);
-            NotificationEvent notiEvent = NotificationEvent.afterIssueBodyChanged(originalIssue.body, updatedIssue);
+            NotificationEvent notiEvent = NotificationEvent.afterIssueBodyChanged(originalIssue.body, modifiedIssue);
             IssueEvent.addFromNotificationEvent(notiEvent, modifiedIssue, UserApp.currentUser().loginId);
         }
     }
@@ -660,9 +689,9 @@ public class IssueApp extends AbstractPostingApp {
 
         Call redirectTo = routes.IssueApp.issue(project.owner, project.name, number);
 
-        // updateIssueBeforeSave.run would be called just before this issue is saved.
+        // preUpdateHook.run would be called just before this issue is updated.
         // It updates some properties only for issues, such as assignee or labels, but not for non-issues.
-        Runnable updateIssueBeforeSave = new Runnable() {
+        Runnable preUpdateHook = new Runnable() {
             @Override
             public void run() {
                 // Below addAll() method is needed to avoid the exception, 'Timeout trying to lock table ISSUE'.
@@ -671,16 +700,14 @@ public class IssueApp extends AbstractPostingApp {
                 issue.voters.addAll(originalIssue.voters);
                 issue.comments = originalIssue.comments;
                 addLabels(issue, request());
+
+                addAssigneeChangedNotification(issue, originalIssue);
+                addStateChangedNotification(issue, originalIssue);
+                addBodyChangedNotification(issue, originalIssue);
             }
         };
 
-        addAssigneeChangedNotification(issue, originalIssue, redirectTo);
-        addStateChangedNotification(issue, originalIssue, redirectTo);
-        addBodyChangedNotification(issue, originalIssue, redirectTo);
-
-        Result result = editPosting(originalIssue, issue, issueForm, redirectTo, updateIssueBeforeSave);
-
-        return result;
+        return editPosting(originalIssue, issue, issueForm, redirectTo, preUpdateHook);
     }
 
     /*
@@ -709,7 +736,7 @@ public class IssueApp extends AbstractPostingApp {
      * @ see {@link AbstractPostingApp#delete(play.db.ebean.Model, models.resource.Resource, Call)}
      */
     @Transactional
-    @IsAllowed(value = Operation.DELETE, resourceType = ResourceType.ISSUE_POST)
+    @With(NullProjectCheckAction.class)
     public static Result deleteIssue(String ownerName, String projectName, Long number) {
         Project project = ProjectApp.getProject(ownerName, projectName);
         Issue issue = Issue.findByNumber(project, number);
@@ -737,91 +764,77 @@ public class IssueApp extends AbstractPostingApp {
      * @see {@link AbstractPostingApp#newComment(models.Comment, play.data.Form}
      */
     @Transactional
-    @IsCreatable(ResourceType.ISSUE_COMMENT)
+    @With(NullProjectCheckAction.class)
     public static Result newComment(String ownerName, String projectName, Long number) throws IOException {
         Project project = Project.findByOwnerAndProjectName(ownerName, projectName);
         final Issue issue = Issue.findByNumber(project, number);
         Call redirectTo = routes.IssueApp.issue(project.owner, project.name, number);
         Form<IssueComment> commentForm = new Form<>(IssueComment.class).bindFromRequest();
 
-        if (commentForm.hasErrors()) {
-            return badRequest(ErrorViews.BadRequest.render("error.validation", project));
+        if (!AccessControl.isResourceCreatable(
+                    UserApp.currentUser(), issue.asResource(), ResourceType.ISSUE_COMMENT)) {
+            return forbidden(ErrorViews.Forbidden.render("error.forbidden", project));
         }
+
+        if (commentForm.hasErrors()) {
+            return badRequest(commentFormValidationResult(project, commentForm));
+        }
+
+        if( containsStateTransitionRequest() ){
+            toNextState(number, project);
+            IssueEvent.addFromNotificationEvent(
+                    NotificationEvent.afterStateChanged(issue.previousState(), issue),
+                    issue, UserApp.currentUser().loginId);
+        }
+
         final IssueComment comment = commentForm.get();
-        return newComment(comment, commentForm, redirectTo, new Runnable() {
+
+        IssueComment existingComment = IssueComment.find.where().eq("id", comment.id).findUnique();
+        if( existingComment != null){
+            existingComment.contents = comment.contents;
+            return saveComment(existingComment, commentForm, redirectTo, getContainerUpdater(issue, comment));
+        } else {
+            return saveComment(comment, commentForm, redirectTo, getContainerUpdater(issue, comment));
+        }
+    }
+
+    private static Runnable getContainerUpdater(final Issue issue, final IssueComment comment) {
+        return new Runnable() {
             @Override
             public void run() {
                 comment.issue = issue;
             }
-        });
-    }
-
-    /**
-     * 댓글 작성과 상태 변경을 함께 처리
-     *
-     * <p>when: 이슈 조회화면에서 댓글 작성하고 저장하면서 상태까지 변경할 때</p>
-     *
-     * 현재 사용자를 댓글 작성자로 하여 저장하고 이슈 조회화면으로 돌아간다.
-     *
-     * @param ownerName 프로젝트 소유자 이름
-     * @param projectName 프로젝트 이름
-     * @param number 이슈 번호
-     * @return
-     * @throws IOException
-     * @see {@link AbstractPostingApp#newComment(Comment, Form, Call, Runnable)}
-     */
-    @Transactional
-    @IsCreatable(ResourceType.ISSUE_COMMENT)
-    public static Result newCommentWithState(String ownerName, String projectName, Long number) throws IOException {
-        Project project = Project.findByOwnerAndProjectName(ownerName, projectName);
-        Form<IssueComment> commentForm = new Form<>(IssueComment.class).bindFromRequest();
-        if (commentForm.hasErrors()) {
-            return commentFormValidationResult(project, commentForm);
-        }
-
-        toNextState(number, project);
-
-        final IssueComment comment = commentForm.get();
-        final Issue issue = Issue.findByNumber(project, number);
-
-        commentSave(comment, issue);
-
-        // Attach all of the files in the current user's temporary storage.
-        Attachment.moveAll(UserApp.currentUser().asResource(), comment.asResource());
-
-        String urlToView = RouteUtil.getUrl(comment);
-        NotificationEvent.afterNewComment(comment);
-        IssueEvent.addFromNotificationEvent(
-                NotificationEvent.afterStateChanged(issue.previousState(), issue),
-                issue, UserApp.currentUser().loginId);
-        return redirect(urlToView);
-    }
-
-    private static void commentSave(final IssueComment comment, final Issue issue) {
-        comment.setAuthor(UserApp.currentUser());
-        new Runnable() {
-            @Override
-            public void run() {
-                comment.issue = issue;
-            }
-        }.run();
-        comment.save();
+        };
     }
 
     private static void toNextState(Long number, Project project) {
-        String withStateTransition = request().body().asMultipartFormData().asFormUrlEncoded().get("withStateTransition")[0];
         final Issue issue = Issue.findByNumber(project, number);
-        if(StringUtils.isNotBlank(withStateTransition)) {
-            issue.toNextState();
-        }
+        issue.toNextState();
     }
 
-    private static Result commentFormValidationResult(Project project, Form<IssueComment> commentForm) {
+    private static boolean containsStateTransitionRequest() {
+
+        if (!isMultipartForm() || getStateTransitionFormValue() == null){
+            return false;
+        }
+
+        return StringUtils.isNotBlank(getStateTransitionFormValue()[0]);
+    }
+
+    private static String[] getStateTransitionFormValue() {
+        return request().body().asMultipartFormData().asFormUrlEncoded().get("withStateTransition");
+    }
+
+    private static boolean isMultipartForm() {
+        return request().body().asMultipartFormData() != null;
+    }
+
+    private static Html commentFormValidationResult(Project project, Form<IssueComment> commentForm) {
         Map<String,List<ValidationError>> errors = commentForm.errors();
         if( errors.get("contents") != null ){
-            return badRequest(ErrorViews.BadRequest.render("post.comment.empty", project));
+            return ErrorViews.BadRequest.render("post.comment.empty", project);
         } else {
-            return badRequest(ErrorViews.BadRequest.render("error.validation", project));
+            return ErrorViews.BadRequest.render("error.validation", project);
         }
     }
 

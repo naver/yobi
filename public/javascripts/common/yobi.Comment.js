@@ -1,10 +1,10 @@
 /**
  * Yobi, Project Hosting SW
  *
- * Copyright 2013 NAVER Corp.
+ * Copyright 2014 NAVER Corp.
  * http://yobi.io
  *
- * @Author kjkmadness
+ * @Author Jungkook Kim
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -44,6 +44,15 @@ yobi.Comment = (function(){
      */
     function _attachEvent() {
         htElement.welContainer.on('click', '[data-toggle="comment-delete"]', _openDeleteModal);
+        htElement.welContainer.on('click', '[data-toggle="comment-edit"]', _toggleEditForm);
+        htElement.welContainer.on('click', '.ybtn-cancel', _toggleEditForm);
+    }
+
+    function _toggleEditForm(){
+        var commentId = $(this).data("commentId");
+
+        $('#comment-editform-' + commentId).toggle();
+        $('#comment-body-' + commentId).toggle();
     }
 
     /**

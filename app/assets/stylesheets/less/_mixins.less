@@ -125,7 +125,12 @@
         clear: both;
     }
 }
-
+.user-select-none {
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+}
 // Center-align a block level element
 // ----------------------------------
 .center-block(){
@@ -163,4 +168,12 @@
     -ms-user-select:@param;
     -o-user-select:@param;
     user-select: @param;
+}
+
+.box-sizing(@param:border-box) {
+    -webkit-box-sizing:@param;
+    -moz-box-sizing:@param;
+    -ms-sbox-izing:@param;
+    -o-box-sizing:@param;
+    box-sizing: @param;
 }

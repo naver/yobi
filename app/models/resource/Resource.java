@@ -1,7 +1,26 @@
+/**
+ * Yobi, Project Hosting SW
+ *
+ * Copyright 2013 NAVER Corp.
+ * http://yobi.io
+ *
+ * @Author Yi EungJun
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *   http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package models.resource;
 
 import actions.support.PathParser;
-import controllers.routes;
 import models.*;
 import models.enumeration.ResourceType;
 import play.db.ebean.Model;
@@ -51,8 +70,11 @@ public abstract class Resource {
             case PULL_REQUEST:
                 finder = PullRequest.finder;
                 break;
-            case PULL_REQUEST_COMMENT:
-                finder = PullRequestComment.find;
+            case REVIEW_COMMENT:
+                finder = ReviewComment.find;
+                break;
+            case ORGANIZATION:
+                finder = Organization.find;
                 break;
             case COMMIT:
                 try {
@@ -63,6 +85,9 @@ public abstract class Resource {
                     play.Logger.error("Failed to determine whether the commit exists", e);
                     return false;
                 }
+            case COMMENT_THREAD:
+                finder = CommentThread.find;
+                break;
             default:
                 throw new IllegalArgumentException(getInvalidResourceTypeMessage(type));
         }
@@ -120,10 +145,15 @@ public abstract class Resource {
                 break;
             case PULL_REQUEST:
                 return PullRequest.finder.byId(longId).asResource();
-            case PULL_REQUEST_COMMENT:
-                return PullRequestComment.find.byId(longId).asResource();
             case USER_AVATAR:
                 return User.find.byId(longId).avatarAsResource();
+            case REVIEW_COMMENT:
+                return ReviewComment.find.byId(longId).asResource();
+            case ORGANIZATION:
+                resource = Organization.find.byId(longId).asResource();
+                break;
+            case COMMENT_THREAD:
+                return CommentThread.find.byId(longId).asResource();
             default:
                 throw new IllegalArgumentException(getInvalidResourceTypeMessage(resourceType));
         }
@@ -140,6 +170,7 @@ public abstract class Resource {
     abstract public ResourceType getType();
     public Resource getContainer() { return null; }
     public Long getAuthorId() { return null; }
+    public boolean isAuthoredBy(User user) { return getAuthorId() != null && getAuthorId().equals(user.id); }
     public void delete() { throw new UnsupportedOperationException(); }
 
     /**

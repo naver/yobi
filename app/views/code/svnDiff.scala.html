@@ -1,3 +1,23 @@
+@**
+* Yobi, Project Hosting SW
+*
+* Copyright 2012 NAVER Corp.
+* http://yobi.io
+*
+* @Author Yi EungJun
+*
+* Licensed under the Apache License, Version 2.0 (the "License");
+* you may not use this file except in compliance with the License.
+* You may obtain a copy of the License at
+*
+*   http://www.apache.org/licenses/LICENSE-2.0
+*
+* Unless required by applicable law or agreed to in writing, software
+* distributed under the License is distributed on an "AS IS" BASIS,
+* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+* See the License for the specific language governing permissions and
+* limitations under the License.
+**@
 @(project: Project, commit:playRepository.Commit, parentCommit:playRepository.Commit, patch: String, comments:List[CommitComment], selectedBranch:String, path:String)
 
 @import playRepository.RepositoryService
@@ -5,27 +25,6 @@
 @import utils.TemplateHelper._
 @import utils.JodaDateUtil
 @import utils.AccessControl._
-
-@branchItemType(itemType:String) = @{
-    if(itemType == "heads"){
-        "branch"
-    } else {
-        itemType
-    }
-}
-
-@makeBranchItem(project:Project, branch:String) = {
-    @defining(branch.split('/')){ names =>
-        @if(names(0).equals("refs") && names.length == 3){
-            <li data-value="@branch"><a href="@routes.CodeHistoryApp.history(project.owner, project.name, URLEncoder.encode(names(2), "UTF-8"), null)"><!--
-             --><span class="label @branchItemType(names(1))">@branchItemType(names(1))</span><!--
-             -->@names(2)
-            </a></li>
-        } else {
-            <li data-value="@branch"><a href="@routes.CodeHistoryApp.history(project.owner, project.name, URLEncoder.encode(branch, "UTF-8"), null)">@branch</a></li>
-        }
-    }
-}
 
 @projectLayout(Messages("code.commits") + " @" + commit.getId, project, utils.MenuType.CODE) {
 @projectMenu(project, utils.MenuType.CODE, "main-menu-only")
@@ -40,7 +39,8 @@
                 <ul class="dropdown-menu">
                 @defining(RepositoryService.getRepository(project).getBranches()) { branches =>
                     @for(branch <- branches){
-                        @makeBranchItem(project, branch)
+                        @common.branchItem("history", project, branch, null,
+                            utils.TemplateHelper.equals(branch, selectedBranch))
                     }
                 }
                 </ul>
@@ -79,7 +79,7 @@
                 }
                 }
                 <span class="ago" title="@JodaDateUtil.getDateString(commit.getAuthorDate)">
-                    @agoString(JodaDateUtil.ago(commit.getAuthorDate))
+                    @agoOrDateString(commit.getAuthorDate)
                 </span>
                 <strong class="commitId pull-right">@{"@"}@commit.getId</strong>
                 @if(comments.size > 0) {
@@ -93,19 +93,6 @@
             <div class="diff-wrap">
                 <div id="commit" data-commit-origin="true" class="diff-body hide">@patch</div>
             </div>
-            @** Mergely **@
-            <div id="compare" class="modal hide compare-wrap" tabindex="-1" role="dialog">
-                <h4 class="path">
-                    <span></span>
-                    <button type="button" class="ybtn pull-right" data-dismiss="modal" style="margin-right:20px;">@Messages("button.confirm")</button>
-                </h4>
-                <div class="row-fluid">
-                    <div class="span6 commitA"></div>
-                    <div class="span6 commitB"></div>
-                </div>
-                <div id="mergely" class="mergely-wrap"></div>
-            </div>
-            @** // **@
 
             @** Comment **@
             <div class="board-comment-wrap">
@@ -127,7 +114,7 @@
                                 </span>
                                 <span class="ago">
                                     <a href="#comment-@comment.id" title="@JodaDateUtil.getDateString(commit.getAuthorDate)">
-                                        @agoString(JodaDateUtil.ago(comment.createdDate))
+                                        @agoOrDateString(comment.createdDate)
                                     </a>
                                 </span>
                                 @if(isAllowed(UserApp.currentUser(), comment.asResource(), Operation.DELETE)){
@@ -139,14 +126,14 @@
 
                             <div class="comment-body markdown-wrap markdown-before" markdown="true">@comment.contents</div>
 
-                            <div class="attachments" data-resourceType="@ResourceType.COMMIT_COMMENT" data-resourceId="@comment.id"></div>
+                            <div class="attachments" data-resource-type="@ResourceType.COMMIT_COMMENT" data-resource-id="@comment.id"></div>
                         </div>
                     </li>
                     }
                 </ul>
                 }
 
-                @common.commentForm(project, ResourceType.COMMIT_COMMENT, routes.CodeHistoryApp.newComment(project.owner, project.name, commit.getId).toString())
+                @common.commentForm(commit.asResource(project), ResourceType.COMMIT_COMMENT, routes.CodeHistoryApp.newComment(project.owner, project.name, commit.getId).toString())
             </div>
             @** // Comment **@
         </div>
@@ -176,13 +163,12 @@
     <button class="ybtn medium btn-thread"></button>
 </script>
 
-<link rel="stylesheet" type="text/css" media="screen" href="@routes.Assets.at("javascripts/lib/mergely/codemirror.css")">
-<link rel="stylesheet" type="text/css" media="screen" href="@routes.Assets.at("javascripts/lib/mergely/mergely.css")">
-<link rel="stylesheet" type="text/css" media="screen" href="@routes.Assets.at("javascripts/lib/mentionjs/mention.css")">
-<script type="text/javascript" src="@routes.Assets.at("javascripts/lib/mentionjs/mention.js")"></script>
+<link rel="stylesheet" type="text/css" media="screen" href="@routes.Assets.at("javascripts/lib/atjs/jquery.atwho.css")">
+<script type="text/javascript" src="@routes.Assets.at("javascripts/lib/atjs/jquery.caret.min.js")"></script>
+<script type="text/javascript" src="@routes.Assets.at("javascripts/lib/atjs/jquery.atwho.js")"></script>
+<script type="text/javascript" src="@routes.Assets.at("javascripts/lib/atjs/jquery.browser.js")"></script>
+<script type="text/javascript" src="@routes.Assets.at("javascripts/lib/atjs/jquery.firefox.keyfix.js")"></script>
 <script type="text/javascript" src="@routes.Assets.at("javascripts/lib/diff.js")"></script>
-<script type="text/javascript" src="@routes.Assets.at("javascripts/lib/mergely/codemirror.min.js")"></script>
-<script type="text/javascript" src="@routes.Assets.at("javascripts/lib/mergely/mergely.js")"></script>
 <script type="text/javascript">
     $(document).ready(function(){
         $yobi.loadModule("code.SvnDiff", {

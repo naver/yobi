@@ -1,6 +1,26 @@
+/**
+ * Yobi, Project Hosting SW
+ *
+ * Copyright 2013 NAVER Corp.
+ * http://yobi.io
+ *
+ * @Author Yi EungJun
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *   http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package playRepository;
 
-import models.CodeComment;
+import models.CodeRange;
 import org.eclipse.jgit.diff.DiffEntry;
 import org.eclipse.jgit.diff.Edit;
 import org.eclipse.jgit.diff.EditList;
@@ -17,7 +37,7 @@ import java.util.*;
 public class FileDiff {
     public static final int SIZE_LIMIT = 500 * 1024;
     public static final int LINE_LIMIT = 5000;
-    private Error error;
+    private Set<Error> errors = new HashSet<>();
     public enum Error {A_SIZE_EXCEEDED, B_SIZE_EXCEEDED, DIFF_SIZE_EXCEEDED, OTHERS_SIZE_EXCEEDED }
     public RawText a;
     public RawText b;
@@ -31,7 +51,7 @@ public class FileDiff {
     public boolean isBinaryB = false;
     public DiffEntry.ChangeType changeType;
     public Integer interestLine = null;
-    public CodeComment.Side interestSide = null;
+    public CodeRange.Side interestSide = null;
     public FileMode oldMode;
     public FileMode newMode;
     private Hunks hunks;
@@ -98,11 +118,11 @@ public class FileDiff {
                     aCur++;
                     bCur++;
                 } else if (aCur < curEdit.getEndA()) {
-                    hunk.lines.add(new DiffLine(this, DiffLineType.REMOVE, aCur, bCur,
+                    hunk.lines.add(new DiffLine(this, DiffLineType.REMOVE, aCur, null,
                             a.getString(aCur)));
                     aCur++;
                 } else if (bCur < curEdit.getEndB()) {
-                    hunk.lines.add(new DiffLine(this, DiffLineType.ADD, aCur, bCur,
+                    hunk.lines.add(new DiffLine(this, DiffLineType.ADD, null, bCur,
                             b.getString(bCur)));
                     bCur++;
                 }
@@ -226,21 +246,88 @@ public class FileDiff {
         return oldMode.getBits() != newMode.getBits();
     }
 
-    public void setError(Error error) {
-        this.error = error;
+    public void addError(Error error) {
+        this.errors.add(error);
     }
 
-    public Error getError() {
-        if (error != null) {
-            return error;
-        } else if (a != null && isRawTextSizeExceeds(a)) {
-            return Error.A_SIZE_EXCEEDED;
-        } else if (b != null && isRawTextSizeExceeds(b)) {
-            return Error.B_SIZE_EXCEEDED;
-        } else if (getHunks() instanceof SizeExceededHunks) {
-            return Error.DIFF_SIZE_EXCEEDED;
-        } else {
-            return null;
+    public boolean hasAnyError(Error ... errors) {
+        refreshErrors();
+
+        for (Error error : errors) {
+            if (this.errors.contains(error)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private void refreshErrors() {
+        if (getHunks() instanceof SizeExceededHunks) {
+            addError(Error.DIFF_SIZE_EXCEEDED);
+        }
+
+        // If editList is already produced, there is no need to concern about
+        // the size of the raw text a or b
+        if (editList == null && a != null && isRawTextSizeExceeds(a)) {
+            addError(Error.A_SIZE_EXCEEDED);
+        }
+        if (editList == null && b != null && isRawTextSizeExceeds(b)) {
+            addError(Error.B_SIZE_EXCEEDED);
         }
     }
+
+    public boolean hasError(Error error) {
+        refreshErrors();
+        return this.errors.contains(error);
+    }
+
+    public boolean hasError() {
+        refreshErrors();
+        return !this.errors.isEmpty();
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        FileDiff fileDiff = (FileDiff) o;
+
+        if (commitA != null ? !commitA.equals(fileDiff.commitA) : fileDiff.commitA != null)
+            return false;
+        if (commitB != null ? !commitB.equals(fileDiff.commitB) : fileDiff.commitB != null)
+            return false;
+        if (editList != null ? !editList.equals(fileDiff.editList) : fileDiff.editList != null)
+            return false;
+        if (pathA != null ? !pathA.equals(fileDiff.pathA) : fileDiff.pathA != null) return false;
+        if (pathB != null ? !pathB.equals(fileDiff.pathB) : fileDiff.pathB != null) return false;
+        if (changeType != null ? !changeType.equals(fileDiff.changeType) : fileDiff.changeType != null)
+            return false;
+
+        return true;
+    }
+
+    @Override
+    public int hashCode() {
+        int result = editList != null ? editList.hashCode() : 0;
+        result = 31 * result + (commitA != null ? commitA.hashCode() : 0);
+        result = 31 * result + (commitB != null ? commitB.hashCode() : 0);
+        result = 31 * result + (pathA != null ? pathA.hashCode() : 0);
+        result = 31 * result + (pathB != null ? pathB.hashCode() : 0);
+        result = 31 * result + (changeType != null ? changeType.hashCode() : 0);
+        return result;
+    }
+
+    @Override
+    public String toString() {
+        return "FileDiff{" +
+                "commitA='" + commitA + '\'' +
+                ", commitB='" + commitB + '\'' +
+                ", pathA='" + pathA + '\'' +
+                ", pathB='" + pathB + '\'' +
+                ", changeType=" + changeType +
+                '}';
+    }
+
 }

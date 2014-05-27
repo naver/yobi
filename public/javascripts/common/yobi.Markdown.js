@@ -1,15 +1,26 @@
 /**
- * @(#)yobi.Markdown 2013.03.21
+ * Yobi, Project Hosting SW
  *
- * Copyright NHN Corporation.
- * Released under the MIT license
+ * Copyright 2012 NAVER Corp.
+ * http://yobi.io
  *
- * http://yobi.dev.naver.com/license
+ * @Author Yi EungJun
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *   http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 yobi.Markdown = (function(htOptions){
 
     var htVar = {};
-    var htElement = {};
 
     /**
      * initialize
@@ -27,12 +38,12 @@ yobi.Markdown = (function(htOptions){
      * @param {Hash Table} htOptions
      */
     function _initVar(htOptions){
-        htVar.sTplSwitch = htOptions.sTplSwitch;
         htVar.sIssuesUrl = htOptions.sIssuesUrl;
         htVar.sProjectUrl = htOptions.sProjectUrl;
         htVar.bBreaks = htOptions.bBreaks;
-        htVar.sUserRules = '[a-z0-9_\\-\\.]';
-        htVar.sProjecRules = '[a-z0-9_\\-\\.]';
+
+        htVar.sUserRules = '[a-zA-Z0-9_\\-\\.\\/]';
+        htVar.sProjecRules = '[a-zA-Z0-9_\\-\\.]';
         htVar.sIssueRules = '\\d';
         htVar.sSha1Rules = '[a-f0-9]{7,40}';
         htVar.htFilter = new Filter();
@@ -45,8 +56,14 @@ yobi.Markdown = (function(htOptions){
             "langPrefix": '',
             "breaks"    : htVar.bBreaks,
             "hook"      : _markedHooks,
-            "highlight" : function(sCode, sLang){
-                return (!sLang) ? sCode : hljs(sCode, sLang).value;
+            "highlight" : function(sCode, sLang) {
+                if(sLang) {
+                    try {
+                        return hljs.highlight(sLang.toLowerCase(), sCode).value;
+                    } catch(oException) {
+                        console.log(oException.message);
+                    }
+                }
             }
         };
     }
@@ -109,7 +126,17 @@ yobi.Markdown = (function(htOptions){
             if(htVar.rxWord.test(sSrc[nMatchIndex-1]) || htVar.rxWord.test(sSrc[nMatchIndex+sMatch.length])){
                 return sMatch;
             }
-            return _makeLink(sMatch, sProjectGroup, sProjectPath, sUserName, sTargetGoup, sIssue, sAt, sShar1, sMention);
+            return _makeLink({
+                "match" : sMatch,
+                "projectGroup": sProjectGroup,
+                "projectPath": sProjectPath,
+                "userName": sUserName,
+                "targetGroup": sTargetGoup,
+                "issue": sIssue,
+                "at": sAt,
+                "sha1": sShar1,
+                "mention": sMention
+            });
         });
 
         return sSrc;
@@ -129,78 +156,50 @@ yobi.Markdown = (function(htOptions){
      * @param {String} sMention
      * @return {String}
      */
-    function _makeLink(sMatch, sProjectGroup, sProjectPath, sUserName, sTargetGoup, sIssue, sAt, sShar1, sMention){
+    function _makeLink(target){
         var sRef,
             sTitle,
             sOwner = htVar.sProjectUrl.split('/')[1],
             sProject = htVar.sProjectUrl.split('/')[2];
         var sClass = "";
 
-        if(sProjectGroup && sUserName && sIssue && !sProjectPath) {
+        if(target.projectGroup && target.userName && target.issue && !target.projectPath) {
             // User/#Num nforge#12345
-            sRef = [sUserName, sProject, 'issue', sIssue].join("/");
-            sTitle = sMatch;
-        } else if(sProjectGroup && sProjectPath && sIssue && !sUserName) {
+            sRef = [target.userName, target.project, 'issue', target.issue].join("/");
+            sTitle = target.match;
+        } else if(target.projectGroup && target.projectPath && target.issue && !target.userName) {
             // User/Project#Num nforge/yobi#12345
-            sRef = [sProjectGroup, 'issue', sIssue].join("/");
-            sTitle = sMatch;
-        } else if(sIssue && !sProjectGroup && !sProjectPath && !sUserName) {
+            sRef = [target.projectGroup, 'issue', target.issue].join("/");
+            sTitle = target.match;
+        } else if(target.issue && !target.projectGroup && !target.projectPath && !target.userName) {
             // #Num #123
-            sRef = [sOwner, sProject, 'issue', sIssue].join("/");
-            sTitle = sMatch;
+            sRef = [sOwner, sProject, 'issue', target.issue].join("/");
+            sTitle = target.match;
             sClass="issueLink";
-        } else if(sShar1 && !sAt && !/[^0-9a-f]/.test(sMatch)) {
+        } else if(target.sha1 && !target.at && !/[^0-9a-f]/.test(target.match)) {
             // SHA1 be6a8cc1c1ecfe9489fb51e4869af15a13fc2cd2
-            sRef = [sOwner, sProject, 'commit' , sMatch].join("/");
-            sTitle = sMatch.slice(0,7);
-        } else if(sShar1 && sAt) {
+            sRef = [sOwner, sProject, 'commit' , target.match].join("/");
+            sTitle = target.match.slice(0,7);
+        } else if(target.sha1 && target.at) {
             // SHA1 @be6a8cc1c1ecfe9489fb51e4869af15a13fc2cd2
-            sRef = [sOwner, sProject, 'commit' , sMatch.slice(1)].join("/");
-            sTitle = sMatch.slice(1,7);
-        } else if(sProjectGroup && sUserName && sShar1 && sAt && !sProjectPath ) {
+            sRef = [sOwner, sProject, 'commit' , target.match.slice(1)].join("/");
+            sTitle = target.match.slice(1,7);
+        } else if(target.projectGroup && target.userName && target.sha1 && target.at && !target.projectPath ) {
             // User@SHA1 nforge@be6a8cc1c1ecfe9489fb51e4869af15a13fc2cd2
-            sRef = [sUserName, sProject, 'commit' , sShar1].join("/");
-            sTitle = [sUserName, '@', sShar1.slice(0,7)].join("");
-        } else if(sProjectGroup && sShar1 && sProjectPath && sAt && !sUserName) {
+            sRef = [target.userName, target.project, 'commit' , target.sha1].join("/");
+            sTitle = [target.userName, '@', target.sha1.slice(0,7)].join("");
+        } else if(target.projectGroup && target.sha1 && target.projectPath && target.at && !target.userName) {
             // User/Project@SHA1 nforge/yobi@be6a8cc1c1ecfe9489fb51e4869af15a13fc2cd2
-            sRef = [sProjectGroup, 'commit' , sShar1].join("/");
-            sTitle = [sProjectGroup, '@', sShar1.slice(0,7)].join("");
-        } else if (sMention) {
-            sRef = sMention;
-            sTitle = sMatch;
+            sRef = [target.projectGroup, 'commit' , target.sha1].join("/");
+            sTitle = [target.projectGroup, '@', target.sha1.slice(0,7)].join("");
+        } else if (target.mention) {
+            sRef = target.mention;
+            sTitle = target.match;
         } else {
-            return sMatch;
+            return target.match;
         }
 
         return '<a href="/'+sRef+'" class="'+sClass+'">'+sTitle+'</a>';
-    }
-
-    /**
-     * set Markdown Editor
-     *
-     * @param {Wrapped Element} welTextarea
-     */
-    function _setEditor(welTextarea) {
-        // create new preview area
-        var welPreview = $('<div class="markdown-preview markdown-wrap">');
-        var welTextareaBox = $('.textarea-box');
-
-        welPreview.css({
-            "display"   : "none",
-            "min-height": welTextarea.height() + 'px'
-        });
-
-        var welPreviewSwitch = $('input[name="edit-mode"]');
-
-        var fOnChangeSwitch = function() {
-            var bPreview = ($("input:radio[name=edit-mode]:checked").val() == "preview");
-            welPreview.html(_renderMarkdown(welTextarea.val()));
-            (bPreview ? welPreview: welTextareaBox).show();
-            (bPreview ? welTextareaBox: welPreview).hide();
-        };
-
-        welPreviewSwitch.change(fOnChangeSwitch);
-        welTextareaBox.before(welPreview);
     }
 
     /**
@@ -212,6 +211,35 @@ yobi.Markdown = (function(htOptions){
         var sMarkdownText = welTarget.text();
         var sContentBody  = (sMarkdownText) ? _renderMarkdown(sMarkdownText) : welTarget.html();
         welTarget.html(sContentBody).removeClass('markdown-before');
+    }
+
+    /**
+     * set Markdown Editor
+     *
+     * @param {Wrapped Element} welTextarea
+     */
+    function _setEditor(welTextarea){
+        var elContainer = welTextarea.parents('[data-toggle="markdown-editor"]').get(0);
+
+        if(!elContainer){
+            return false;
+        }
+
+        $(elContainer).on("click", 'a[data-mode="preview"]', function(weEvt){
+            var welPreview = $(weEvt.delegateTarget).find("div.markdown-preview");
+            welPreview.html(_renderMarkdown(welTextarea.val()));
+            welPreview.css({"min-height": welTextarea.height() + 'px'});
+        });
+
+        welTextarea.on("keydown.tabkey-event-handler", function(e) {
+            if(e.keyCode === 9){ //tab
+                e.preventDefault();
+                var start = this.selectionStart;
+                var end = this.selectionEnd;
+                this.value = this.value.substring(0, start) + "\t" + this.value.substring(end);
+                this.selectionEnd = start + 1;
+            }
+        });
     }
 
     /**
@@ -228,7 +256,7 @@ yobi.Markdown = (function(htOptions){
     }
 
     /**
-     * Returns that specifieid element is editable
+     * Returns that specified element is editable
      *
      * @param {HTMLElement} elTarget
      * @return {Boolean}

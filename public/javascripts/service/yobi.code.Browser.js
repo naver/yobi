@@ -1,12 +1,23 @@
 /**
- * @(#)yobi.code.Browser.js 2013.09.09
+ * Yobi, Project Hosting SW
  *
- * Copyright NHN Corporation.
- * Released under the MIT license
+ * Copyright 2013 NAVER Corp.
+ * http://yobi.io
  *
- * http://yobi.dev.naver.com/license
+ * @Author Jihan Kim
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *   http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
-
 (function(ns){
 
     var oNS = $yobi.createNamespace(ns);
@@ -53,26 +64,7 @@
             htVar.sPath = htOptions.sInitialPath;
             htVar.nFontSize = 12;
             htVar.aPathQueue = [];
-
-            // Spinner Option
-            htVar.htOptSpinner = {
-                lines: 10,    // The number of lines to draw
-                length: 8,    // The length of each line
-                width: 4,     // The line thickness
-                radius: 8,    // The radius of the inner circle
-                corners: 1,   // Corner roundness (0..1)
-                rotate: 0,    // The rotation offset
-                direction: -1, // 1: clockwise, -1: counterclockwise
-                color: '#000',  // #rgb or #rrggbb
-                speed: 1.5,     // Rounds per second
-                trail: 60,      // Afterglow percentage
-                shadow: false,  // Whether to render a shadow
-                hwaccel: false, // Whether to use hardware acceleration
-                className: 'spinner', // The CSS class to assign to the spinner
-                zIndex: 2e9, // The z-index (defaults to 2000000000)
-                top: 'auto', // Top position relative to parent in px
-                left: 'auto' // Left position relative to parent in px
-            };
+            htVar.aMarkdownExtension = ['markdown', 'mdown', 'mkdn', 'mkd', 'md', 'mdwn'];
         }
 
         /**
@@ -85,7 +77,6 @@
             htElement.welShowCode = $("#showCode"); // aceEditor
             htElement.welCodeVal  = $("#codeVal");
             htElement.welBreadCrumbs = $("#breadcrumbs");
-            htElement.elSpinTarget = document.getElementById('spin');
         }
 
         /**
@@ -196,7 +187,7 @@
          */
         function _requestFolderList(){
             if(htVar.aPathQueue.length === 0){
-                _stopSpinner();
+                yobi.ui.Spinner.hide();
                 htVar.aWelList.forEach(function(welList){
                     welList.css("display", "block");
                 });
@@ -205,14 +196,13 @@
 
             var sTargetPath = htVar.aPathQueue.shift();
             var welTarget = $('[data-targetpath="' + sTargetPath + '"]');
-            var welList = $('[data-listpath="' + sTargetPath + '"]');
 
-            if(welList.length === 0){
-                // 해당 경로의 목록이 존재하지 않을 때에만 요청하고
-                _appendFolderList(welTarget, sTargetPath);
-            } else {
+            if(_isListExistsByPath(sTargetPath)){
                 // 이미 있으면 다음 경로순서로 넘어간다
                 _requestFolderList();
+            } else {
+                // 해당 경로의 목록이 존재하지 않을 때에만 요청
+                _appendFolderList(welTarget, sTargetPath);
             }
         }
 
@@ -229,9 +219,14 @@
             _setIndentByDepth(nNewDepth); // CSS Rule 먼저 추가해 놓고
 
             // AJAX 호출로 데이터 요청
-            _startSpinner();
+            yobi.ui.Spinner.show();
             $.ajax(sURL, {
                 "success": function(oRes){
+                    if(_isListExistsByPath(sTargetPath)){
+                        yobi.ui.Spinner.hide();
+                        return;
+                    }
+
                     var aHTML = _getListHTML(oRes.data, sTargetPath);
                     var welTargetItem = $('.listitem[data-path="' + sTargetPath + '"]');
                     var welList = $('<div class="list-wrap" data-listPath="' + sTargetPath + '"></div>');
@@ -251,13 +246,25 @@
                             welList.css("display", "block");
                         });
                     }
-                    _stopSpinner();
+
+                    yobi.ui.Spinner.hide();
                 },
                 "error"  : function(){
                     // TODO: #255 서버 응답에 맞는 오류 메시지 보여주기
-                    _stopSpinner();
+                    yobi.ui.Spinner.hide();
                 }
             });
+        }
+
+        /**
+         * 지정한 경로의 목록이 존재하는지 여부를 반환
+         *
+         * @param sTargetPath
+         * @returns {boolean}
+         * @private
+         */
+        function _isListExistsByPath(sTargetPath){
+            return ($('[data-listpath="' + sTargetPath + '"]').length > 0);
         }
 
         /**
@@ -422,19 +429,32 @@
          * @param {String} sMode
          */
         function _initCodeView(){
-            if(!htVar.oEditor){
-                htVar.oEditor = _getEditor("showCode");
+            
+            if(_isMarkdownExtension(htVar.sPath)) {
+
+                htElement.welFileView.removeClass('file-wrap');
+
+                htElement.welCodeVal
+                    .removeClass('hidden')
+                    .addClass('markdown-wrap codebrowser-markdown')
+                    .html(yobi.Markdown.renderMarkdown(htElement.welCodeVal.text()));
+
+            } else {
+
+                if(!htVar.oEditor){
+                    htVar.oEditor = _getEditor("showCode");
+                }
+
+                // Use explicit MIME Type if the server told which language is used to write the source code.
+                // or the client should guess it.
+                var sMimeType = htElement.welShowCode.data("mimetype");
+                var aMatch = sMimeType.match(htVar.rxSub);
+                var sMode = (aMatch ? aMatch[1] : _getEditorModeByPath(htVar.sPath)) || "text";
+
+                htVar.oSession.setMode("ace/mode/" + sMode);
+                htVar.oSession.setValue(htElement.welCodeVal.text());
+                setTimeout(_resizeEditor, 50);
             }
-
-            // Use explicit MIME Type if the server told which language is used to write the source code.
-            // or the client should guess it.
-            var sMimeType = htElement.welShowCode.data("mimetype");
-            var aMatch = sMimeType.match(htVar.rxSub);
-            var sMode = (aMatch ? aMatch[1] : _getEditorModeByPath(htVar.sPath)) || "text";
-
-            htVar.oSession.setMode("ace/mode/" + sMode);
-            htVar.oSession.setValue(htElement.welCodeVal.text());
-            setTimeout(_resizeEditor, 50);
         }
 
         /**
@@ -456,6 +476,11 @@
             htVar.oSession = oAce.getSession();
 
             return oAce;
+        }
+
+        function _isMarkdownExtension(sPath) {
+            var sExt =  getExt(basename(htVar.sPath));
+            return ($.inArray(sExt, htVar.aMarkdownExtension) !== -1);
         }
 
         /**
@@ -551,24 +576,6 @@
             var newHeight = (htVar.oSession.getScreenLength() * nLineHeight) + htVar.oEditor.renderer.scrollBar.getWidth();
             htElement.welShowCode.height(newHeight);
             htVar.oEditor.resize();
-        }
-
-        /**
-         * Spinner 시작
-         */
-        function _startSpinner(){
-            htVar.oSpinner = htVar.oSpinner || new Spinner(htVar.htOptSpinner);
-            htVar.oSpinner.spin(htElement.elSpinTarget);
-        }
-
-        /**
-         * Spinner 종료
-         */
-        function _stopSpinner(){
-            if(htVar.oSpinner){
-                htVar.oSpinner.stop();
-            }
-            htVar.oSpinner = null;
         }
 
         /**

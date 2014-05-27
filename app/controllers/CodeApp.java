@@ -1,9 +1,30 @@
+/**
+ * Yobi, Project Hosting SW
+ *
+ * Copyright 2012 NAVER Corp.
+ * http://yobi.io
+ *
+ * @Author Ahn Hyeok Jun
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *   http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package controllers;
 
-import actions.NullProjectCheckAction;
+import actions.DefaultProjectCheckAction;
 import controllers.annotation.IsAllowed;
 import models.Project;
 import models.enumeration.Operation;
+import org.apache.commons.io.FilenameUtils;
 import org.apache.tika.Tika;
 import org.codehaus.jackson.node.ObjectNode;
 import org.eclipse.jgit.api.errors.GitAPIException;
@@ -15,13 +36,13 @@ import play.mvc.With;
 import playRepository.PlayRepository;
 import playRepository.RepositoryService;
 import utils.ErrorViews;
+import utils.FileUtil;
 import views.html.code.nohead;
 import views.html.code.nohead_svn;
 import views.html.code.view;
 
 import javax.servlet.ServletException;
 import java.io.IOException;
-import java.io.InputStream;
 import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -75,7 +96,7 @@ public class CodeApp extends Controller {
      * @param branch 브랜치 이름
      * @param path 파일 경로
      */
-    @With(NullProjectCheckAction.class)
+    @With(DefaultProjectCheckAction.class)
     public static Result codeBrowserWithBranch(String userName, String projectName, String branch, String path)
         throws UnsupportedOperationException, IOException, SVNException, GitAPIException, ServletException {
         Project project = ProjectApp.getProject(userName, projectName);
@@ -110,7 +131,7 @@ public class CodeApp extends Controller {
      * @param projectName 프로젝트 이름
      * @param path 파일 또는 폴더의 경로
      */
-    @With(NullProjectCheckAction.class)
+    @With(DefaultProjectCheckAction.class)
     public static Result ajaxRequest(String userName, String projectName, String path) throws Exception{
         PlayRepository repository = RepositoryService.getRepository(userName, projectName);
         ObjectNode fileInfo = repository.getMetaDataFromPath(path);
@@ -130,7 +151,7 @@ public class CodeApp extends Controller {
      * @param branch 브랜치 이름
      * @param path 파일 또는 폴더의 경로
      */
-    @With(NullProjectCheckAction.class)
+    @With(DefaultProjectCheckAction.class)
     public static Result ajaxRequestWithBranch(String userName, String projectName, String branch, String path)
             throws UnsupportedOperationException, IOException, SVNException, GitAPIException, ServletException{
         CodeApp.hostName = request().host();
@@ -152,7 +173,7 @@ public class CodeApp extends Controller {
      * @param revision
      * @param path
      */
-    @With(NullProjectCheckAction.class)
+    @With(DefaultProjectCheckAction.class)
     public static Result showRawFile(String userName, String projectName, String revision, String path) throws Exception{
         byte[] fileAsRaw = RepositoryService.getFileAsRaw(userName, projectName, revision, path);
         if(fileAsRaw == null){
@@ -168,7 +189,7 @@ public class CodeApp extends Controller {
      * @param projectName
      * @param path
      */
-    @With(NullProjectCheckAction.class)
+    @With(DefaultProjectCheckAction.class)
     public static Result showImageFile(String userName, String projectName, String revision, String path) throws Exception{
         final byte[] fileAsRaw = RepositoryService.getFileAsRaw(userName, projectName, revision, path);
         String mimeType = tika.detect(fileAsRaw);
@@ -235,6 +256,6 @@ public class CodeApp extends Controller {
             return notFound(ErrorViews.NotFound.render("error.notfound"));
         }
 
-        return ok(raw).as(tika.detect(raw));
+        return ok(raw).as(FileUtil.detectMediaType(raw, FilenameUtils.getName(path)));
     }
 }

@@ -1,3 +1,23 @@
+/**
+ * Yobi, Project Hosting SW
+ *
+ * Copyright 2012 NAVER Corp.
+ * http://yobi.io
+ *
+ * @Author Ahn Hyeok Jun
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *   http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package models;
 
 import java.text.SimpleDateFormat;
@@ -38,6 +58,13 @@ public class User extends Model implements ResourceConvertible {
 
     public static final Model.Finder<Long, User> find = new Finder<>(Long.class, User.class);
 
+    public static final Comparator<User> USER_NAME_COMPARATOR = new Comparator<User>() {
+        @Override
+        public int compare(User u1, User u2) {
+            return u1.name.compareTo(u2.name);
+        }
+    };
+
     /**
      * 한 페이지에 보여줄 사용자 개수.
      */
@@ -52,6 +79,7 @@ public class User extends Model implements ResourceConvertible {
      * 로그인ID 패턴
      */
     public static final String LOGIN_ID_PATTERN = "[a-zA-Z0-9-]+([_.][a-zA-Z0-9-]+)*";
+    public static final String LOGIN_ID_PATTERN_ALLOW_FORWARD_SLASH = "[a-zA-Z0-9-/]+([_.][a-zA-Z0-9-/]+)*";
 
     // TODO anonymous를 사용하는 것이아니라 향후 NullUser 패턴으로 usages들을 교체해야 함
     public static final User anonymous = new NullUser();
@@ -129,6 +157,10 @@ public class User extends Model implements ResourceConvertible {
     @JoinTable(name = "user_enrolled_project", joinColumns = @JoinColumn(name = "user_id"), inverseJoinColumns = @JoinColumn(name = "project_id"))
     public List<Project> enrolledProjects;
 
+    @ManyToMany(cascade = CascadeType.ALL)
+    @JoinTable(name = "user_enrolled_organization", joinColumns = @JoinColumn(name = "user_id"), inverseJoinColumns = @JoinColumn(name = "organization_id"))
+    public List<Organization> enrolledOrganizations;
+
     @ManyToMany(mappedBy = "receivers")
     @OrderBy("created DESC")
     public List<NotificationEvent> notificationEvents;
@@ -146,11 +178,17 @@ public class User extends Model implements ResourceConvertible {
     @OneToOne(mappedBy = "user", cascade = CascadeType.ALL)
     public RecentlyVisitedProjects recentlyVisitedProjects;
 
+    @OneToMany(mappedBy = "user")
+    public List<Mention> mentions;
+
     /**
      * The user's preferred language code which can be recognized by {@link play.api.i18n.Lang#get},
      * such as "ko", "en-US" or "ja". This field is used as a language for notification mail.
      */
     public String lang;
+
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
+    public List<OrganizationUser> organizationUsers;
 
     public User() {
     }
@@ -213,22 +251,29 @@ public class User extends Model implements ResourceConvertible {
     }
 
     /**
-     * email로 사용자를 조회한다.
      *
-     * 사용자가 없으면 {@link #anonymous}객체에 email을 할당하고 반환한다.
+     * Find a user by email account.
+     * - find a user with a given email account or who has the email account  as one of sub email accounts.
+     * - If no user matched up with the given email account, then return new {@link models.NullUser}
+     * after setting the email account to the object.
      *
      * @param email
      * @return
      */
     public static User findByEmail(String email) {
         User user = find.where().eq("email", email).findUnique();
-        if (user == null) {
-            anonymous.email = email;
-            return anonymous;
-        }
-        else {
+        if (user != null) {
             return user;
         }
+
+        Email subEmail = Email.findByEmail(email, true);
+        if (subEmail != null) {
+            return subEmail.user;
+        }
+
+        User anonymous = new NullUser();
+        anonymous.email = email;
+        return anonymous;
     }
 
     /**
@@ -389,6 +434,13 @@ public class User extends Model implements ResourceConvertible {
         return this.enrolledProjects;
     }
 
+    public List<Organization> getEnrolledOrganizations() {
+        if (this.enrolledOrganizations == null) {
+            this.enrolledOrganizations = new ArrayList<>();
+        }
+        return this.enrolledOrganizations;
+    }
+
     @Transactional
     public void addWatching(Project project) {
         Watch.watch(this, project.asResource());
@@ -429,6 +481,11 @@ public class User extends Model implements ResourceConvertible {
         this.update();
     }
 
+    public void enroll(Organization organization) {
+        getEnrolledOrganizations().add(organization);
+        this.update();
+    }
+
     /**
      * {@code project}에 보낸 멤버 등록 요청을 삭제한다.
      *
@@ -436,6 +493,11 @@ public class User extends Model implements ResourceConvertible {
      */
     public void cancelEnroll(Project project) {
         getEnrolledProjects().remove(project);
+        this.update();
+    }
+
+    public void cancelEnroll(Organization organization) {
+        getEnrolledOrganizations().remove(organization);
         this.update();
     }
 
@@ -451,6 +513,14 @@ public class User extends Model implements ResourceConvertible {
             return false;
         }
         return user.getEnrolledProjects().contains(project);
+    }
+
+    public static boolean enrolled(Organization organization) {
+        User user = UserApp.currentUser();
+        if (user.isAnonymous()) {
+            return false;
+        }
+        return user.getEnrolledOrganizations().contains(organization);
     }
 
     @Override
@@ -476,6 +546,10 @@ public class User extends Model implements ResourceConvertible {
             enrolledProjects.clear();
             notificationEvents.clear();
             for (Assignee assignee : Assignee.finder.where().eq("user.id", id).findList()) {
+                for (Issue issue : assignee.issues) {
+                    issue.assignee = null;
+                    issue.update();
+                }
                 assignee.delete();
             }
         }
@@ -536,6 +610,11 @@ public class User extends Model implements ResourceConvertible {
                 .eq("projectUser.role.id", roleType.roleType()).orderBy().asc("name").findList();
     }
 
+    public static List<User> findUsersByOrganization(Long organizationId, RoleType roleType) {
+        return find.where().eq("organizationUsers.organization.id", organizationId)
+                .eq("organizationUsers.role.id", roleType.roleType()).orderBy().asc("name").findList();
+    }
+
     /**
      * 사용자가 가진 보조 이메일에 새로운 이메일 추가한다.
      *
@@ -571,29 +650,11 @@ public class User extends Model implements ResourceConvertible {
         email.delete();
     }
 
-    /**
-     * {@code committerEmail}에 해당하는 User를 찾아 반환한다.
-     *
-     * @param committerEmail
-     * @return
-     */
-    public static User findByCommitterEmail(String committerEmail) {
-        User user = find.where().eq("email", committerEmail).findUnique();
-        if (user != null) {
-            return user;
-        }
-
-        Email email = Email.findByEmail(committerEmail, true);
-        if (email != null) {
-            return email.user;
-        }
-
-        return anonymous;
-    }
-
     public void visits(Project project) {
-        this.recentlyVisitedProjects = RecentlyVisitedProjects.addNewVisitation(this, project);
-        this.update();
+        synchronized (this) {
+            this.recentlyVisitedProjects = RecentlyVisitedProjects.addNewVisitation(this, project);
+            this.update();
+        }
     }
 
 
@@ -603,5 +664,32 @@ public class User extends Model implements ResourceConvertible {
         }
 
         return this.recentlyVisitedProjects.findRecentlyVisitedProjects(size);
+    }
+
+    public List<Organization> getOrganizations(int size) {
+        if(size < 1) {
+            throw new IllegalArgumentException("the size should be bigger then 0");
+        }
+        List<Organization> orgs = new ArrayList<>();
+        for(OrganizationUser ou : OrganizationUser.findByUser(this, size)) {
+            orgs.add(ou.organization);
+        }
+        return orgs;
+    }
+
+    public void createOrganization(Organization organization) {
+        OrganizationUser ou = new OrganizationUser();
+        ou.user = this;
+        ou.organization = organization;
+        ou.role = Role.findByRoleType(RoleType.ORG_ADMIN);
+        ou.save();
+
+        this.add(ou);
+        organization.add(ou);
+        this.update();
+    }
+
+    private void add(OrganizationUser ou) {
+        this.organizationUsers.add(ou);
     }
 }

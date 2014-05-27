@@ -1,10 +1,22 @@
 /**
- * @(#)yobi.Mention.js 2013.08.12
+ * Yobi, Project Hosting SW
  *
- * Copyright NHN Corporation.
- * Released under the MIT license
+ * Copyright 2013 NAVER Corp.
+ * http://yobi.io
  *
- * http://yobi.dev.naver.com/license
+ * @Author Suwon Chae
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *   http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 yobi.Mention = function(htOptions) {
 
@@ -29,15 +41,13 @@ yobi.Mention = function(htOptions) {
      */
     function _initVar(htOptions) {
         htVar = htOptions || {}; // set htVar as htOptions
-
-        htVar.htMentionList = {
-            "emptyQuery": true,
-            "typeaheadOpts": {
-                "items": 15
-            },
-            "users": [],
-            "queryBy": ["username", "name"]
-        };
+        htVar.atConfig = {
+            at: "@",
+            limit: 10,
+            data: [],
+            tpl: "<li data-value='@${loginid}'><img style='width:20px;height:20px;' src='${image}'> ${username} <small>${loginid}</small></li>",
+            show_the_at: true
+        }
     }
 
     /**
@@ -62,8 +72,9 @@ yobi.Mention = function(htOptions) {
     function _onKeyInput(eEvt){
         eEvt = eEvt || window.event;
 
-        if(eEvt.which === 64 || eEvt.which === 35){ // 64 = @ or 35 = #
-            if(htVar.htMentionList.users.length == 0) {
+        var charCode = eEvt.which || eEvt.keyCode;
+        if(charCode === 64 || charCode === 35) { // 64 = @, 35 = #
+            if(htVar.atConfig.data.length == 0) {
                 _findMentionList();
             }
         }
@@ -82,8 +93,21 @@ yobi.Mention = function(htOptions) {
     }
 
     function _onLoadUserList(aData){
-        htVar.htMentionList.users = aData;
-        htElement.welTarget.mention(htVar.htMentionList);
+        htVar.atConfig.data = aData.result;
+
+        // on-key event fix for FF on Korean input
+        var keyFix = new beta.fix(htVar.target);
+
+        $inputor = htElement.welTarget
+            .atwho(htVar.atConfig)
+            .atwho({
+                at: "#",
+                limit: 10,
+                tpl: '<li data-value="#${issueNo}"><small>#${issueNo}</small> ${title}</li>',
+                data: aData.issues
+            });
+        $inputor.caret("pos", 47);
+        $inputor.focus().atwho("run");
     }
 
     _init(htOptions || {});

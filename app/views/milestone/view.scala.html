@@ -1,3 +1,23 @@
+@**
+* Yobi, Project Hosting SW
+*
+* Copyright 2013 NAVER Corp.
+* http://yobi.io
+*
+* @Author Keesun Baik
+*
+* Licensed under the Apache License, Version 2.0 (the "License");
+* you may not use this file except in compliance with the License.
+* You may obtain a copy of the License at
+*
+*   http://www.apache.org/licenses/LICENSE-2.0
+*
+* Unless required by applicable law or agreed to in writing, software
+* distributed under the License is distributed on an "AS IS" BASIS,
+* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+* See the License for the specific language governing permissions and
+* limitations under the License.
+**@
 @(title: String, milestone: models.Milestone, project: Project, issueState:State)
 @import scala.collection.immutable._
 @import utils.TemplateHelper._
@@ -34,25 +54,12 @@
                 </small>
             </h4>
 
-            <div class="progress @if(milestone.getCompletionRate==0){empty}">
-                <div class="progress-bar" style="width: @milestone.getCompletionRate%;"></div>
+            <div class="progress progress-success @if(milestone.state == State.OPEN) {progress-striped active}">
+                <div class="bar" style="width: @milestone.getCompletionRate%;"></div>
             </div>
-            <div class="progress-label clearfix">
-                @if(milestone.getNumOpenIssues + milestone.getNumClosedIssues > 0) {
-                <div class="pull-left">
-                    <a href="@makeIssuesLink(milestone.id,"closed")">@Messages("issue.state.closed") <strong>@milestone.getCompletionRate%</strong></a>
-                </div>
-                <div class="pull-right">
-                    <a href="@makeIssuesLink(milestone.id,"open")">@Messages("issue.state.open") <strong>@{100 - milestone.getCompletionRate}%</strong></a>
-                </div>
-                } else {
-                    <div class="empty-issue">@Messages("issue.is.empty")</div>
-                }
-            </div>
-
             <div class="milestone-desc">
                 <div markdown="true" class="markdown-wrap">@milestone.contents</div>
-                <div class="attachments" data-resourceType="@ResourceType.MILESTONE" data-resourceId="@milestone.id"></div>
+                <div class="attachments" data-resource-type="@ResourceType.MILESTONE" data-resource-id="@milestone.id"></div>
             </div>
 
             <div id="issues">
@@ -85,20 +92,22 @@
             </div>
 
             <div class="actrow right-txt" style="padding: 15px 0; clear:both;">
+                <a href="@routes.MilestoneApp.milestones(project.owner, project.name)" class="ybtn pull-left">@Messages("button.list")</a>
+
                 @if(isAllowed(UserApp.currentUser(), milestone.asResource(), Operation.DELETE)){
-                <a href="#deleteConfirm" data-toggle="modal" class="ybtn ybtn-danger pull-left">@Messages("milestone.delete")</a>
+                    <a href="#deleteConfirm" data-toggle="modal" class="ybtn ybtn-danger">@Messages("button.delete")</a>
                 }
 
                 @if(isAllowed(UserApp.currentUser(), milestone.asResource(), Operation.UPDATE)){
+                    <a href="@routes.MilestoneApp.editMilestoneForm(project.owner, project.name, milestone.id)" class="ybtn">@Messages("button.edit")</a>
+
                     @if(milestone.state == State.OPEN) {
                         <button type="button" data-request-method="post" data-request-uri="@routes.MilestoneApp.close(project.owner, project.name, milestone.id)" class="ybtn">@Messages("milestone.close")</button>
                     }
                     @if(milestone.state == State.CLOSED) {
                         <button type="button" data-request-method="post" data-request-uri="@routes.MilestoneApp.open(project.owner, project.name, milestone.id)" class="ybtn">@Messages("milestone.open")</button>
                     }
-                    <a href="@routes.MilestoneApp.editMilestoneForm(project.owner, project.name, milestone.id)" class="ybtn">@Messages("button.edit")</a>
                 }
-                <a href="@routes.MilestoneApp.milestones(project.owner, project.name)" class="ybtn">@Messages("button.list")</a>
             </div>
 
         </div>

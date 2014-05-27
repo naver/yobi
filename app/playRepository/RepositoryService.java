@@ -1,3 +1,23 @@
+/**
+ * Yobi, Project Hosting SW
+ *
+ * Copyright 2012 NAVER Corp.
+ * http://yobi.io
+ *
+ * @Author Yi EungJun
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *   http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package playRepository;
 
 import java.io.ByteArrayInputStream;
@@ -176,7 +196,7 @@ public class RepositoryService {
     public static byte[] getFileAsRaw(String userName, String projectName, String revision, String path)
             throws UnsupportedOperationException, IOException, ServletException, SVNException {
         Project project = ProjectApp.getProject(userName, projectName);
-        return RepositoryService.getRepository(project).getRawFile(revision, path);
+        return RepositoryService.getRepository(project, true).getRawFile(revision, path);
     }
 
     /**
@@ -192,7 +212,7 @@ public class RepositoryService {
      * @throws ServletException
      * @throws UnsupportedOperationException
      */
-    public static PlayRepository getRepository(Project project) throws IOException,
+    public static PlayRepository getRepository(Project project, boolean alternatesMergeRepo) throws IOException,
             ServletException, UnsupportedOperationException {
         if (project == null) {
             return null;
@@ -200,12 +220,17 @@ public class RepositoryService {
 
         switch (project.vcs) {
             case VCS_GIT:
-                return new GitRepository(project.owner, project.name);
+                return new GitRepository(project.owner, project.name, alternatesMergeRepo);
             case VCS_SUBVERSION:
                 return new SVNRepository(project.owner, project.name);
             default:
                 throw new UnsupportedOperationException();
         }
+    }
+
+    public static PlayRepository getRepository(Project project) throws IOException,
+            ServletException, UnsupportedOperationException {
+        return getRepository(project, true);
     }
 
     /**
@@ -297,7 +322,7 @@ public class RepositoryService {
         packetLineOut.end();
         PacketLineOutRefAdvertiser packetLineOutRefAdvertiser = new PacketLineOutRefAdvertiser(packetLineOut);
 
-        Repository repository = GitRepository.createGitRepository(project);
+        Repository repository = GitRepository.buildGitRepository(project);
 
         if (service.equals("git-upload-pack")) {
             UploadPack uploadPack = new UploadPack(repository);
@@ -345,14 +370,16 @@ public class RepositoryService {
                 requestStream = new FileInputStream(raw.asFile());
             }
 
-            Repository repository = GitRepository.createGitRepository(project);
+            Repository repository;
             PipedInputStream responseStream = new PipedInputStream();
 
             switch (service) {
                 case "git-upload-pack":
+                    repository = GitRepository.buildGitRepository(project);
                     uploadPack(requestStream, repository, new PipedOutputStream(responseStream));
                     break;
                 case "git-receive-pack":
+                    repository = GitRepository.buildGitRepository(project, false);
                     PostReceiveHook postReceiveHook = createPostReceiveHook(UserApp.currentUser(), project, request);
                     receivePack(requestStream, repository, new PipedOutputStream(responseStream),
                             postReceiveHook);

@@ -1,9 +1,31 @@
+/**
+ * Yobi, Project Hosting SW
+ *
+ * Copyright 2012 NAVER Corp.
+ * http://yobi.io
+ *
+ * @Author Hwi Ahn
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *   http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package models;
 
 import static org.fest.assertions.Assertions.assertThat;
 import static org.junit.Assert.*;
 
 import java.util.List;
+
+import models.enumeration.ProjectScope;
 
 import org.junit.Test;
 
@@ -15,7 +37,7 @@ public class ProjectTest extends ModelTest<Project> {
         Project project = new Project();
         project.name = "prj_test";
         project.overview = "Overview for prj_test";
-        project.isPublic = false;
+        project.projectScope = ProjectScope.PRIVATE;
         project.vcs = "GIT";
         // When
         Project.create(project);
@@ -66,7 +88,7 @@ public class ProjectTest extends ModelTest<Project> {
         // Then
         assertThat(project.name).isEqualTo("projectYobi");
         assertThat(project.overview).isEqualTo("Yobi는 소프트웨어 개발에 필요한 기능들을 사용하기 편리하게 웹으로 묶은 협업 개발 플랫폼입니다.");
-        assertThat(project.isPublic).isEqualTo(true);
+        assertThat(project.projectScope).isEqualTo(ProjectScope.PUBLIC);
         assertThat(project.vcs).isEqualTo("GIT");
         assertThat(project.siteurl).isEqualTo("http://localhost:9000/projectYobi");
 

@@ -26,7 +26,15 @@ import models.*;
 import models.enumeration.ResourceType;
 import models.resource.Resource;
 
+import models.SimpleCommentThread;
+import models.NonRangedCodeCommentThread;
+import models.CodeCommentThread;
+
+import utils.TemplateHelper.DiffRenderer$;
+
 public class RouteUtil {
+    public static DiffRenderer$ diffRenderer = new DiffRenderer$();
+
     public static String getUrl(ResourceType resourceType, String resourceId) {
         Long longId = Long.valueOf(resourceId);
 
@@ -44,8 +52,10 @@ public class RouteUtil {
                     return getUrl(CommitComment.find.byId(longId));
                 case PULL_REQUEST:
                     return getUrl(PullRequest.finder.byId(longId));
-                case PULL_REQUEST_COMMENT:
-                    return getUrl(PullRequestComment.find.byId(longId));
+                case REVIEW_COMMENT:
+                    return getUrl(ReviewComment.find.byId(longId));
+                case COMMENT_THREAD:
+                    return getUrl(CommentThread.find.byId(longId));
                 default:
                     throw new IllegalArgumentException(
                             Resource.getInvalidResourceTypeMessage(resourceType));
@@ -98,7 +108,6 @@ public class RouteUtil {
 
         play.mvc.Call toView = controllers.routes.CodeHistoryApp.show(
                 comment.project.owner, comment.project.name, comment.commitId);
-        toView = CodeHistoryApp.backToThePullRequestCommitView(toView);
         return toView + "#comment-" + comment.id;
     }
 
@@ -114,9 +123,15 @@ public class RouteUtil {
         throw new IllegalArgumentException();
     }
 
-    public static String getUrl(PullRequestComment newComment) {
-        if (newComment == null) return null;
+    public static String getUrl(ReviewComment comment) {
+        if (comment == null) return null;
 
-        return getUrl(newComment.pullRequest) + "#comment-" + newComment.id;
+        CommentThread thread = comment.thread;
+
+        return diffRenderer.urlToContainer(thread) + "#comment-" + comment.id;
+    }
+
+    public static String getUrl(CommentThread thread) {
+        return diffRenderer.urlToContainer(thread) + "#thread-" + thread.id;
     }
 }

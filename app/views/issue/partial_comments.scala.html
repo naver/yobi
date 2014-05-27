@@ -84,50 +84,58 @@
                         <strong>@comment.authorLoginId </strong>
                     </a>
                 </span>
-                <a href="#comment-@comment.id" class="ago">@utils.TemplateHelper.agoString(comment.ago())</a>
-                @if(isAllowed(UserApp.currentUser(), comment.asResource(), Operation.DELETE)){
-                <span class="edit pull-right">
-                    <button type="button" class="btn-transparent close" data-toggle="comment-delete" data-request-uri="@routes.IssueApp.deleteComment(project.owner, project.name, issue.getNumber, comment.id)" title="@Messages("common.comment.delete")"><i class="yobicon-trash"></i></button>
+                <a href="#comment-@comment.id" class="ago" title="@JodaDateUtil.getDateString(comment.createdDate)">@utils.TemplateHelper.agoOrDateString(comment.createdDate)</a>
+                <span class="act-row pull-right">
+                    @if(isAllowed(UserApp.currentUser(), comment.asResource(), Operation.UPDATE)) {
+                        <button type="button" class="btn-transparent mr10" data-toggle="comment-edit" data-comment-id="@comment.id" title="@Messages("common.comment.edit")"><i class="yobicon-edit-2"></i></button>
+                    }
+
+                    @if(isAllowed(UserApp.currentUser(), comment.asResource(), Operation.DELETE)) {
+                        <button type="button" class="btn-transparent" data-toggle="comment-delete" data-request-uri="@routes.IssueApp.deleteComment(project.owner, project.name, issue.getNumber, comment.id)" title="@Messages("common.comment.delete")"><i class="yobicon-trash"></i></button>
+                    }
                 </span>
-                }
             </div>
 
-            <div class="comment-body markdown-wrap markdown-before" markdown="true">@comment.contents</div>
+            @common.commentUpdateForm(comment.id, routes.IssueApp.newComment(project.owner, project.name, issue.getNumber).toString(), comment.contents)
 
-            <div class="attachments pull-right" data-resourceType="@ResourceType.ISSUE_COMMENT" data-resourceId="@comment.id"></div>
+            <div id="comment-body-@comment.id">
+                <div class="comment-body markdown-wrap markdown-before" markdown="true">@comment.contents</div>
+                <div class="attachments pull-right" data-resource-type="@ResourceType.ISSUE_COMMENT" data-resource-id="@comment.id"></div>
+            </div>
         </div>
     </li>
+
     }
     case (event: IssueEvent) => {
-    <li class="event" id="event-@event.id">
-        @defining(User.findByLoginId(event.senderLoginId)) { user =>
-            @event.eventType match {
-                case EventType.ISSUE_STATE_CHANGED => {
-                    <span class="state @event.newValue">@Messages("issue.state." + event.newValue)</span> @Html(Messages("issue.event." + event.newValue, linkToUser(user.loginId, user.name)))
-                }
-                case EventType.ISSUE_ASSIGNEE_CHANGED => {
-                    <span class="state changed">@Messages("issue.state.assigned")</span>
-                    @Html(Messages(assginedMesssage(event.newValue, user), linkToUser(user.loginId, user.name), linkToUser(event.newValue,User.findByLoginId(event.newValue).name, true)))
-                }
-                case EventType.ISSUE_REFERRED_FROM_COMMIT => {
-                    <span class="state changed">@Messages("issue.event.referred.title")</span>
-                    @Html(Messages("issue.event.referred",linkToUser(user.loginId, user.name),linkToCommit(event.newValue)))
-                }
-                case EventType.ISSUE_REFERRED_FROM_PULL_REQUEST => {
-                    <span class="state changed">@Messages("issue.event.referred.title")</span>
-                    @defining(PullRequest.findById(Long.valueOf(event.newValue))) { pull =>
-                        @Html(Messages("issue.event.referred",linkToUser(user.loginId, user.name),linkToPullRequest(pull)))
+        @if(event.eventType != EventType.ISSUE_BODY_CHANGED) {
+            <li class="event" id="event-@event.id">
+                @defining(User.findByLoginId(event.senderLoginId)) { user =>
+                    @event.eventType match {
+                        case EventType.ISSUE_STATE_CHANGED => {
+                            <span class="state @event.newValue">@Messages("issue.state." + event.newValue)</span> @Html(Messages("issue.event." + event.newValue, linkToUser(user.loginId, user.name)))
+                        }
+                        case EventType.ISSUE_ASSIGNEE_CHANGED => {
+                            <span class="state changed">@Messages("issue.state.assigned")</span>
+                            @Html(Messages(assginedMesssage(event.newValue, user), linkToUser(user.loginId, user.name), linkToUser(event.newValue,User.findByLoginId(event.newValue).name, true)))
+                        }
+                        case EventType.ISSUE_REFERRED_FROM_COMMIT => {
+                            <span class="state changed">@Messages("issue.event.referred.title")</span>
+                            @Html(Messages("issue.event.referred",linkToUser(user.loginId, user.name),linkToCommit(event.newValue)))
+                        }
+                        case EventType.ISSUE_REFERRED_FROM_PULL_REQUEST => {
+                            <span class="state changed">@Messages("issue.event.referred.title")</span>
+                            @defining(PullRequest.findById(Long.valueOf(event.newValue))) { pull =>
+                                @Html(Messages("issue.event.referred",linkToUser(user.loginId, user.name),linkToPullRequest(pull)))
+                            }
+                        }
+                        case _ => {
+                            @event.newValue by @linkToUser(user.loginId, user.name)
+                        }
                     }
                 }
-                case EventType.ISSUE_BODY_CHANGED => {
-                }
-                case _ => {
-                    @event.newValue by @linkToUser(user.loginId, user.name)
-                }
-            }
+                <span class="date"><a href="#event-@event.id">@utils.TemplateHelper.agoOrDateString(event.getDate())</a></span>
+            </li>
         }
-        <span class="date"><a href="#event-@event.id">@utils.TemplateHelper.agoString(JodaDateUtil.ago(event.getDate()))</a></span>
-    </li>
     }
     }
 }

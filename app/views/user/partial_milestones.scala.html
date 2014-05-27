@@ -1,3 +1,23 @@
+@**
+* Yobi, Project Hosting SW
+*
+* Copyright 2013 NAVER Corp.
+* http://yobi.io
+*
+* @Author Keesun Baik
+*
+* Licensed under the Apache License, Version 2.0 (the "License");
+* you may not use this file except in compliance with the License.
+* You may obtain a copy of the License at
+*
+*   http://www.apache.org/licenses/LICENSE-2.0
+*
+* Unless required by applicable law or agreed to in writing, software
+* distributed under the License is distributed on an "AS IS" BASIS,
+* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+* See the License for the specific language governing permissions and
+* limitations under the License.
+**@
 @(milestone:Milestone, project:Project)
 @import utils.JodaDateUtil
 @import utils.TemplateHelper._
@@ -24,31 +44,23 @@
             <span class="due-date">@Messages("label.dueDate") <strong>@milestone.getDueDateString</strong></span>
             <span class="date">(@milestone.until)</span>
             }
-            <div class="issue-wrap nbtn-group pull-right">
-                <a href="@makeIssuesLink(milestone.id,"open")" class="nbtn medium">
-                @Messages("issue.state.open") <strong class="num-badge open">@milestone.getNumOpenIssues</strong>
+            <div class="pull-right">
+                <a href="@makeIssuesLink(milestone.id,"open")">
+                @Messages("issue.state.open") <strong class="numberic nm">@milestone.getNumOpenIssues</strong>
                 </a>
-                <a href="@makeIssuesLink(milestone.id,"closed")" class="nbtn medium">
-                @Messages("issue.state.closed") <strong class="num-badge closed">@milestone.getNumClosedIssues</strong>
+                <a href="@makeIssuesLink(milestone.id,"closed")" class="ml10">
+                @Messages("issue.state.closed") <strong class="numberic nm">@milestone.getNumClosedIssues</strong>
                 </a>
             </div>
         </div>
 
         <div class="progress-wrap">
-            <div class="progress">
-                <div class="bar orange" style="width: @milestone.getCompletionRate%;"></div>
-            </div>
-            <div class="progress-label">
-                <div class="pull-left" style="width: @milestone.getCompletionRate%; min-width:100px;">
-                    <a href="@makeIssuesLink(milestone.id,"closed")">@Messages("issue.state.closed") <strong>@milestone.getCompletionRate%</strong></a>
-                </div>
-                <div class="pull-right">
-                    <a href="@makeIssuesLink(milestone.id,"open")">@Messages("issue.state.open") <strong>@{100 - milestone.getCompletionRate}%</strong></a>
-                </div>
+            <div class="progress progress-success progress-striped active">
+                <div class="bar" style="width: @milestone.getCompletionRate%;"></div>
             </div>
         </div>
     </div>
-    <div class="completion-rate @if(milestone.getCompletionRate == 100){done}"><!--
+    <div class="completion-rate"><!--
              -->@milestone.getCompletionRate<!--
              --><i>%</i>
     </div>

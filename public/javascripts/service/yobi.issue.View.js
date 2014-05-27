@@ -1,12 +1,23 @@
 /**
- * @(#)yobi.issue.View.js 2013.03.13
+ * Yobi, Project Hosting SW
  *
- * Copyright NHN Corporation.
- * Released under the MIT license
+ * Copyright 2013 NAVER Corp.
+ * http://yobi.io
  *
- * http://yobi.dev.naver.com/license
+ * @Author Jihan Kim
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *   http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
-
 (function(ns){
 
     var oNS = $yobi.createNamespace(ns);
@@ -26,9 +37,10 @@
 
             _initFileUploader();
             _initFileDownloader();
-            _setLabelTextColor();
 
             _setTimelineUpdateTimer();
+
+            _setBtnCommentAndClose();
         }
 
         /**
@@ -38,15 +50,13 @@
             htElement.welUploader = $("#upload");
             htElement.welTextarea = $("#comment-editor");
 
-            htElement.welLabels = $('.issue-label');
             htElement.welBtnWatch = $('#watch-button');
 
+            htElement.welIssueLabels = $("#issueLabels");
             htElement.welAssignee = htOptions.welAssignee || $("#assignee");
             htElement.welMilestone = htOptions.welMilestone || $("#milestone");
             htElement.welIssueUpdateForm = htOptions.welIssueUpdateForm;
-            htElement.sIssueCheckBoxesSelector = htOptions.sIssueCheckBoxesSelector;
 
-            htElement.welChkIssueOpen = $("#issueOpen");
             htElement.welTimelineWrap = $("#timeline");
             htElement.welTimelineList = htElement.welTimelineWrap.find(".timeline-list");
         }
@@ -71,6 +81,14 @@
             htVar.sTimelineHTML = htElement.welTimelineList.html();
             htVar.nTimelineItems = _countTimelineItems(); // 타임라인 항목 갯수
             htVar.bOnFocusTextarea = false; // 댓글 작성폼에 포커스가 있는지 여부
+
+            // for comment-and-close
+            htVar.sNextState = htOptions.sNextState;
+            htVar.sNextStateUrl = htOptions.sNextStateUrl;
+            htVar.sCommentWithStateUrl = htOptions.sCommentWithStateUrl;
+
+            // for label update
+            htVar.aLatestLabelIds = htElement.welIssueLabels.val();
         }
 
         /**
@@ -81,9 +99,9 @@
             htElement.welBtnWatch.click(_onClickBtnWatch);
 
             // 이슈 정보 업데이트
-            htElement.welChkIssueOpen.change(_onChangeIssueOpen);
             htElement.welAssignee.on("change", _onChangeAssignee);
             htElement.welMilestone.on("change", _onChangeMilestone);
+            htElement.welIssueLabels.on("change", _onChangeIssueLabels);
 
             // 타임라인 자동업데이트를 위한 정보
             if(htElement.welTextarea.length > 0){
@@ -92,6 +110,10 @@
                    "blur" : _onBlurCommentTextarea
                 });
             }
+
+            $(".labels-wrap").on("click", ".edit-button", function(){
+                $("#issueLabels").data("select2").open();
+            });
         }
 
         /**
@@ -117,37 +139,126 @@
          */
         function _onClickBtnWatch(weEvt){
             var welTarget = $(weEvt.target);
-            var bWatched = (welTarget.attr("data-watching") == "true") ? true : false;
+            var bWatched = (welTarget.attr("data-watching") === "true");
 
             $yobi.sendForm({
                 "sURL": bWatched ? htVar.sUnwatchUrl : htVar.sWatchUrl,
                 "fOnLoad": function(){
-                    welTarget.attr("data-watching", !bWatched);
-                    welTarget.html(Messages(!bWatched ? "project.unwatch" : "project.watch"));
+                    welTarget
+                        .attr("data-watching", !bWatched)
+                        .toggleClass('ybtn-watching')
+                        .html(Messages(!bWatched ? "project.unwatch" : "project.watch"));
+                        
                     $yobi.notify(Messages(bWatched ? "issue.unwatch.start" : "issue.watch.start"), 3000);
                 }
             });
         }
 
         /**
-         * 이슈 해결/미해결 스위치 변경시
+         * 이슈 라벨 변경시
+         * change 이벤트 핸들러
+         *
+         * @param weEvt
+         * @private
          */
-        function _onChangeIssueOpen(){
-            var welTarget  = $(this);
-            var bChecked   = welTarget.prop("checked");
-            var sNextState = bChecked ? "OPEN" : "CLOSED";
+        function _onChangeIssueLabels(weEvt){
+            var htReqData = _getRequestDataForUpdateIssueLabel(weEvt);
 
+            // 업데이트 요청 전송
             _requestUpdateIssue({
-               "htData" : {"state": sNextState},
-               "fOnLoad": function(){
-                    welTarget.prop("checked", bChecked);
-                    _updateTimeline();
-                },
+               "htData"  : htReqData,
+               "fOnLoad" : function(){
+                   $yobi.notify(Messages("issue.update.label"), 3000);
+               },
                "fOnError": function(oRes){
-                    welTarget.prop("checked", !bChecked);
-                    _onErrorRequest(Messages("issue.update.state"), oRes);
+                   _onErrorRequest(Messages("issue.update.label"), oRes);
                }
             });
+        }
+
+        /**
+         * 이슈 라벨 변경 요청 데이터를 반환
+         *
+         * @param weEvt
+         * @returns {Hash Table}
+         * @private
+         */
+        function _getRequestDataForUpdateIssueLabel(weEvt){
+            var htReqData = {};
+
+            // 삭제할 라벨
+            htReqData["detachingLabel[0].id"] = _getIdPropFromObject(weEvt.removed);
+
+            // 추가할 라벨
+            htReqData["attachingLabel[0].id"] = _getIdPropFromObject(weEvt.added);
+
+            // 추가하는 라벨이 있는 경우
+            // 해당 라벨을 추가함으로 인해 삭제해야 하는 라벨을 찾아 htReqData 에 넣는다
+            if(htReqData["attachingLabel[0].id"]){
+                var htRemove = _getLabelsToRemovedByAdding(weEvt.added);
+                htReqData = $.extend(htReqData, htRemove);
+            }
+
+            return htReqData;
+        }
+
+        /**
+         * {@code htItem}의 id 속성을 반환한다
+         *
+         * @param htItem
+         * @returns {*}
+         * @private
+         */
+        function _getIdPropFromObject(htItem){
+            return (htItem && htItem.id) ? htItem.id : undefined;
+        }
+
+        /**
+         * {@code htLabel} 을 추가함으로 인해 삭제해야 하는 라벨을 찾아 그 정보를 반환한다
+         *
+         * @param htLabel
+         * @private
+         * @return {Hash Table}
+         */
+        function _getLabelsToRemovedByAdding(htLabel){
+            var htRemove = {};
+            var oIssueLabels = htElement.welIssueLabels.data("select2");
+            var aIssueLabelValues = oIssueLabels.val();
+            var aRemoveLabelIds = _getLabelInSameCategoryWith(oIssueLabels.data(), htLabel);
+
+            // 삭제할 항목으로 추가하고
+            aRemoveLabelIds.forEach(function(nValue, nIndex){
+                htRemove["detachingLabel[" + (nIndex + 1) + "].id"] = nValue;
+                aIssueLabelValues.splice(aIssueLabelValues.indexOf(nValue), 1);
+            });
+
+            // 해당 항목이 제거된 상태로 Select2 값 설정
+            oIssueLabels.val(aIssueLabelValues);
+
+            return htRemove;
+        }
+
+        /**
+         * {@code aData} 를 기준으로 {@code htAddedLabel}과 같은 카테고리의 항목을 반환한다
+         *
+         * @param aData
+         * @param htAddedLabel
+         * @private
+         * @returns {Array}
+         */
+        function _getLabelInSameCategoryWith(aData, htAddedLabel){
+            var aLabelIds = [];
+            var sAddedCategory = $(htAddedLabel.element).data("category");
+
+            aData.forEach(function(htData){
+                var sCategory = $(htData.element).data("category");
+
+                if(htData.id !== htAddedLabel.id && sCategory === sAddedCategory){
+                    aLabelIds.push(htData.id);
+                }
+            });
+
+            return aLabelIds;
         }
 
         /**
@@ -244,23 +355,6 @@
                     (new yobi.Attachments({"elContainer": elContainer}));
                 }
             });
-        }
-
-        /**
-         * set Labels foreground color as contrast to background color
-         */
-        function _setLabelTextColor(){
-            var welLabel;
-            var sBgColor, sColor;
-
-            htElement.welLabels.each(function(nIndex, elLabel){
-                welLabel = $(elLabel);
-                sBgColor = welLabel.css("background-color");
-                sColor = $yobi.getContrastColor(sBgColor);
-                welLabel.css("color", sColor);
-            });
-
-            welLabel = null;
         }
 
         /**
@@ -362,7 +456,9 @@
 
             htVar.nTimelineItems = _countTimelineItems();
             htVar.nTimelineUpdateTimer = setInterval(function(){
-                if(htVar.bTimelineUpdating !== true){
+                var bEditing = (htElement.welTimelineWrap.find(".comment-update-form:visible").length > 0);
+
+                if(htVar.bTimelineUpdating !== true && !bEditing){
                     _updateTimeline();
                 }
             }, htVar.nTimelineUpdatePeriod);
@@ -388,6 +484,51 @@
          */
         function _countTimelineItems(){
             return htElement.welTimelineList.find("ul.comments > li").length;
+        }
+
+        /**
+         * Add "comment & close" like button at comment form
+         * @private
+         */
+        function _setBtnCommentAndClose(){
+            var welEditor = $("#comment-editor");
+            var welDynamicCommentBtn = $("#dynamic-comment-btn");
+            var welCommentForm = $("#comment-form");
+            var welWithStateTransition = $("<input type='hidden' name='withStateTransition'>");
+
+            var sNextState = Messages("button.nextState." + htVar.sNextState);
+            var sCommentAndNextState = Messages("button.commentAndNextState." + htVar.sNextState);
+
+            welCommentForm.prepend(welWithStateTransition);
+            welDynamicCommentBtn.removeClass('hidden');
+            welDynamicCommentBtn.html(Messages("button.nextState." + htVar.sNextState));
+            welDynamicCommentBtn.on("click", function(){
+                if(welEditor.val().length > 0){
+                    welWithStateTransition.val("true");
+                    welCommentForm.attr("action", htVar.sCommentWithStateUrl);
+                    welCommentForm.submit();
+                } else {
+                    welWithStateTransition.val("");
+                    location.href = htVar.sNextStateUrl;
+                }
+            });
+
+            welEditor.on("keyup", function(){
+                if(welEditor.val().length > 0){
+                    welDynamicCommentBtn.html(sCommentAndNextState);
+                } else {
+                    welDynamicCommentBtn.html(sNextState);
+                }
+            });
+
+            // if yobi.ShortcutKey exists
+            if(yobi.ShortcutKey){
+                yobi.ShortcutKey.attach("CTRL+SHIFT+ENTER", function(htInfo){
+                    if(htInfo.welTarget.is(welEditor)){
+                        welDynamicCommentBtn.click();
+                    }
+                });
+            }
         }
 
         // initialize

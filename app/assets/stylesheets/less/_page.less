@@ -33,6 +33,21 @@
 .gnb-outer {
     height:40px;
     background-color:#1d2d46;
+
+    &.project-header {
+        background-color: rgba(0, 0, 0, 0.35);
+        position: absolute;
+        width: 100%;
+        z-index: 10000;
+
+        .gnb-inner {
+            .logo {
+                &:before, &:after {
+                    display: none;
+                }
+            }
+        }
+    }
 }
 
 .gnb-inner {
@@ -182,6 +197,17 @@
                             border-top: 4px solid #FFF;
                         }
                     }
+
+                    &.dropdwon-box-btn {
+                        background-color:@primary;
+                        .border-radius(3px);
+                        color:#FFF;
+                        padding:0 10px;
+
+                        .caret {
+                            border-top: 4px solid #FFF;
+                        }
+                    }
                 }
             }
         }
@@ -217,11 +243,9 @@
 }
 
 .project-header-outer {
-    background-color:#ececec;
-    height:69px;
-    border-bottom:1px solid #ddd;
-    background-clip: padding-box;
-    background-position: bottom;
+    background-color: #565656;
+    height:120px;
+    background-position: center bottom;
     background-repeat: no-repeat;
     background-size: cover;
 
@@ -242,7 +266,9 @@
                 position:absolute;
                 width: 80px;
                 height: 80px;
-                border:5px solid #fff;
+                border:5px solid #f9f9f9;
+                border-radius: 3px !important;
+                background: #fff;
 
                 img {
                     width: 100%;
@@ -368,7 +394,6 @@
             &.project-menu-gruop {
                 float:left;
                 margin-left:110px;
-                border-left:1px solid #ddd;
             }
 
             li {
@@ -449,7 +474,7 @@
     margin:20px auto 0;
 
     label {
-        display: inline-block;
+      display: inline-block;
     }
 
     h4 {
@@ -502,13 +527,13 @@
                 color: #2cb400;
             }
         }
-
+        
         .d2-program:hover {
-            background-color:#183054;
+            background-color:#5f5f5f;
             text-decoration:none;
 
             .d2 {
-                color:#f8da3a;
+                color:#32cda0;
             }
 
             .program {
@@ -581,28 +606,24 @@
             }
         }
         &.login {
-            /*margin-top: 25px;*/
            padding-top:40px;
            margin-top:0px;
         }
         .title {
-            font-size: 3.3em; /*52px;*/
-            line-height:42px; /*line-height: 1.3;*/
+            font-size: 3.3em;
+            line-height:42px;
             font-weight: normal;
+            font-family:@base-font-family;
             .inline-block;
-            /*.helvetic-light;*/
-            .high-light {
-                color: @yobi-primary;
 
+            .highlight {
+                color: @yobi-primary;
             }
-            /*font-family:'Myriad Pro Light', 'Droid Sans', Tahoma, sans-serif;*/
-           font-family:@base-font-family;
         }
         .tag-line {
-            font-size: 1.2em; /*16px;*/
-            color: #7c7c7c; /*@gray-52;*/
-            /*font-family:"Myriad Pro";*/
-
+            font-size: 1.2em;
+            color: #7c7c7c;
+            margin-top:10px;
             span { color:@gray-52; }
         }
     }
@@ -1001,13 +1022,15 @@
 
                     .stream-info {
 
-                        .avatar-wrap { float:left; margin-top:3px;}
+                        .avatar-wrap { float:left; margin-top:3px; margin-right:15px;}
 
                         .title {
                             color:#51aacc;
                             font-size:13px;
                             font-weight:bold;
-                            padding-left:55px;
+                            overflow:hidden;
+                            text-overflow: ellipsis;
+                            white-space: nowrap;
                         }
 
                         .meta {
@@ -1027,7 +1050,6 @@
                             margin-top:3px;
                             font-size:12px;
                             color:#888;
-                            padding-left:12px;
                             overflow:hidden;
                             line-height:20px;
                             .transition(all 0.3s ease);
@@ -1312,25 +1334,21 @@
             margin-bottom: 15px;
         }
     }
+
+    .alert h4 { font-size:15px; }
 }
 .login-form-wrap {
     margin-top: 54px;
     width: 400px;
     .center-block;
+
     .act-row {
         margin-bottom: 42px;
         line-height:22px;
+        .checkbox { margin-top:4px !important; }
     }
     .forgot-password {
-        vertical-align: top;
-        color: #5C5C5C;
-        margin-left: 5px;
-        padding-left: 5px;
-        border-left: 1px solid #eee;
-
-        &:hover {
-            color: #010101;
-        }
+        float:left; margin:0;
     }
 
     .btns-row {
@@ -1608,7 +1626,7 @@
                width:100%;
                ul {
                     display:inline-block;
-                    width:115px; max-height:71px;
+                    padding-left: 50px;
                     overflow:hidden;
 
                     li {
@@ -1825,7 +1843,7 @@
     }
 }
 .cu-label {
-    width: 80px;
+    width: 160px;
     padding-right: 45px;
     .inline-block;
     vertical-align: top;
@@ -1956,7 +1974,6 @@
     padding: 4px;
 
     .progress {
-        background-color:@state-open;
         height:7px;
         width:100%;
 
@@ -2021,15 +2038,8 @@
                     color: #666;
                     &.over { color:#f36c22; }
                 }
-
-                .open { background-color: @state-open; color:#FFF;}
-                .closed { background-color: @state-closed; color:#FFF;}
-
-                .num-badge {
-                    color: #fff;
-                    margin-left:3px;
-                }
             }
+            
             .progress-wrap {
                 overflow: hidden;
                 color: #999;
@@ -2037,14 +2047,7 @@
                 margin-top:15px;
 
                 .progress {
-                    background-color: @state-open;
-
-                    &.empty { background-color: #B1B1B1; }
-
-                    .progress-bar {
-                        background-color: @state-closed;
-                        height: inherit;
-                    }
+                    height:14px;
                 }
 
             }
@@ -2202,16 +2205,9 @@
     }
 
     .project-clone-wrap {
-        position: absolute;
-        top:0;
-        right: 0;
+        position: relative;
         padding:5px 0;
         .border-radius(6px);
-
-        .project-clone {
-            position: relative;
-            float:right;
-        }
 
         .project-clone-url {
             text-align: right;
@@ -2225,6 +2221,8 @@
             cursor: pointer;
             .border-radius(3px 0 0 3px);
             .transition(width .15s);
+            position:absolute;
+            right:86px;
 
             &:focus {
                 width:450px;
@@ -2233,6 +2231,10 @@
 
         .project-clone-button {
             margin-left:0;
+            position:absolute;
+            right:0;
+            width:86px;
+            padding:4px 0 !important;
             .border-radius(0 3px 3px 0);
             float:left;
         }
@@ -2252,17 +2254,15 @@
         text-align:center;
         padding:5px 0;
         .project-btn-item {
+            margin-top:10px;
             display:block;
 
             a {
                 display:block;
             }
-        }
 
-        &.git-project{
-            .project-btn-item {
-                display: inline-block;
-                padding:0 5px;
+            &:first-child {
+                margin-top:0;
             }
         }
     }
@@ -2453,6 +2453,71 @@
     }
 }
 
+.project-overview-home {
+    h5 {
+        margin-bottom:20px;
+        border-left: 3px solid @yobi-primary;
+        padding-left: 10px;
+    }
+    small {
+        color:#999;
+        margin-left:3px;
+        width:35px;
+        display:inline-block;
+    }
+    .progress { margin-top:7px; width:100px; height:7px; }
+    .num {
+        text-align:right;
+        padding-right:15px;
+    }
+    .empty {
+        text-align:center;
+        p { margin-bottom:15px; color:#999; font-size:13px; }
+    }
+
+    .overview-label {
+        border-bottom:1px solid #eee;
+        padding:5px 0;
+
+        dt { width:120px; line-height:30px; }
+        dd { margin-left:140px; line-height:30px; }
+
+        &:first-of-type { padding-top:0; }
+        &:last-of-type { border-bottom:none; }
+    }
+
+    .overview-assignee {
+        .usf-group {
+            display:block;
+            white-space: nowrap;
+            overflow:hidden;
+            .text-overflow();
+        }
+    }
+
+    .overview-pullrequest {
+        .title {
+            white-space: nowrap;
+            display:inline-block;
+            .text-overflow();
+        }
+
+        .review {
+            text-align:right;
+            &.disabled { color:#ddd; }
+        }
+    }
+}
+.historyAgo {
+    font-size:11px;
+    font-weight:normal;
+    margin-left:3px;
+    color:@secondary;
+
+    &.new { color:@primary; }
+    &.old { color:#777; }
+}
+
 .write-btn-wrap {
     margin: 20px 0;
     text-align: right;
@@ -2518,7 +2583,10 @@
         padding:15px 0 0 10px;
 
         dl { margin-bottom:20px; }
-        dl.author { height:51px; overflow:hidden; }
+        dl.author {
+            height:51px; overflow:hidden;
+            dd { padding:5px 10px; }
+        }
         p {
             margin-bottom: 5px;
             line-height: 14px;
@@ -2572,6 +2640,17 @@
         margin: 0;
         padding: 0;
         list-style: none;
+        .comment-update-form {
+          display:none;
+          .textarea-box {
+            padding-right: 2px;
+            margin-bottom: 10px;
+          }
+          .write-comment-box {
+            padding: 10px;
+          }
+        }
+
         .comment {
             padding: 10px 0px;
             position: relative;
@@ -2605,9 +2684,24 @@
                     height:22px;
                     padding:5px 15px;
                     background-color:#f8f8f8;
-                    border-bottom:1px solid #BDC3C7;
 
                     .yobicon-comment {vertical-align: middle;}
+
+                    .act-row {
+                        i {
+                            font-size: 20px;
+                            line-height: 20px;
+                            color: #000;
+                            .opacity(20);
+
+                            &.yobicon-edit-2 { margin-top:2px; }
+                            &:hover {
+                                color:@yobi-link;
+                                .opacity(100);
+                            }
+                        }
+                    }
+
                     .comment_author {font-size:13px; margin-right:5px; }
                     .ago {
                         color:#7F8C8D;
@@ -2616,7 +2710,6 @@
                             text-decoration:line-through;
                         }
                      }
-                    .edit { color: #7F8C8D;}
                 }
 
                 .attach {
@@ -2727,7 +2820,9 @@
 
                     .commit-id {
                         float:left;
-                        color:#51aacc;
+                        color: @yobi-link;
+                        font-family: @fixed-font-family;
+                        font-size: 12px;
                         width: 70px;
                         text-align: center;
                     }
@@ -2823,32 +2918,42 @@
 }
 
 div.markdown-preview {
-    font-size: 12px;
+    font-size: 13px;
     overflow-x:auto;
     margin:0px;
-    margin-bottom:9px;
     vertical-align : middle;
-    border:1px solid #ccc;
-    padding:10px;
+    border:2px solid #ccc;
+    padding:4px 6px;
     .border-radius(0 0 3px 3px);
+    background: #FAFAFA;
 
 }
 
 .write-comment-box {
-    padding: 15px 0 15px 50px;
+    padding: 0px 0 15px 50px;
     font-family:@base-font-family;
 
     .write-comment-wrap {
         margin-bottom: 10px;
         position: relative;
-
+        .nav {
+          margin-bottom: 0;
+        }
         .disabled {
             resize:none;
         }
+        input[type="radio"]{
+          display: none;
+        }
+
+        .comment-update-button{
+          margin-top: 10px;
+        }
+
     }
 
     .comment {
-        height: 120px;
+        height: 160px;
         margin: 0;
         resize:vertical;
         .box-shadow(none);
@@ -2881,16 +2986,13 @@ div.markdown-preview {
 }
 .board-actrow {
     margin:20px 0;
-
-    .labels-wrap {
-        line-height: 30px;
-        padding-right: 30px;
-        text-align: left;
-        max-width:630px;
-        .inline-block;
-    }
 }
 
+.labels-wrap {
+    position:relative;
+
+    select { visibility: hidden; }
+}
 
 // -- new attach files //
 .upload-wrap {
@@ -2955,7 +3057,7 @@ div.markdown-preview {
             .progress {
                 display: inline-block;
                 width: 100px;
-                height: 10px;
+                height: 7px;
                 margin: 0;
                 overflow: hidden;
             }
@@ -3087,7 +3189,6 @@ div.markdown-preview {
 
     .content {
         height:190px; /*320px;*/
-        background-color: #F9F9F9;
     }
     .actions {
         margin-top: 20px;
@@ -3102,7 +3203,6 @@ div.markdown-preview {
 .issue-form-labels {
     .controls {
         margin:0;
-        line-height:30px;
 
         .labelInput {
             width:90%;
@@ -3227,13 +3327,49 @@ label.issue-item-row {
         color:#999;
 
         .infos-item {
-            margin-right:8px;
-            display:inline-block;
+            margin-right:12px;
+            float:left;
 
             &.infos-link-item {
                 &:hover {
                     color:#3592b5;
                     text-decoration: none;
+                }
+            }
+
+            &.item-count-groups {
+                border:1px solid #EEE;
+                .border-radius(3px);
+                line-height: 14px;
+                margin-top:2px;
+
+                .count-groups {
+                    margin:0 auto;
+                    display:inline-block;
+                    text-align: center;
+                    padding:0 5px;
+                    float: left;
+
+                    &.item-icon {
+                        background-color:#F7F7F7;
+                        color:#3592b5;
+                        font-size: 9px; 
+                        padding-top:2px;
+                        line-height: 12px;
+                        border-left:1px solid #EEE;
+
+                        &:first-child {
+                            border-left:none;
+                        }
+                        
+                        &.strong {
+                            color:@primary;
+                        }
+                    }
+
+                    &.item-count {
+                        padding:0 7px;
+                    }
                 }
             }
 
@@ -3243,22 +3379,46 @@ label.issue-item-row {
                 i {vertical-align: middle;}
 
                 .size {margin-right:3px;}
+                .total {color:#777;}
 
                 &:hover {
                     color:#3592b5;
                     text-decoration: none;
                 }
+                &.open   {
+                    color:@state-open !important;
+                }
+                &.closed {
+                    color:@state-closed !important;
+                    .total { color:inherit !important; }
+                }
+            }
+
+            &.infos-sympathy {
+                color:@yobi-orange-dark !important;
+                font-weight: bold;
+            }
+
+            .upload-progress {
+                display: inline-block;
+                width: 30px;
+                vertical-align: middle;
+                overflow: hidden;
+                margin-top: 3px;
+                .border-radius(5px);
+
+                .bar { height:100%; }
             }
         }
     }
 }
 
 .state {
-    margin-right:25px;
+    margin-right:16px;
     margin-top:7px;
     font-weight:bold;
     color:#FFF;
-    padding:5px 15px;
+    padding:5px 12px;
     .border-radius(15px);
 
     &.merged { background-color: @state-merged;}
@@ -3277,7 +3437,7 @@ label.issue-item-row {
     margin-top:7px;
     margin-right: 25px;
     font-weight: bold;
-    max-width: 100px;
+    max-width: 135px;
     text-overflow: ellipsis;
     white-space: nowrap;
     overflow: hidden;
@@ -3289,20 +3449,127 @@ label.issue-item-row {
     .box-shadow(1px 1px 1px rgba(0,0,0,0.15));
 }
 
-.pullRequest-branch {
-    display:inline-block;
+.pullRequest-branchInfo {
+    padding:15px 0 0 15px;
 
     code {
         border:none;
-        background: #f7f7f7;
-        color: @secondary;
-        padding: 3px 10px;
-        text-shadow: 1px 1px rgba(255,255,255,0.5);
-        .box-shadow(1px 1px 1px rgba(0,0,0,0.15));
-        a { color: #1a4797; }
-        i { color: #1a4797; }
+        background: transparent;
+        color: @yobi-cyan-dark;
+        padding: 0;
+
+        a {
+            color: @yobi-cyan-dark;
+            &.branchName { color:@yobi-cyan; }
+        }
     }
-    i.icon-right { font-size:12px; margin:0 5px; color: #1a4797;}
+
+    i { font-size:12px; margin:0 5px; color: @yobi-cyan-dark; }
+}
+.pullRequest-stateInfo {
+    margin-top:15px;
+
+    .alert {
+        padding:15px;
+        font-size:13px;
+        font-weight:bold;
+        .border-radius(3px);
+
+        i {
+            margin-top:-2px;
+            font-size:15px;
+            vertical-align: middle;
+        }
+
+        &.alert-success { color:@yobi-green-dark; }
+        &.alert-error   { color:@yobi-red-dark;   }
+        &.alert-warning { color:@yobi-yello-dark; }
+        &.alert-info    { color:@yobi-cyan-dark;  }
+    }
+}
+.codediff-wrap {
+    position:relative;
+
+    .diffs-wrap {
+        position:relative;
+        display:block;
+        margin-right:282px;
+
+        .diff-body {
+            position:relative;
+            .border-radius(3px);
+            min-height:30px;
+        }
+
+       
+        .write-comment-box { padding:0; margin-top:20px; }
+    }
+
+    .review-wrap {
+        position:absolute;
+        display:block;
+        width:260px;
+        min-height:30px;
+        top:0; right:0;
+
+        .review-container {
+            width:260px;
+            position:relative;
+
+            &.affix {
+                position: fixed;
+                top:10px;
+            }
+
+            .review-list {
+                overflow:auto;
+            }
+        }
+    }
+
+    .btn-hide-reviewcards {
+        position:absolute; right:0;
+    }
+    .btn-show-reviewcards {
+        display:none;
+    }
+
+    &.diffs-only {
+        .diffs-wrap { width:100%; }
+        .review-wrap { display:none; }
+
+        .btn-hide-reviewcards {
+            display: none;
+        }
+        .btn-show-reviewcards {
+            display:block;
+            position:absolute;
+            top:0; right:-52px;
+            z-index:10;
+        }
+    }
+
+    .non-ranged-threads-wrap {
+        margin-top:20px;
+
+        .btn-thread-minimize { display:none; }
+        .comment-thread-wrap {
+            border-right:1px solid #ddd;
+            border-left:1px solid #ddd;
+            .border-radius(0 3px 3px 0);
+        }
+    }
+
+    .non-ranged-threads-wrap {
+        margin-top:20px;
+
+        .btn-thread-minimize { display:none; }
+        .comment-thread-wrap {
+            border-right:1px solid #ddd;
+            border-left:1px solid #ddd;
+            .border-radius(3px);
+        }
+    }
 }
 
 .relative-issue {
@@ -3317,6 +3584,56 @@ label.issue-item-row {
             border:none;
 
             .date { font-size:11px; color:#999; }
+        }
+    }
+}
+
+.vote-wrap {
+    display:inline-block;
+    margin-left:.3em;
+    font-size:@base-font-size;
+    vertical-align:middle;
+}
+.voter-list-wrap {
+    display:inline-block;
+    margin-left:.3em;
+    vertical-align:middle;
+    overflow: hidden;
+}
+.voter-list {
+    display:block;
+    height:30px;
+    list-style:none;
+
+    li {
+        float:left;
+        margin-right:3px;
+
+        &:last-of-type {
+            margin-right:0;
+            line-height:30px;
+        }
+    }
+
+    .usf-group {
+        display:inline-block;
+        width:30px; height:30px;
+
+        img { width:30px; height:30px; }
+    }
+}
+.voters-dialog {
+    width:340px;
+    margin-left:-170px;
+    text-align:left;
+
+    .close { margin-top:-2px; }
+
+    li {
+        margin-bottom:10px;
+
+        &:last-of-type {
+            margin-bottom:0;
         }
     }
 }
@@ -3417,7 +3734,7 @@ label.issue-item-row {
     display: none;
     position: fixed;
     width: 15px; height: 400px;
-    right: 0.5%; top:192px;
+    right: 1%; top:192px;
     border: 1px solid rgba(0,0,0,0.3);
     background: rgba(0,0,0,0.5);
     z-index: 999;
@@ -3449,6 +3766,8 @@ label.issue-item-row {
 }
 
 .code-browse-wrap {
+    position:relative;
+
     .code-browse-header {
       margin-top:10px;
       margin-bottom:10px;
@@ -3485,22 +3804,38 @@ label.issue-item-row {
     .commit-wrap {
         background-color: @white;
 
-        .commit-id { text-align:center; vertical-align: top; }
+        .commit-id { text-align:center; vertical-align: top; padding:0; }
 
         .tbody {
             td { padding:10px 15px 10px 5px; }
+
             .messages { /* see .commitMsg */ }
 
             .commit-id {
-                width: 70px; text-align:center;
+                position:relative;
+                text-align:center;
                 vertical-align:top;
-                padding-top:15px;
-                font-family:Consolas;
+                padding:12px 3px;
+                font-family:@fixed-font-family;
                 font-size:12px;
+                width: 70px;
 
                 a {
                     color:@secondary;
                     &:hover { color:@link-hover-color; text-decoration:underline; }
+                }
+
+                .btn-copy-commitId {
+                    display:none;
+                    &.hover { background:#f1f1f1; }
+                }
+
+                &:hover {
+                    .btn-copy-commitId {
+                        position:absolute; display:block;
+                        top:15px; left:-15px;
+                        color:@secondary;
+                    }
                 }
             }
             .messages { vertical-align:top;}
@@ -3526,12 +3861,20 @@ label.issue-item-row {
     /** diff **/
     /** code/diff.scala.html **/
     .commitId {
-        color:#999;
+        color:@secondary;
         margin-top:5px;
     }
     .commitInfo {
-        .avatar-wrap { margin-right:5px; }
         .ago { margin-left:5px; color:#bbb; }
+        .commitAuthor {
+            float:right; margin-top:5px;
+            .avatar-wrap { margin-right:5px; }
+        }
+        .commitMsg-wrap {
+            .commitMsg.short { font-size:18px; white-space:normal; }
+            .commitMsg.desc  { margin:5px; }
+        }
+        .commitId-wrap { padding:10px 5px; }
     }
     .diff-wrap {
         width:100%; overflow:auto; margin-bottom:20px;
@@ -3550,8 +3893,7 @@ label.issue-item-row {
 
     .write-comment-box {
         font-family:@base-font-family;
-        background-color: #f5f5f5;
-        margin-bottom:15px;
+        padding:5px;
     }
 
     /** view **/
@@ -3603,6 +3945,13 @@ label.issue-item-row {
             .filename { display:block; font-size:20px; }
             .filesize { display:block; font-size:13px; margin-bottom:20px; color:#999; }
         }
+    }
+
+    .codebrowser-markdown {
+        border: 5px solid #eee;
+        border-top: none;
+        font-size: 14px;
+        padding: 25px;
     }
 
     /** list **/
@@ -3814,6 +4163,8 @@ label.issue-item-row {
         background-color: #F7F7F7;
         border-right: 1px solid #EEE;
         width: 22px;
+        .user-select-none;
+
         > a {
             color: #AAA;
         }
@@ -4034,6 +4385,8 @@ label.issue-item-row {
         border-right: 1px solid #EEEEEE;
         font-size: 12px;
         line-height: 1.5;
+        .user-select-none;
+
         > a {
             color: #AAA;
         }
@@ -4132,7 +4485,7 @@ label.issue-item-row {
 
     p {
         font-weight:bold; font-size:15px;
-        color:#898989; margin-top:18px;
+        color:#898989; margin:20px 0;
     }
 }
 .code-tab, .plugin-tab {
@@ -4361,16 +4714,20 @@ label.issue-item-row {
         text-align:center;
     }
 }
+
+.mass-update-wrap {
+    &.affix {
+        top:0;
+        padding:15px 0;
+        border-bottom:1px solid rgba(0, 0, 0, 0.1);
+        width:100%;
+        background: #fff;
+    }
+}
+
 .mass-update-form {
    position:relative;
    -webkit-transition:padding 0.5s;
-
-   &.fixed {
-       position:fixed; width:100%;
-       top:0; background:#fff;
-       padding:10px 0;
-       border-bottom:1px solid rgba(0,0,0,0.1);
-   }
 
    .mass-update-list {
         max-height: 350px;
@@ -4425,9 +4782,11 @@ label.issue-item-row {
 .keymap-help {
     padding:20px;
     line-height:30px;
+    white-space:nowrap;
 
-    .nbtn {
+    .ybtn {
         min-width:20px;
+        margin-right:3px;
     }
     .actrow {
         text-align:center;
@@ -4505,9 +4864,25 @@ label.issue-item-row {
 .diff-body.show-comments tr.comments {
     display: table-row;
 }
+.diff-body tr.comment-form {
+    td {
+        position:relative;
+        padding:0; padding-left:5px;
+        border:1px solid #ccc;
+        border-width:1px 0;
+
+        .review-form {
+            position:static;
+            max-width: 860px;
+            border:0;
+            .border-radius(0);
+        }
+    }
+}
+
 
 /*div#mode-select { text-align:right; }*/
-.pullreq-info { display:block; clear:both; padding-bottom:10px; margin-bottom:10px; }
+.pullreq-info {clear:both; padding-bottom:10px; margin-bottom:10px; }
 
 .go-zen {
     position: absolute;
@@ -4527,7 +4902,7 @@ label.issue-item-row {
         .border-radius(0 0 3px 3px);
         width: 100%;
         resize:vertical !important;
-        font-size: 13px;
+        font-size: 12px;
     }
 }
 
@@ -4698,6 +5073,7 @@ label.issue-item-row {
     font-family: "monospace", Consolas, Tahoma;
 
     .isBinary { color:#bbb; text-shadow:-1px -1px #fff; padding:5px 10px; }
+    .btnPop { position:absolute; display:none; }
 
     .diff-partial-outer {
         border: 1px solid #bbb;
@@ -4708,6 +5084,7 @@ label.issue-item-row {
                 background-color: #eee;
                 border-bottom: 1px solid #bbb;
                 height: 30px;
+                position:relative;
 
                 .diff-partial-commit {
                     float:left;
@@ -4723,13 +5100,19 @@ label.issue-item-row {
                 }
 
                 .diff-partial-file {
-                    float: left;
                     padding:5px 10px;
                     font-weight: bold;
+                    overflow: hidden;
+                    text-overflow: ellipsis;
+                    white-space: nowrap;
+                    word-break : break-all;
+                    margin-right: 115px;
                 }
 
                 .diff-partial-utility {
-                    float:right;
+                    position:absolute;
+                    top:0;
+                    right:0;
                     padding:2px 5px;
                 }
             }
@@ -4745,7 +5128,6 @@ label.issue-item-row {
                     border-spacing: 0;
 
                     tr {
-                        position: relative;
                         td {
                             &.linenum {
                                 text-align: right;
@@ -4769,13 +5151,22 @@ label.issue-item-row {
                                         display: block;
                                     }
                                 }
+
+                                .yobicon-comments {
+                                    position:absolute;
+                                    cursor: pointer;
+                                    .opacity(0);
+                                    margin-left: -84px;
+                                    width: 25px;
+                                    margin-top:2px;
+                                }
                             }
 
                             &.code {
                                 white-space: nowrap;
                                 padding:0 5px;
                                 .diff-partial-codeline {
-                                    font-family: "monospace", Consolas, Tahoma;
+                                    font-family: @fixed-font-family;
                                     background-color: transparent;
                                     border:none;
                                     margin:0;
@@ -4793,8 +5184,9 @@ label.issue-item-row {
                                 form { margin:0;}
 
                                 .write-comment-box {
-                                    background-color: #f5f5f5;
+                                    padding:15px 0 15px 50px;
                                     margin:0;
+
                                     .write-comment-wrap {
                                         max-width: 1070px;
                                     }
@@ -4828,14 +5220,12 @@ label.issue-item-row {
                         &.comments {
                             display: none;
                             td {
-                                border:1px solid #e5e5e5;
-                                border-left: none;
-                                border-right: none;
-                                padding:10px 5px;
+                                padding:0;
 
                                 li {
                                     max-width: 1150px;
                                 }
+                                /* see .comment-thread-wrap */
                             }
                         }
                     }
@@ -4847,25 +5237,15 @@ label.issue-item-row {
                     }
                 }
 
-                .icon-comment {
-                    position:absolute;
-                    cursor: pointer;
-                    .opacity(0);
-                    margin-left: -75px;
-                    width: 25px;
-                    margin-top:2px;
-
-                }
-
                 tr.add:hover, tr.remove:hover,tr.context:hover{
                     background-color: #CCE9FF !important;
 
-                    .icon-comment {
+                    .yobicon-comments {
                         .opacity(100);
                     }
                 }
 
-                .linenum:hover .icon-comment {
+                .linenum:hover .yobicon-comments {
                     opacity: 1.0;
                 }
 
@@ -4877,10 +5257,206 @@ label.issue-item-row {
             }
         }
     }
+
+    &.discommentable {
+        .linenum .yobicon-comments {
+            display:none;
+        }
+    }
 }
 
 div.diff-body[data-outdated="true"] tr:hover .icon-comment {
     visibility: hidden;
+}
+
+.comment-thread-wrap {
+    border:1px solid #e5e5e5;
+    border-width:1px 0px;
+    padding:5px;
+    padding-bottom:0;
+    background-color:#fefefe;
+    max-width:876px;
+    position:relative;
+
+    .thread-header{
+        padding: 5px 10px 10px 10px;
+
+        .badge {
+            margin:0; padding:2px 10px;
+        }
+        .thread-info {
+            color:#999; margin:0 10px;
+            .commitId { font-family:@fixed-font-family; margin-right:5px; }
+            .comments { color:#3592b5; margin-left:10px; }
+        }
+    }
+
+    .comments {
+        margin:0 5px;
+        .comment { padding: 2px 0; }
+        .media-body { background: #fff; }
+    }
+
+    .btn-thread-here {
+        display:none;
+    }
+    .btn-thread-minimize {
+        position:absolute;
+        top:8px; right:10px;
+    }
+
+    .thread-actrow {
+        text-align:right;
+        padding:5px 5px 10px;
+    }
+
+    &.open {
+        .box-shadow(inset 5px 0 0 @state-open);
+    }
+
+    &.closed {
+        .box-shadow(inset 5px 0 0 @state-closed);
+    }
+
+    &.fold {
+        position:static;
+        padding:0; margin:0;
+        background: transparent;
+        border: none;
+        .box-shadow(none);
+
+        .thread-header, .thread-actrow, .comments {
+            display:none;
+        }
+        .btn-thread-here {
+            position:absolute; z-index:99;
+            right:0px; margin-top:0px;
+            display:block !important;
+        }
+        .btn-thread-minimize {
+            display:none;
+        }
+
+        &.open .btn-thread-here button {
+            border-left:3px solid @state-open;
+        }
+        &.closed .btn-thread-here button {
+            border-left:3px solid @state-closed;
+        }
+    }
+}
+.comment-thread-wrap + .comment-thread-wrap {
+    margin-top:10px;
+}
+.comment-thread-wrap.fold + .comment-thread-wrap {
+    margin-top:0;
+}
+
+.review-form {
+    display: none;
+    padding: 0px 10px; padding-right:6px;
+    font-family:@base-font-family;
+    .border-radius(6px);
+
+    label { display:inline-block; } /* for Markdown Edit/Preview radio button */
+
+    /*&.arrow-left:before,*/
+    &.arrow-top:before,
+    &.arrow-bottom:before {
+        content: ' ';
+        position: absolute;
+        width : 12px;
+        height: 12px;
+        left: 50%;
+        border-color:#ccc;
+        border-style:solid;
+        background-color: #fff;
+        .rotate(45deg);
+    }
+    /*
+    &.arrow-left:before {
+        top: 23px; left: 0px;
+        border-width:0px 0px 1px 1px; margin-left: -7px;
+    }
+    */
+    &.arrow-top:before  {
+        top: -7px;
+        border-width:1px 0px 0px 1px;
+    }
+    &.arrow-bottom:before {
+        bottom: -7px;
+        border-width:0px 1px 1px 0px;
+    }
+
+    .author-info-wrap {
+        padding: 0px; margin-bottom: 10px;
+        display: block; clear: both;
+        height: 35px;
+    }
+
+    .markdown-help { right:0; }
+
+    .write-comment-box {
+        padding:0;
+        margin:0;
+        margin-left:46px;
+    }
+}
+.review-block { /** ref: yobi.CodeCommentBlock.js **/
+    /*background-color:rgba(133,246,150,0.25);*/ /* green */
+    background-color:rgba(0,133,255,0.25); /* blue */
+    /*background-color:rgba(255,245,0,0.35); /* yellow */
+    padding:2px 0;
+}
+.review-card {
+    display:block;
+    border: 1px solid #ddd;
+    padding: 10px;
+    padding-left: 15px;
+    margin-bottom: 5px;
+    .border-radius(0 3px 3px 0);
+
+    &:last-of-type { margin-bottom:0; }
+    &:hover {
+        text-decoration:none;
+        background-color:#fafafa;
+    }
+    
+    &.open {
+        .box-shadow(inset 5px 0px 0px @state-open);
+    }
+    &.closed {
+        .box-shadow(inset 5px 0px 0px @state-closed);
+    }
+
+    .content {
+        display: box;
+        display: -webkit-box;
+        overflow:hidden;
+        text-overflow:ellipsis;
+        text-align: justify;
+        max-height: 60px;
+        -webkit-line-clamp: 3;
+        -webkit-box-orient:vertical;
+        word-break:break-all;
+    }
+
+    .info {
+        display:block;
+        text-align:right;
+        margin-top:10px;
+    }
+
+    .date {
+        color:#999;
+        vertical-align:middle;
+    }
+
+    .comments {
+        color:#3592b5;
+        margin-top:2px;
+        margin-left:1px;
+    }
 }
 
 .warning-none {
@@ -4920,9 +5496,10 @@ div.diff-body[data-outdated="true"] tr:hover .icon-comment {
     }
 
     .branchName {
+        min-width:200px;
         padding-top:13px;
 
-        a { color:@blue; }
+        a { color:@blue;font-family:@fixed-font-family; }
 
         .headBranch {
             color: #0088cc;
@@ -4934,22 +5511,10 @@ div.diff-body[data-outdated="true"] tr:hover .icon-comment {
         }
     }
 
-    .commitMessage {
-        padding-top:13px;
-
-        .usf-group       { float:left; }
-        .avatar-wrap     { margin-top:0px; margin-right:10px; }
-        .commitMsg.short {
-            display:inline;
-            overflow:visible;
-            white-space: normal;
-            padding:0;
-        }
-        .commitMsg.desc  { margin-top:5px; }
-    }
-
-    .commitDate {
+    .commit {
         width:115px; padding-top:13px;
+        .commitId { font-family:@fixed-font-family; }
+        .date { font-size:11px; color:#777; margin-left:10px; }
     }
 
     .pullRequest {
@@ -4991,3 +5556,55 @@ div.diff-body[data-outdated="true"] tr:hover .icon-comment {
         text-decoration: none;
     }
 }
+
+.group-title-head{
+  color: #00bff3;
+  .border-radius(3px);
+  font-size: 12px;
+  margin-right: 5px;
+  padding: 3px;
+}
+
+.my-list-item {
+  img {
+    width: 20px;
+    height: 20px;
+    .border-radius(3px);
+    border: 1px solid #ececec;
+    margin-right: 3px;
+  }
+  .dummy-25px {
+    width: 25px;
+    display: inline-block;
+  }
+}
+
+.dropdown-menu>li {
+  .my-list-item;
+}
+
+.margin-right-15 {
+  margin-right: 15px;
+}
+
+.howto-resolve-conflict {
+    .help {
+        padding:10px;
+        font-size:12px;
+        background:#fefefe;
+        .border-radius(2px);
+
+        ol {
+            margin-left: 30px;
+
+            code {
+                display:block;
+                font-weight:normal;
+                padding:5px; margin:5px 0;
+            }
+
+            .ybtn { margin:0 5px; font-weight:normal !important; }
+        }
+    }
+}
+

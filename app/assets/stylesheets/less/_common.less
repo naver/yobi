@@ -9,7 +9,8 @@ body {
    text-rendering: auto !important;
 }
 
-input, button, select, textarea { font-family: @base-font-family !important; }
+input, textarea { font-family: @fixed-font-family !important; }
+button, select { font-family: @base-font-family !important; }
 h1,h2,h3,h4,h5,h6 { text-rendering:auto !important; }
 
 a {
@@ -100,10 +101,10 @@ input[type=number]::-webkit-outer-spin-button {
 }
 
 /** file uploader **/
-.progress {
+.upload-progress {
     height: 7px;
     margin-bottom: 5px;
-    background:#b1b1b1;
+    background:#f0f0f0;
     filter:none;
 
     .box-shadow(inset 0px 1px 1px rgba(0,0,0,0.25));
@@ -111,6 +112,8 @@ input[type=number]::-webkit-outer-spin-button {
         filter:none;
         &.orange { background:@orange; .box-shadow(none); } // #f28149
         &.blue   { background:@blue;   .box-shadow(none); }
+        &.open   { background:@state-open; .box-shadow(none); }
+        &.closed { background:@state-closed; .box-shadow(none); }
     }
 }
 
@@ -132,11 +135,13 @@ input[type=number]::-webkit-outer-spin-button {
 /** text style **/
 .bold { font-weight:bold; }
 .gray-txt      { color:@gray-cc !important; }
+.darkgray-txt  { color:@gray-99 !important; }
 .orange-txt    { color:@orange !important; }
 .primary-txt   { color:@primary !important; }
 .secondary-txt { color:@secondary !important; }
 .center-txt    { text-align:center; }
 .right-txt     { text-align:right; }
+.left-txt      { text-align:left;  }
 .blue-txt      { color:@blue;}
 
 /** background **/
@@ -150,7 +155,6 @@ input[type=number]::-webkit-outer-spin-button {
 
 /** form elements **/
 .radio-btn {
-   .inline-block;
    vertical-align:top;
    margin:2px !important;
 }
@@ -177,6 +181,7 @@ input[type=number]::-webkit-outer-spin-button {
     font-weight: normal;
 }
 
+.ml0 { margin-left:0; }
 .ml10 { margin-left:10px; }
 .mr10 { margin-right:10px; }
 .mt10 { margin-top:10px; }

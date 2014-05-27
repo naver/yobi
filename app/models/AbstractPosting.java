@@ -1,3 +1,23 @@
+/**
+ * Yobi, Project Hosting SW
+ *
+ * Copyright 2013 NAVER Corp.
+ * http://yobi.io
+ *
+ * @Author Yi EungJun
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *   http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package models;
 
 import models.enumeration.ResourceType;
@@ -88,6 +108,10 @@ abstract public class AbstractPosting extends Model implements ResourceConvertib
         return number;
     }
 
+    public void setNumber(Long number) {
+        this.number = number;
+    }
+
     /**
      * 저장할 때 번호가 설정되어 있지 않다면 번호를 저장하고 댓글 개수를 설정한다.
      *
@@ -107,6 +131,7 @@ abstract public class AbstractPosting extends Model implements ResourceConvertib
 
         try {
             super.save();
+            updateMention();
         } catch (PersistenceException e) {
             Long oldNumber = number;
             fixLastNumber();
@@ -127,9 +152,11 @@ abstract public class AbstractPosting extends Model implements ResourceConvertib
     /**
      * 갱신할 때 댓글 개수를 설정한다.
      */
+    @Transactional
     public void update() {
         numOfComments = computeNumOfComments();
         super.update();
+        updateMention();
     }
 
 
@@ -257,5 +284,11 @@ abstract public class AbstractPosting extends Model implements ResourceConvertib
         }
 
         return Watch.findActualWatchers(actualWatchers, asResource());
+    }
+
+    protected void updateMention() {
+        if (this.body != null) {
+            Mention.add(this.asResource(), NotificationEvent.getMentionedUsers(this.body));
+        }
     }
 }

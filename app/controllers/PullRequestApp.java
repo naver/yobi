@@ -48,6 +48,7 @@ import play.mvc.With;
 import playRepository.*;
 import utils.*;
 import views.html.git.*;
+import views.html.error.notfound;
 
 import javax.servlet.ServletException;
 import java.io.IOException;
@@ -75,17 +76,21 @@ public class PullRequestApp extends Controller {
      */
     @With(AnonymousCheckAction.class)
     @IsCreatable(ResourceType.FORK)
-    public static Result newFork(String userName, String projectName) {
-        Project project = ProjectApp.getProject(userName, projectName);
-        User currentUser = UserApp.currentUser();
-        Project forkedProject = Project.findByOwnerAndOriginalProject(currentUser.loginId, project);
+    public static Result newFork(String userName, String projectName, String forkOwner) {
+        String destination = findDestination(forkOwner);
+        Project project = Project.findByOwnerAndProjectName(userName, projectName);
+        List<OrganizationUser> orgUserList = OrganizationUser.findByAdmin(UserApp.currentUser().id);
+        List<Project> forkedProjects = Project.findByOwnerAndOriginalProject(destination, project);
+        Project forkProject = Project.copy(project, destination);
+        return ok(fork.render("fork", project, forkProject, forkedProjects, new Form<>(Project.class), orgUserList));
+    }
 
-        if (forkedProject != null) {
-            return ok(fork.render("fork", project, forkedProject, false, new Form<>(Project.class)));
-        } else {
-            Project forkProject = Project.copy(project, currentUser);
-            return ok(fork.render("fork", project, forkProject, true, new Form<>(Project.class)));
+    private static String findDestination(String forkOwner) {
+        Organization organization = Organization.findByName(forkOwner);
+        if (OrganizationUser.isAdmin(organization, UserApp.currentUser())) {
+            return forkOwner;
         }
+        return UserApp.currentUser().loginId;
     }
 
     /**
@@ -103,29 +108,22 @@ public class PullRequestApp extends Controller {
     @With(AnonymousCheckAction.class)
     @IsCreatable(ResourceType.FORK)
     public static Result fork(String userName, String projectName) {
+        Form<Project> forkProjectForm = new Form<>(Project.class).bindFromRequest();
+        Project projectForm = forkProjectForm.get();
+        String destination = findDestination(projectForm.owner);
         Project originalProject = Project.findByOwnerAndProjectName(userName, projectName);
-        User currentUser = UserApp.currentUser();
-
-        // 이미 포크한 프로젝트가 있다면 그 프로젝트로 이동.
-        Project forkedProject = Project.findByOwnerAndOriginalProject(currentUser.loginId, originalProject);
-        if(forkedProject != null) {
-            flash(Constants.WARNING, "fork.redirect.exist");
-            return redirect(routes.ProjectApp.project(forkedProject.owner, forkedProject.name));
-        }
 
         // 포크 프로젝트 이름 중복 검사
-        Form<Project> forkProjectForm = new Form<>(Project.class).bindFromRequest();
-        if (Project.exists(UserApp.currentUser().loginId, forkProjectForm.field("name").value())) {
+        if (Project.exists(destination, projectForm.name)) {
             flash(Constants.WARNING, "project.name.duplicate");
             forkProjectForm.reject("name");
-            return redirect(routes.PullRequestApp.newFork(originalProject.owner, originalProject.name));
+            return redirect(routes.PullRequestApp.newFork(originalProject.owner, originalProject.name, destination));
         }
 
         // 새 프로젝트 생성
-        Project forkProject = Project.copy(originalProject, currentUser);
-        Project projectFromForm = forkProjectForm.get();
-        forkProject.name = projectFromForm.name;
-        forkProject.isPublic = projectFromForm.isPublic;
+        Project forkProject = Project.copy(originalProject, destination);
+        forkProject.name = projectForm.name;
+        forkProject.projectScope = projectForm.projectScope;
         originalProject.addFork(forkProject);
 
         return ok(clone.render("fork", forkProject));
@@ -137,13 +135,15 @@ public class PullRequestApp extends Controller {
      *
      * @param userName
      * @param projectName
-     * @param name
-     * @param isPublic
      * @return
      */
     @Transactional
     @IsCreatable(ResourceType.FORK)
-    public static Result doClone(String userName, String projectName, String name, Boolean isPublic) {
+    public static Result doClone(String userName, String projectName) {
+        Form<Project> form = new Form<>(Project.class).bindFromRequest();
+        Project projectForm = form.get();
+        String destination = findDestination(projectForm.owner);
+
         String status = "status";
         String failed = "failed";
         String url = "url";
@@ -165,14 +165,12 @@ public class PullRequestApp extends Controller {
         }
 
         // 새 프로젝트 생성
-        Project forkProject = Project.copy(originalProject, currentUser);
-        if(name != null && !name.isEmpty()) {
-            forkProject.name = name;
+        Project forkProject = Project.copy(originalProject, destination);
+        forkProject.name = projectForm.name;
+        forkProject.projectScope = projectForm.projectScope;
+        if (Organization.isNameExist(destination)) {
+            forkProject.organization = Organization.findByName(destination);
         }
-        if(isPublic != null) {
-            forkProject.isPublic = isPublic;
-        }
-
         originalProject.addFork(forkProject);
 
         // git clone으로 Git 저장소 생성하고 새 프로젝트를 만들고 권한 추가.
@@ -223,8 +221,8 @@ public class PullRequestApp extends Controller {
         final List<GitBranch> toBranches = new GitRepository(toProject).getAllBranches();
 
         final PullRequest pullRequest = PullRequest.createNewPullRequest(fromProject, toProject
-                            , StringUtils.defaultIfBlank(request().getQueryString("fromBranch"), fromBranches.get(0).getName())
-                            , StringUtils.defaultIfBlank(request().getQueryString("toBranch"), project.defaultBranch()));
+                , StringUtils.defaultIfBlank(request().getQueryString("fromBranch"), fromBranches.get(0).getName())
+                , StringUtils.defaultIfBlank(request().getQueryString("toBranch"), project.defaultBranch()));
 
         Promise<PullRequestMergeResult> promise = Akka.future(new Callable<PullRequestMergeResult>() {
             @Override
@@ -323,12 +321,13 @@ public class PullRequestApp extends Controller {
         pullRequest.save();
 
         PushedBranch.removeByPullRequestFrom(pullRequest);
-        Attachment.moveAll(UserApp.currentUser().asResource(), pullRequest.asResource());
+
+        AbstractPostingApp.attachUploadFilesToPost(pullRequest.asResource());
 
         Call pullRequestCall = routes.PullRequestApp.pullRequest(pullRequest.toProject.owner, pullRequest.toProject.name, pullRequest.number);
 
         NotificationEvent notiEvent = NotificationEvent.afterNewPullRequest(pullRequest);
-        PullRequestEvent.addEvent(notiEvent, pullRequest);
+        PullRequestEvent.addFromNotificationEvent(notiEvent, pullRequest);
 
         PullRequestEventMessage message = new PullRequestEventMessage(
                 UserApp.currentUser(), request(), pullRequest);
@@ -422,15 +421,8 @@ public class PullRequestApp extends Controller {
             canRestoreBranch = GitRepository.canRestoreBranch(pullRequest);
         }
 
-        List<PullRequestComment> comments = new ArrayList<>();
-
-        for (PullRequestComment comment : pullRequest.comments) {
-            if (comment.line != null && comment.hasValidCommitId()) {
-                comments.add(comment);
-            }
-        }
         UserApp.currentUser().visits(project);
-        return ok(view.render(project, pullRequest, comments, canDeleteBranch, canRestoreBranch));
+        return ok(view.render(project, pullRequest, canDeleteBranch, canRestoreBranch));
     }
 
     /**
@@ -473,22 +465,6 @@ public class PullRequestApp extends Controller {
 
     /**
      * {@code userName}과 {@code projectName}에 해당하는 프로젝트로 들어온
-     * {@code pullRequestId}에 해당하는 코드 요청의 커밋 목록을 조회한다.
-     *
-     * @param userName
-     * @param projectName
-     * @param pullRequestNumber
-     * @return
-     */
-    @IsAllowed(value = Operation.READ, resourceType = ResourceType.PULL_REQUEST)
-    public static Result pullRequestCommits(String userName, String projectName, long pullRequestNumber) {
-        Project project = Project.findByOwnerAndProjectName(userName, projectName);
-        PullRequest pullRequest = PullRequest.findOne(project, pullRequestNumber);
-        return ok(viewCommits.render(project, pullRequest));
-    }
-
-    /**
-     * {@code userName}과 {@code projectName}에 해당하는 프로젝트로 들어온
      * {@code pullRequestId}에 해당하는 코드 요청의 변경내역을 조회한다.
      *
      * @param userName
@@ -497,19 +473,17 @@ public class PullRequestApp extends Controller {
      * @return
      */
     @IsAllowed(value = Operation.READ, resourceType = ResourceType.PULL_REQUEST)
-    public static Result pullRequestChanges(String userName, String projectName, long pullRequestNumber) {
+    public static Result pullRequestChanges(String userName, String projectName,
+                                            long pullRequestNumber) {
+        return specificChange(userName, projectName, pullRequestNumber, null);
+    }
+
+    @IsAllowed(value = Operation.READ, resourceType = ResourceType.PULL_REQUEST)
+    public static Result specificChange(String userName, String projectName,
+                                            long pullRequestNumber, String commitId) {
         Project project = Project.findByOwnerAndProjectName(userName, projectName);
         PullRequest pullRequest = PullRequest.findOne(project, pullRequestNumber);
-
-        List<PullRequestComment> comments = new ArrayList<>();
-
-        for (PullRequestComment comment : pullRequest.comments) {
-            if (comment.hasValidCommitId()) {
-                comments.add(comment);
-            }
-        }
-
-        return ok(viewChanges.render(project, pullRequest, comments));
+        return ok(viewChanges.render(project, pullRequest, commitId));
     }
 
     /**
@@ -526,9 +500,13 @@ public class PullRequestApp extends Controller {
     @With(AnonymousCheckAction.class)
     @IsAllowed(value = Operation.ACCEPT, resourceType = ResourceType.PULL_REQUEST)
     public static Result accept(final String userName, final String projectName,
-            final long pullRequestNumber) {
+                                final long pullRequestNumber) {
         Project project = Project.findByOwnerAndProjectName(userName, projectName);
         final PullRequest pullRequest = PullRequest.findOne(project, pullRequestNumber);
+
+        // change it's state to block other accept request.
+        pullRequest.isMerging = true;
+        pullRequest.update();
 
         final PullRequestEventMessage message = new PullRequestEventMessage(
                 UserApp.currentUser(), request(), project, pullRequest.toBranch);
@@ -541,6 +519,9 @@ public class PullRequestApp extends Controller {
             @Override
             public Void call() throws Exception {
                 pullRequest.merge(message);
+                // mark the end of the merge
+                pullRequest.endMerge();
+                pullRequest.update();
                 return null;
             }
         });
@@ -556,7 +537,7 @@ public class PullRequestApp extends Controller {
 
     private static void addNotification(PullRequest pullRequest, State from, State to) {
         NotificationEvent notiEvent = NotificationEvent.afterPullRequestUpdated(pullRequest, from, to);
-        PullRequestEvent.addEvent(notiEvent, pullRequest);
+        PullRequestEvent.addFromNotificationEvent(notiEvent, pullRequest);
     }
 
     /**
@@ -638,8 +619,6 @@ public class PullRequestApp extends Controller {
         List<GitBranch> fromBranches = new GitRepository(pullRequest.fromProject).getAllBranches();
         List<GitBranch> toBranches = new GitRepository(pullRequest.toProject).getAllBranches();
 
-        Attachment.moveAll(UserApp.currentUser().asResource(), pullRequest.asResource());
-
         return ok(edit.render("title.editPullRequest", editForm, fromProject, fromBranches, toBranches, pullRequest));
     }
 
@@ -682,7 +661,8 @@ public class PullRequestApp extends Controller {
         }
 
         pullRequest.updateWith(updatedPullRequest);
-        Attachment.moveAll(UserApp.currentUser().asResource(), pullRequest.asResource());
+
+        AbstractPostingApp.attachUploadFilesToPost(pullRequest.asResource());
 
         return redirect(routes.PullRequestApp.pullRequest(toProject.owner, toProject.name, pullRequest.number));
     }
@@ -728,42 +708,6 @@ public class PullRequestApp extends Controller {
     }
 
     /**
-     * {@code pullRequestId}에 해당하는 코드 보내기 요청의 {@code commitId}의 Diff를 보여준다.
-     *
-     * @param userName
-     * @param projectName
-     * @param pullRequestNumber
-     * @param commitId
-     * @return
-     * @throws IOException
-     * @throws ServletException
-     * @throws GitAPIException
-     * @throws SVNException
-     */
-    @Transactional
-    @IsAllowed(Operation.READ)
-    public static Result commitView(String userName, String projectName, Long pullRequestNumber, String commitId) throws GitAPIException, SVNException, IOException, ServletException {
-        Project toProject = Project.findByOwnerAndProjectName(userName, projectName);
-        PullRequest pullRequest = PullRequest.findOne(toProject, pullRequestNumber);
-
-        Project project = pullRequest.fromProject;
-
-        List<FileDiff> fileDiffs = RepositoryService.getRepository(project).getDiff(commitId);
-        Commit commit = RepositoryService.getRepository(project).getCommit(commitId);
-        Commit parentCommit = RepositoryService.getRepository(project).getParentCommitOf(commitId);
-
-        if (fileDiffs == null) {
-            return notFound(ErrorViews.NotFound.render("error.notfound", project));
-        }
-
-        List<CommitComment> comments = CommitComment.find.where().eq("commitId",
-                commitId).eq("project.id", project.id).order("createdDate").findList();
-
-        return ok(diff.render(pullRequest, commit, parentCommit, fileDiffs, comments));
-    }
-
-
-    /**
      * {@link PullRequest}를 만들어 보내기 전에 프로젝트와 현재 사용자의 권한을 검증한다.
      *
      * when: {@link PullRequest}를 생성하는 폼이나 폼 서브밋을 처리하기 전에 사용한다.
@@ -789,6 +733,90 @@ public class PullRequestApp extends Controller {
         }
 
         return new ValidationResult(result, hasError);
+    }
+
+    @IsCreatable(ResourceType.REVIEW_COMMENT)
+    public static Result newComment(String ownerName, String projectName, Long pullRequestId,
+                                    String commitId) throws IOException, ServletException,
+            SVNException {
+        Form<CodeRange> codeRangeForm = new Form<>(CodeRange.class).bindFromRequest();
+
+        Form<ReviewComment> reviewCommentForm = new Form<>(ReviewComment.class)
+                .bindFromRequest();
+
+        Project project = Project.findByOwnerAndProjectName(ownerName, projectName);
+
+        if (reviewCommentForm.hasErrors()) {
+            return badRequest(ErrorViews.BadRequest.render("error.validation", project));
+        }
+
+        PullRequest pullRequest = PullRequest.findById(pullRequestId);
+
+        if (pullRequest == null) {
+            return notFound(notfound.render("error.notfound", project, request().path()));
+        }
+
+        ReviewComment comment = reviewCommentForm.get();
+        comment.author = new UserIdent(UserApp.currentUser());
+        if (comment.thread == null) {
+            if (codeRangeForm.errors().isEmpty()) {
+                CodeCommentThread thread = new CodeCommentThread();
+
+                if (commitId != null) {
+                    thread.commitId = commitId;
+                } else {
+                    thread.commitId = pullRequest.mergedCommitIdTo;
+                    thread.prevCommitId = pullRequest.mergedCommitIdFrom;
+                }
+
+                User codeAuthor = RepositoryService
+                        .getRepository(project)
+                        .getCommit(thread.commitId)
+                        .getAuthor();
+                if (!codeAuthor.isAnonymous()) {
+                    thread.codeAuthors.add(codeAuthor);
+                }
+
+                thread.codeRange = codeRangeForm.get();
+
+                comment.thread = thread;
+            } else {
+                // non-range
+                NonRangedCodeCommentThread thread = new NonRangedCodeCommentThread();
+                if (commitId != null) {
+                    thread.commitId = commitId;
+                } else {
+                    thread.commitId = pullRequest.mergedCommitIdTo;
+                    thread.prevCommitId = pullRequest.mergedCommitIdFrom;
+                }
+                comment.thread = thread;
+            }
+            comment.thread.project = project;
+            comment.thread.state = CommentThread.ThreadState.OPEN;
+            comment.thread.createdDate = comment.createdDate;
+            comment.thread.author = comment.author;
+            pullRequest.addCommentThread(comment.thread);
+        } else {
+            comment.thread = CommentThread.find.byId(comment.thread.id);
+        }
+        comment.save();
+        pullRequest.update();
+
+        AbstractPostingApp.attachUploadFilesToPost(comment.asResource());
+
+        play.mvc.Call toView;
+        if (commitId != null) {
+            toView = routes.PullRequestApp.specificChange(ownerName, projectName,
+                    pullRequest.number, commitId);
+        } else {
+            toView = routes.PullRequestApp.pullRequestChanges(ownerName, projectName,
+                    pullRequest.number);
+        }
+        String urlToView = toView + "#comment-" + comment.id;
+
+        NotificationEvent.afterNewComment(UserApp.currentUser(), pullRequest, comment, urlToView);
+
+        return redirect(urlToView);
     }
 
     static class ValidationResult {

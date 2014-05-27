@@ -1,3 +1,23 @@
+/**
+ * Yobi, Project Hosting SW
+ *
+ * Copyright 2013 NAVER Corp.
+ * http://yobi.io
+ *
+ * @Author Yi EungJun
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *   http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package controllers;
 
 import models.*;
@@ -58,15 +78,20 @@ public class AbstractPostingApp extends Controller {
      * @return
      * @throws IOException
      */
-    public static Result newComment(final Comment comment, Form<? extends Comment> commentForm, final Call toView, Runnable containerUpdater) {
+    public static Result saveComment(final Comment comment, Form<? extends Comment> commentForm, final Call toView, Runnable containerUpdater) {
         if (commentForm.hasErrors()) {
             flash(Constants.WARNING, "post.comment.empty");
             return redirect(toView);
         }
 
-        comment.setAuthor(UserApp.currentUser());
         containerUpdater.run(); // this updates comment.issue or comment.posting;
-        comment.save();
+        if(comment.id != null && AccessControl.isAllowed(UserApp.currentUser(), comment.asResource(), Operation.UPDATE)) {
+            comment.update();
+        } else {
+            comment.setAuthor(UserApp.currentUser());
+            comment.save();
+        }
+
 
         // Attach all of the files in the current user's temporary storage.
         attachUploadFilesToPost(comment.asResource());
@@ -116,10 +141,10 @@ public class AbstractPostingApp extends Controller {
      * @param posting
      * @param postingForm
      * @param redirectTo
-     * @param updatePosting
+     * @param preUpdateHook
      * @return
      */
-    protected static Result editPosting(AbstractPosting original, AbstractPosting posting, Form<? extends AbstractPosting> postingForm, Call redirectTo, Runnable updatePosting) {
+    protected static Result editPosting(AbstractPosting original, AbstractPosting posting, Form<? extends AbstractPosting> postingForm, Call redirectTo, Runnable preUpdateHook) {
         if (postingForm.hasErrors()) {
             return badRequest(ErrorViews.BadRequest.render("error.validation", original.project));
         }
@@ -140,7 +165,8 @@ public class AbstractPostingApp extends Controller {
         posting.authorLoginId = original.authorLoginId;
         posting.authorName = original.authorName;
         posting.project = original.project;
-        updatePosting.run();
+        posting.setNumber(original.getNumber());
+        preUpdateHook.run();
         posting.update();
         posting.updateProperties();
 
@@ -160,14 +186,14 @@ public class AbstractPostingApp extends Controller {
      *
      * @param resource 이슈글,게시판글,댓글
      */
-    protected static void attachUploadFilesToPost(Resource resource) {
+    public static void attachUploadFilesToPost(Resource resource) {
         final String[] temporaryUploadFiles = getTemporaryFileListFromHiddenForm();
         if(isTemporaryFilesExist(temporaryUploadFiles)){
             int attachedFileCount = Attachment.moveOnlySelected(UserApp.currentUser().asResource(), resource,
                     temporaryUploadFiles);
             if( attachedFileCount != temporaryUploadFiles.length){
-                flash("failed", Messages.get("post.popup.fileAttach.hasMissing",
-                        temporaryUploadFiles.length - attachedFileCount, getTemporaryFilesServerKeepUpTimeOfMinuntes()));
+                flash(Constants.TITLE, Messages.get("post.popup.fileAttach.hasMissing", temporaryUploadFiles.length - attachedFileCount));
+                flash(Constants.DESCRIPTION, Messages.get("post.popup.fileAttach.hasMissing.description", getTemporaryFilesServerKeepUpTimeOfMinuntes()));
             }
         }
     }
@@ -179,6 +205,10 @@ public class AbstractPostingApp extends Controller {
     private static String[] getTemporaryFileListFromHiddenForm() {
         Http.MultipartFormData body = request().body().asMultipartFormData();
         if (body == null) {
+            return new String[] {};
+        }
+        String [] temporaryUploadFiles = body.asFormUrlEncoded().get(AttachmentApp.TAG_NAME_FOR_TEMPORARY_UPLOAD_FILES);
+        if (temporaryUploadFiles == null) {
             return new String[] {};
         }
         final String CSV_DELEMETER = ",";

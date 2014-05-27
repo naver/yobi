@@ -1,7 +1,27 @@
-
+/**
+ * Yobi, Project Hosting SW
+ *
+ * Copyright 2012 NAVER Corp.
+ * http://yobi.io
+ *
+ * @Author Sangcheol Hwang
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *   http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package controllers;
 
 import actions.AnonymousCheckAction;
+import actions.DefaultProjectCheckAction;
 import actions.NullProjectCheckAction;
 
 import com.avaje.ebean.ExpressionList;
@@ -194,11 +214,14 @@ public class BoardApp extends AbstractPostingApp {
      * @param number 게시물number
      * @return
      */
-    @With(AnonymousCheckAction.class)
-    @IsAllowed(value = Operation.UPDATE, resourceType = ResourceType.BOARD_POST)
+    @With(NullProjectCheckAction.class)
     public static Result editPostForm(String owner, String projectName, Long number) {
         Project project = Project.findByOwnerAndProjectName(owner, projectName);
         Posting posting = Posting.findByNumber(project, number);
+
+        if (!AccessControl.isAllowed(UserApp.currentUser(), posting.asResource(), Operation.UPDATE)) {
+            return forbidden(ErrorViews.Forbidden.render("error.forbidden", project));
+        }
 
         Form<Posting> editForm = new Form<>(Posting.class).fill(posting);
         boolean isAllowedToNotice = ProjectUser.isAllowedToNotice(UserApp.currentUser(), project);
@@ -233,6 +256,7 @@ public class BoardApp extends AbstractPostingApp {
 
         final Posting post = postForm.get();
         final Posting original = Posting.findByNumber(project, number);
+
         Call redirectTo = routes.BoardApp.post(project.owner, project.name, number);
         Runnable updatePostingBeforeUpdate = new Runnable() {
             @Override
@@ -280,11 +304,11 @@ public class BoardApp extends AbstractPostingApp {
      * @param number 게시물number
      * @return
      * @throws IOException
-     * @see controllers.AbstractPostingApp#newComment(models.Comment, play.data.Form, play.mvc.Call, Runnable)
+     * @see controllers.AbstractPostingApp#saveComment(models.Comment, play.data.Form, play.mvc.Call, Runnable)
      */
     @Transactional
     @IsAllowed(value = Operation.READ, resourceType = ResourceType.BOARD_POST)
-    @IsCreatable(ResourceType.NONISSUE_COMMENT)
+    @With(NullProjectCheckAction.class)
     public static Result newComment(String owner, String projectName, Long number) throws IOException {
         Project project = Project.findByOwnerAndProjectName(owner, projectName);
         final Posting posting = Posting.findByNumber(project, number);
@@ -296,16 +320,29 @@ public class BoardApp extends AbstractPostingApp {
             return badRequest(views.html.error.badrequest.render("error.validation", project));
         }
 
-        final PostingComment comment = commentForm.get();
+        if (!AccessControl.isResourceCreatable(
+                    UserApp.currentUser(), posting.asResource(), ResourceType.NONISSUE_COMMENT)) {
+            return forbidden(ErrorViews.Forbidden.render("error.forbidden", project));
+        }
 
-        return newComment(comment, commentForm, redirectTo, new Runnable() {
+        final PostingComment comment = commentForm.get();
+        PostingComment existingComment = PostingComment.find.where().eq("id", comment.id).findUnique();
+        if( existingComment != null){
+            existingComment.contents = comment.contents;
+            return saveComment(existingComment, commentForm, redirectTo, getContainerUpdater(posting, comment));
+        } else {
+            return saveComment(comment, commentForm, redirectTo, getContainerUpdater(posting, comment));
+        }
+    }
+
+    private static Runnable getContainerUpdater(final Posting posting, final PostingComment comment) {
+        return new Runnable() {
             @Override
             public void run() {
                 comment.posting = posting;
             }
-        });
+        };
     }
-
     /**
      * 댓글 삭제
      *

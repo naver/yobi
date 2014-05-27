@@ -1,3 +1,23 @@
+/**
+ * Yobi, Project Hosting SW
+ *
+ * Copyright 2012 NAVER Corp.
+ * http://yobi.io
+ *
+ * @Author Yi EungJun
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *   http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package models;
 
 import java.io.BufferedInputStream;
@@ -18,6 +38,7 @@ import models.resource.Resource;
 import models.resource.ResourceConvertible;
 
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.FilenameUtils;
 import org.apache.tika.Tika;
 
 import models.enumeration.ResourceType;
@@ -193,8 +214,8 @@ public class Attachment extends Model implements ResourceConvertible {
         MessageDigest algorithm = MessageDigest.getInstance("SHA1");
         byte buf[] = new byte[10240];
         FileInputStream fis = new FileInputStream(file);
-        while(fis.read(buf) > 0) {
-            algorithm.update(buf);
+        for (int size = 0; size >= 0; size = fis.read(buf)) {
+            algorithm.update(buf, 0, size);
         }
         Formatter formatter = new Formatter();
         for (byte b : algorithm.digest()) {
@@ -257,14 +278,7 @@ public class Attachment extends Model implements ResourceConvertible {
         }
 
         if (this.mimeType == null) {
-            Metadata meta = new Metadata();
-            meta.add(Metadata.RESOURCE_NAME_KEY, this.name);
-            MediaType mediaType = new Tika().getDetector().detect(
-                    new BufferedInputStream(new FileInputStream(file)), meta);
-            this.mimeType = mediaType.toString();
-            if (mediaType.getType().toLowerCase().equals("text")) {
-                this.mimeType += "; charset=" + FileUtil.detectCharset(new FileInputStream(file));
-            }
+            this.mimeType = FileUtil.detectMediaType(file, name);
         }
 
         // the size must be set before it is moved.

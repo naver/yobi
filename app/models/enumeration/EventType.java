@@ -1,3 +1,23 @@
+/**
+ * Yobi, Project Hosting SW
+ *
+ * Copyright 2013 NAVER Corp.
+ * http://yobi.io
+ *
+ * @Author Yi EungJun
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *   http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package models.enumeration;
 
 import play.i18n.Messages;
@@ -13,28 +33,31 @@ public enum EventType {
     ISSUE_ASSIGNEE_CHANGED("notification.type.issue.assignee.changed", 5),
     PULL_REQUEST_STATE_CHANGED("notification.type.pullrequest.state.changed", 6),
     NEW_COMMENT("notification.type.new.comment", 7),
-    NEW_PULL_REQUEST_COMMENT("notification.type.new.simple.comment", 8),
+    NEW_REVIEW_COMMENT("notification.type.new.simple.comment", 8),
     MEMBER_ENROLL_REQUEST("notification.type.member.enroll", 9),
     PULL_REQUEST_MERGED("notification.type.pullrequest.merged", 10),
     ISSUE_REFERRED_FROM_COMMIT("notification.type.issue.referred.from.commit", 11),
     PULL_REQUEST_COMMIT_CHANGED("notification.type.pullrequest.commit.changed", 12),
     NEW_COMMIT("notification.type.new.commit", 13),
-    PULL_REQUEST_REVIEWED("notification.type.pullrequest.reviewed", 14),
-    PULL_REQUEST_UNREVIEWED("notification.type.pullrequest.unreviewed", 15),
+    PULL_REQUEST_REVIEW_STATE_CHANGED("notification.type.pullrequest.review.action.changed",14),
     ISSUE_BODY_CHANGED("notification.type.issue.body.changed", 17),
-    ISSUE_REFERRED_FROM_PULL_REQUEST("notification.type.issue.referred.from.pullrequest", 16);
+    ISSUE_REFERRED_FROM_PULL_REQUEST("notification.type.issue.referred.from.pullrequest", 16),
+    REVIEW_THREAD_STATE_CHANGED("notification.type.review.state.changed", 18),
+    ORGANIZATION_MEMBER_ENROLL_REQUEST("notification.organization.type.member.enroll",19);
 
     private String descr;
 
     private int order;
 
+    private String messageKey;
+
     EventType(String messageKey, int order) {
-        this.descr = Messages.get(messageKey);
+        this.messageKey = messageKey;
         this.order = order;
     }
 
     public String getDescr() {
-        return descr;
+        return Messages.get(messageKey);
     }
 
     public int getOrder() {

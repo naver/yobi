@@ -257,6 +257,13 @@ a.nbtn, div.nbtn, span.nbtn, p.nbtn {
     &.large  { padding: 9px 30px; font-size:15px; }
 }
 button.nbtn {
+    &.square {
+      padding: 1px 12px;
+      height: 24px;
+      line-height: 1;
+      margin-top: 4px;
+      margin-right: 4px;
+    }
     &.small  { padding:1px 10px; height:24px; line-height:1; }
     &.medium { padding:4px 20px; height:30px; line-height:1; }
     &.large  { padding:8px 30px; height:36px; line-height:1; font-size:15px; }
@@ -293,10 +300,8 @@ button.nbtn {
 
 /** issue label **/
 .issue-label {
-    background:#f7f7f7;
-    border:1px solid rgba(0,0,0,0.1);/*none;*/
-    padding:2px 6px 2px 7px; margin-right:5px;
-    font-size:11px; font-weight:bold;
+    background:#f9f9f9;
+    font-size:11px;
     text-shadow:none;
     -webkit-transition-duration:0.25s;
     cursor: pointer;
@@ -312,12 +317,12 @@ button.nbtn {
     /*&.editable .delete { display:inline; }*/
 
     &.list-label {
-        padding:0 2px;
+        padding:2px 3px;
         font-weight:normal;
     }
 
     &.active {
-        .border-radius(2px);
+        .border-radius(1px);
         &.active-white   { color:#fff; }
         &.active-dimgray { color:#696969; }
     }
@@ -325,11 +330,19 @@ button.nbtn {
     &:hover {
         .opacity(70);
     }
+    &.static.active { border-left:initial !important; }
+    &.static:hover  { .opacity(100); }
 }
 span.issue-label {
     display: inline-block;
-    overflow: hidden; vertical-align: middle;
+    overflow: hidden;
     line-height: 20px;
+    margin-right: 5px;
+    padding: 2px 6px;
+    &:hover {
+      background: #DFDFDF;
+      .opacity(100);
+    }
 }
 
 .dropdown-menu .issue-label:hover { .opacity(100); }
@@ -420,7 +433,6 @@ span.issue-label {
     display:inline-block;
     vertical-align:middle;
     overflow:hidden;
-    border: 1px solid #ccc;
     background:#ddd;
     .border-radius(3px) !important;
 
@@ -445,11 +457,9 @@ span.issue-label {
     li {
         a {
             padding-left:30px; padding-right:30px;
-            background:#ececec;
-            border:1px solid #d3d3d3;
-
+            color: #3592b5;
+            font-weight: bold;
             &:hover {
-                border:1px solid #d3d3d3;
                 text-decoration: none;
                 background-color: @yobi-white-dark;
             }
@@ -459,7 +469,71 @@ span.issue-label {
             font-weight:bold;
         }
     }
+
+    &.small {
+        height:29px;
+        li a { padding:4px 15px; }
+    }
 }
+
+.tab-box {
+    border:1px solid #ececec;
+    border-top:none;
+    .border-radius(0 0 4px 4px);
+}
+
+.tab-box-content {
+    display:none;
+
+    &.active {
+        display:block;
+    }
+}
+
+.tab-searchbox {
+    padding:5px 15px;
+}
+
+.subtab-wrap {
+    padding:5px 10px;
+}
+
+.nav-subtab {
+    li {
+        display: inline-block;
+        margin-left:10px;
+        
+        &:first-child {
+            margin-left:0;
+        }
+
+        a {
+            display: block;
+            padding:3px; 
+
+            &:hover {
+                text-decoration: none;
+                border-bottom:2px solid @primary;
+            }
+        }
+
+        &.active {
+            a {
+                border-bottom:2px solid @primary;
+                font-weight: bold;
+            }
+        }
+    }
+}
+
+.my-project-item {
+    li {
+        padding:5px 15px;
+        border-top : 1px solid #ececec;
+        font-size: 14px;
+    }
+}
+
 
 /** alert **/
 .yobiDialog {
@@ -545,7 +619,7 @@ span.issue-label {
 
 .yobiSpinner {
     display: none;
-    position: fixed; z-index: 999;
+    position: fixed; z-index: 99999;
     top: 0; bottom: 0; left: 0; right: 0;
 
     .spinContainer {
@@ -564,7 +638,6 @@ span.issue-label {
     border-radius: 2px;
     margin-left: 3px;
     font-size: 13px;
-    color: black;
     padding: 2px 4px;
 }
 
@@ -757,11 +830,12 @@ span.issue-label {
     }
 
     &.ybtn-watching {
-        background-color : @yobi-btn-success !important;
-        border:1px solid @yobi-btn-success-hover;
+        background-color : #FFDC51 !important;
+        border:1px solid #E0C006;
+        color:#333;
 
         &:hover, &:focus {
-            background-color: @yobi-btn-success-hover !important;
+            background-color: #F0CD02 !important;
         }
     }
 
@@ -796,7 +870,7 @@ span.issue-label {
             }
         }
 
-        &.ybtn-success,&.ybtn-primary, &.ybtn-info, &.ybtn-danger,&.ybtn-inverse, &.ybtn-disabled, &ybtn-warning,&.ybtn-watching  {
+        &.ybtn-success,&.ybtn-primary, &.ybtn-info, &.ybtn-danger,&.ybtn-inverse, &.ybtn-disabled  {
            &:after {
                 border-top: 4px solid @yobi-white !important;
             }
@@ -971,7 +1045,7 @@ span.issue-label {
             > a {
                 .border-radius(3px);
                 color:#292929;
-                padding: 3px 20px 5px;
+                padding: 3px 5px 5px 15px;
                 background-color:transparent !important;
                 .transition(all 0.2s ease);
 
@@ -1249,4 +1323,11 @@ span.issue-label {
         top:5px;
         right:5px;
     }
+}
+
+.control-label{
+    font-weight: bold;
+    display: block;
+    padding: 4px 4px 0px 4px;
+    color: 666;
 }

@@ -1,3 +1,23 @@
+/**
+ * Yobi, Project Hosting SW
+ *
+ * Copyright 2012 NAVER Corp.
+ * http://yobi.io
+ *
+ * @Author Ahn Hyeok Jun
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *   http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package playRepository;
 
 import static play.test.Helpers.*;
@@ -684,5 +704,174 @@ public class GitRepositoryTest {
         } else {
             return repository.open(treeWalk.getObjectId(0)).getBytes();
         }
+    }
+
+    @Test
+    public void getDiff_bigFile() throws IOException, GitAPIException {
+        // given
+        String userName = "yobi";
+        String projectName = "testProject";
+        String wcPath = GitRepository.getRepoPrefix() + userName + "/" + projectName;
+
+        String repoPath = wcPath + "/.git";
+        File repoDir = new File(repoPath);
+        Repository repo = new RepositoryBuilder().setGitDir(repoDir).build();
+        repo.create(false);
+
+        Git git = new Git(repo);
+        String testFilePath = wcPath + "/readme.txt";
+        BufferedWriter out = new BufferedWriter(new FileWriter(testFilePath));
+
+        char[] cbuf = new char[FileDiff.SIZE_LIMIT + 1];
+        java.util.Arrays.fill(cbuf, 'a');
+        out.write(cbuf); // Add a big file
+        out.flush();
+        git.add().addFilepattern("readme.txt").call();
+        RevCommit commit = git.commit().setMessage("commit 1").call();
+
+        // When
+        FileDiff diff = GitRepository.getDiff(repo, commit).get(0);
+
+        // Then
+        assertThat(diff.a).describedAs("a").isNull();
+        assertThat(diff.b).describedAs("b").isNotNull();
+        assertThat(diff.hasError(FileDiff.Error.A_SIZE_EXCEEDED))
+            .describedAs("a exceeds the size limit.").isFalse();
+        assertThat(diff.hasError(FileDiff.Error.B_SIZE_EXCEEDED))
+            .describedAs("b exceeds the size limit.").isTrue();
+        assertThat(diff.hasError(FileDiff.Error.DIFF_SIZE_EXCEEDED))
+            .describedAs("The diff exceeds the size limit.").isFalse();
+        assertThat(diff.hasError(FileDiff.Error.OTHERS_SIZE_EXCEEDED))
+            .describedAs("The others exceeds the size limit.").isFalse();
+    }
+
+    @Test
+    public void getDiff_manyLines() throws IOException, GitAPIException {
+        // given
+        String userName = "yobi";
+        String projectName = "testProject";
+        String wcPath = GitRepository.getRepoPrefix() + userName + "/" + projectName;
+
+        String repoPath = wcPath + "/.git";
+        File repoDir = new File(repoPath);
+        Repository repo = new RepositoryBuilder().setGitDir(repoDir).build();
+        repo.create(false);
+
+        Git git = new Git(repo);
+        String testFilePath = wcPath + "/readme.txt";
+        BufferedWriter out = new BufferedWriter(new FileWriter(testFilePath));
+
+        for (int i = 0; i < FileDiff.LINE_LIMIT + 1; i++) {
+            out.write("a\n"); // Add a big file
+        }
+        out.flush();
+        git.add().addFilepattern("readme.txt").call();
+        RevCommit commit = git.commit().setMessage("commit 1").call();
+
+        // When
+        FileDiff diff = GitRepository.getDiff(repo, commit).get(0);
+
+        // Then
+        assertThat(diff.hasError(FileDiff.Error.A_SIZE_EXCEEDED))
+            .describedAs("a exceeds the size limit.").isFalse();
+        assertThat(diff.hasError(FileDiff.Error.B_SIZE_EXCEEDED))
+            .describedAs("b exceeds the size limit.").isTrue();
+        assertThat(diff.hasError(FileDiff.Error.DIFF_SIZE_EXCEEDED))
+            .describedAs("The diff exceeds the size limit.").isFalse();
+        assertThat(diff.hasError(FileDiff.Error.OTHERS_SIZE_EXCEEDED))
+            .describedAs("The others exceeds the size limit.").isFalse();
+
+    }
+
+    @Test
+    public void getDiff_smallChangeOfBigFile() throws IOException, GitAPIException {
+        // given
+        String userName = "yobi";
+        String projectName = "testProject";
+        String wcPath = GitRepository.getRepoPrefix() + userName + "/" + projectName;
+
+        String repoPath = wcPath + "/.git";
+        File repoDir = new File(repoPath);
+        Repository repo = new RepositoryBuilder().setGitDir(repoDir).build();
+        repo.create(false);
+
+        Git git = new Git(repo);
+        String testFilePath = wcPath + "/readme.txt";
+        BufferedWriter out = new BufferedWriter(new FileWriter(testFilePath));
+
+        // Commit a big file
+        for (int i = 0; i < FileDiff.LINE_LIMIT + 1; i++) {
+            out.write("a\n"); // Add a big file
+        }
+        out.flush();
+        git.add().addFilepattern("readme.txt").call();
+        git.commit().setMessage("commit 1").call();
+
+        // Modify the file
+        out.write("b\n");
+        out.flush();
+        git.add().addFilepattern("readme.txt").call();
+        RevCommit commit = git.commit().setMessage("commit 2").call();
+
+        // When
+        FileDiff diff = GitRepository.getDiff(repo, commit).get(0);
+
+        // Then
+        assertThat(diff.hasError(FileDiff.Error.A_SIZE_EXCEEDED))
+            .describedAs("a exceeds the size limit.").isFalse();
+        assertThat(diff.hasError(FileDiff.Error.B_SIZE_EXCEEDED))
+            .describedAs("b exceeds the size limit.").isFalse();
+        assertThat(diff.hasError(FileDiff.Error.DIFF_SIZE_EXCEEDED))
+            .describedAs("The diff exceeds the size limit.").isFalse();
+        assertThat(diff.hasError(FileDiff.Error.OTHERS_SIZE_EXCEEDED))
+            .describedAs("The others exceeds the size limit.").isFalse();
+    }
+
+    @Test
+    public void getDiff_manyFiles() throws IOException, GitAPIException {
+        // given
+        String userName = "yobi";
+        String projectName = "testProject";
+        String wcPath = GitRepository.getRepoPrefix() + userName + "/" + projectName;
+
+        String repoPath = wcPath + "/.git";
+        File repoDir = new File(repoPath);
+        Repository repo = new RepositoryBuilder().setGitDir(repoDir).build();
+        repo.create(false);
+
+        Git git = new Git(repo);
+
+        // Add four big files
+        for(int i = 0; i < 4; i++) {
+            String testFilePath = wcPath + "/" + i + ".txt";
+            BufferedWriter out = new BufferedWriter(new FileWriter(testFilePath));
+            char[] cbuf = new char[FileDiff.SIZE_LIMIT - 1];
+            java.util.Arrays.fill(cbuf, 'a');
+            out.write(cbuf);
+            out.flush();
+            git.add().addFilepattern(i + ".txt").call();
+        }
+
+        // Add a small file
+        String testFilePath = wcPath + "/readme.txt";
+        BufferedWriter out = new BufferedWriter(new FileWriter(testFilePath));
+        out.write("hello");
+        out.flush();
+        git.add().addFilepattern("readme.txt").call();
+        RevCommit commit = git.commit().setMessage("commit 1").call();
+
+        // When
+        List<FileDiff> diffs = GitRepository.getDiff(repo, commit);
+        FileDiff diff = diffs.get(4);
+
+        // Then
+        assertThat(diff.hasError(FileDiff.Error.A_SIZE_EXCEEDED))
+            .describedAs("a exceeds the size limit.").isFalse();
+        assertThat(diff.hasError(FileDiff.Error.B_SIZE_EXCEEDED))
+            .describedAs("b exceeds the size limit.").isFalse();
+        assertThat(diff.hasError(FileDiff.Error.DIFF_SIZE_EXCEEDED))
+            .describedAs("The diff exceeds the size limit.").isFalse();
+        assertThat(diff.hasError(FileDiff.Error.OTHERS_SIZE_EXCEEDED))
+            .describedAs("The others exceeds the size limit.").isTrue();
     }
 }

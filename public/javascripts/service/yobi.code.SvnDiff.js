@@ -1,12 +1,23 @@
 /**
- * @(#)yobi.code.Diff.js 2013.04.04
+ * Yobi, Project Hosting SW
  *
- * Copyright NHN Corporation.
- * Released under the MIT license
+ * Copyright 2013 NAVER Corp.
+ * http://yobi.io
  *
- * http://yobi.dev.naver.com/license
+ * @Author Yi EungJun
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *   http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
-
 (function(ns){
 
     var oNS = $yobi.createNamespace(ns);
@@ -28,7 +39,6 @@
             _initFileDownloader();
             _initToggleCommentsButton();
             _initMiniMap();
-            _initMergely();
         }
 
         /**
@@ -82,13 +92,6 @@
             htElement.welMiniMapWrap = htElement.welMiniMap.find(".minimap-wrap");
             htElement.welMiniMapCurr = htElement.welMiniMapWrap.find(".minimap-curr");
             htElement.welMiniMapLinks = htElement.welMiniMapWrap.find(".minimap-links");
-
-            // FullDiff (Mergely)
-            htElement.welMergelyWrap = $("#compare");
-            htElement.welMergely = $("#mergely");
-            htElement.welMergelyPathTitle = htElement.welMergelyWrap.find(".path > span");
-            htElement.welMergelyCommitFrom = htElement.welMergelyWrap.find(".compare-from");
-            htElement.welMergelyCommitTo = htElement.welMergelyWrap.find(".compare-to");
         }
 
         /**
@@ -109,13 +112,10 @@
 
             $(window).on("resize", _initMiniMap);
             $(window).on("scroll", _updateMiniMapCurr);
-            $(window).on("resize", _resizeMergely);
 
             $('.diff-wrap').on('click','td.linenum',_onClickLineNumA);
 
             $('.diff-wrap').on('click','[data-toggle="commentBoxToggle"]',_onClickCommentBoxToggleBtn);
-
-            $('.diff-wrap').on('click','[data-toggle="mergely"]',_onClickBtnFullDiff);
         }
 
         /**
@@ -367,13 +367,9 @@
                 var welDiffMeta = $('<div/>',{class:'diff-partial-meta'});
                 var welDiffMetaCommit = $('<div/>',{class:'diff-partial-commit'});
                 var welDiffMetaFile = $('<div/>',{class:'diff-partial-file'});
-                var welDiffMetaUtility = $('<div/>',{class:'diff-partial-utility'});
                 var welDiffCodeWrap = $('<div/>',{class:'diff-partial-code'});
                 var welDiffCodeTable = $('<table/>',{class:'diff-container show-comments'});
                 var welDiffCodeTableBody = $('<tbody/>');
-                var welFullDiff = $('<button/>',{class:'ybtn ybtn-small',type:'button'})
-                                    .attr('data-toggle','mergely')
-                                    .text(Messages("code.fullDiff"));
 
                 var aLine = sDiffRow.split('\n').slice(0,-1);
                 var sPath;
@@ -414,8 +410,6 @@
                                 if(aMatch[1]==='---') {
                                     sPath = aMatch[2];
                                     welDiffCodeTable.attr('data-path-a',sPath);
-                                    welFullDiff.attr('data-path-a',sPath);
-                                    welFullDiff.attr('data-commit-a',htVar.sParentCommitId);
 
                                     var welCommit = _makeCommitLink(sPath,htVar.sParentCommitId);
                                     welDiffMetaCommit.append(welCommit);
@@ -424,10 +418,6 @@
                                     sPath = aMatch[2] == "/dev/null" ? sPath : aMatch[2];
                                     welDiffCodeTable.attr('data-path-b',sPath);
                                     welDiffCodeTable.attr('data-file-path',sPath);
-
-                                    welFullDiff.attr('data-path-b',sPath);
-                                    welFullDiff.attr('data-path',sPath);
-                                    welFullDiff.attr('data-commit-b',htVar.sCommitId);
 
                                     var welCommit = _makeCommitLink(sPath,htVar.sCommitId);
                                     welDiffMetaCommit.append(welCommit);
@@ -488,13 +478,10 @@
                                 break;
                         }
                     });
-
-                    welDiffMetaUtility.append(welFullDiff);
                 }
 
                 welDiffMeta.append(welDiffMetaCommit);
                 welDiffMeta.append(welDiffMetaFile);
-                welDiffMeta.append(welDiffMetaUtility);
                 welDiffCodeTable.append(welDiffCodeTableBody);
                 welDiffCodeWrap.append(welDiffCodeTable);
                 welDiffWrapInner.append(welDiffMeta);
@@ -530,7 +517,7 @@
                 var nLine = (nLineB==null) ? nLineA : nLineB;
                 welCellCode.addClass('code');
                 welRow.attr('data-line',nLine).attr('data-type',sRowType);
-                welCellLineA.append($('<i/>',{class:'icon-comment'}));
+                welCellLineA.append($('<i/>',{class:'yobicon-comments'}));
                 welCellCode.append(welCode);
             }
 
@@ -543,98 +530,6 @@
             welRow.append(welCellLineB);
             welRow.append(welCellCode);
             return welRow;
-        }
-
-        /**
-         * Mergely 초기화
-         */
-        function _initMergely(){
-            var htWrapSize = _getMergelyWrapSize();
-
-            htElement.welMergely.mergely({
-                "width" : "auto",
-                // "height": "auto",
-                "height": (htWrapSize.nWrapHeight - 100) + "px",
-                "editor_width": ((htWrapSize.nWrapWidth - 92) / 2) + "px",
-                "editor_height": (htWrapSize.nWrapHeight - 100) + "px",
-                "cmsettings":{"readOnly": true, "lineNumbers": true}
-            });
-        }
-
-        /**
-         * Mergely wrapper 크기 반환
-         */
-        function _getMergelyWrapSize(){
-            return {
-                "nWrapWidth" : window.innerWidth - 100,
-                "nWrapHeight": window.innerHeight - (window.innerHeight * 0.2)
-            };
-        }
-
-        /**
-         * fullDiff 버튼 클릭시 이벤트 핸들러
-         *
-         * @param {Wrapped Event} weEvt
-         */
-        function _onClickBtnFullDiff(weEvt){
-            var welTarget = $(weEvt.target);
-            var sToId   = welTarget.data("commitA");
-            var sFromId = welTarget.data("commitB");
-            var sPath   = welTarget.data("path");
-            sPath = sPath.indexOf("/") === 0 ? sPath.substr(1) : sPath;
-            var sRawURLFrom = $yobi.tmpl(htVar.sTplRawURL, {"commitId": sToId, "path": sPath});
-            var sRawURLTo = $yobi.tmpl(htVar.sTplRawURL, {"commitId": sFromId, "path": sPath});
-
-            // UpdateText
-            htElement.welMergelyPathTitle.text(sPath);
-            htElement.welMergelyCommitFrom.text(sFromId);
-            htElement.welMergelyCommitTo.text(sToId);
-            htElement.welMergelyWrap.modal();
-
-            _resizeMergely();
-            _updateMergely(sRawURLFrom, sRawURLTo);
-        }
-
-        /**
-         * 두 코드를 가져다 fullDiff 에 표시하는 함수
-         *
-         * @param {String} sRawURLFrom
-         * @param {String} sRawURLTo
-         */
-        function _updateMergely(sRawURLFrom, sRawURLTo){
-            // lhs = from
-            $.get(sRawURLFrom).done(function(sData){
-                htElement.welMergely.mergely("lhs", sData);
-                htElement.welMergely.mergely("resize");
-                htElement.welMergely.mergely("update");
-            });
-
-            // rhs = to
-            $.get(sRawURLTo).done(function(sData){
-                htElement.welMergely.mergely("rhs", sData);
-                htElement.welMergely.mergely("resize");
-                htElement.welMergely.mergely("update");
-            });
-        }
-
-        /**
-         * Mergely 영역 크기 조절
-         */
-        function _resizeMergely(){
-            var htWrapSize = _getMergelyWrapSize();
-            var nWidth = ((htWrapSize.nWrapWidth - 92) / 2);
-            var nHeight = (htWrapSize.nWrapHeight - 100);
-
-            htElement.welMergelyWrap.css({
-                "width" : htWrapSize.nWrapWidth + "px",
-                "height": htWrapSize.nWrapHeight + "px",
-                "margin-left": -(htWrapSize.nWrapWidth / 2) + "px"
-            });
-            htElement.welMergely.mergely("cm", "rhs").setSize(nWidth + "px", nHeight + "px");
-            htElement.welMergely.mergely("cm", "lhs").setSize(nWidth + "px", nHeight + "px");
-
-            $(".mergely-column").width(nWidth).height(nHeight);
-            $(".CodeMirror").height(nHeight);
         }
 
         /**

@@ -1,16 +1,27 @@
 /**
- * @(#)yobi.user.SignUp.js 2013.04.02
+ * Yobi, Project Hosting SW
  *
- * Copyright NHN Corporation.
- * Released under the MIT license
+ * Copyright 2013 NAVER Corp.
+ * http://yobi.io
  *
- * http://yobi.dev.naver.com/license
+ * @Author Jihan Kim
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *   http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
-
 (function(ns){
 
     var oNS = $yobi.createNamespace(ns);
-    oNS.container[oNS.name] = function(){
+    oNS.container[oNS.name] = function(htOptions){
 
         var htVar = {};
         var htElement = {};
@@ -18,9 +29,9 @@
         /**
          * initialize
          */
-        function _init(){
+        function _init(htOptions){
             _initElement();
-            _initVar();
+            _initVar(htOptions);
 
             _initFormValidator();
             _attachEvent();
@@ -43,8 +54,10 @@
         /**
          * initialize variables
          */
-        function _initVar(){
+        function _initVar(htOptions){
             htVar.rxLoginId = /^[a-zA-Z0-9-]+([_.][a-zA-Z0-9-]+)*$/;
+            htVar.sLogindIdCheckUrl = htOptions.sLogindIdCheckUrl;
+            htVar.sEmailCheckUrl = htOptions.sEmailCheckUrl;
         }
 
         /**
@@ -72,7 +85,7 @@
             }
 
             if(sLoginId != ""){
-                doesExists($(this), "/user/isExist/");
+                doesExists($(this), htVar.sLogindIdCheckUrl);
             }
         }
 
@@ -84,7 +97,7 @@
             var welInput = $(this);
 
             if(welInput.val() !== ""){
-                doesExists(welInput, "/user/isEmailExist/");
+                doesExists(welInput, htVar.sEmailCheckUrl);
             }
         }
 
@@ -101,10 +114,6 @@
          * @param {String} sURL
          */
         function doesExists(welInput, sURL){
-            if(sURL.substr(-1) != "/"){
-                sURL += "/";
-            }
-
             $.ajax({
                 "url": sURL + welInput.val()
             }).done(function(htData){
@@ -207,6 +216,6 @@
             } catch(e){} // to avoid bootstrap bug
         }
 
-        _init();
+        _init(htOptions || {});
     };
 })("yobi.user.SignUp");

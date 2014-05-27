@@ -1,7 +1,28 @@
+@**
+* Yobi, Project Hosting SW
+*
+* Copyright 2012 NAVER Corp.
+* http://yobi.io
+*
+* @Author Yoon
+*
+* Licensed under the Apache License, Version 2.0 (the "License");
+* you may not use this file except in compliance with the License.
+* You may obtain a copy of the License at
+*
+*   http://www.apache.org/licenses/LICENSE-2.0
+*
+* Unless required by applicable law or agreed to in writing, software
+* distributed under the License is distributed on an "AS IS" BASIS,
+* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+* See the License for the specific language governing permissions and
+* limitations under the License.
+**@
 @(title:String, form: Form[Milestone], project: Project)
 
 @import utils.TemplateHelper._
 @import models.enumeration._
+@import scala.collection.Map
 
 @projectLayout(title, project, utils.MenuType.MILESTONE) {
 @projectMenu(project, utils.MenuType.MILESTONE, "")
@@ -18,17 +39,7 @@
                         <div class="content-wrap">
                             <label for="contents">@Messages("milestone.form.content")</label>
                             <div style="position: relative;">
-                                <div id="mode-select">
-                                    <input type="radio" name="edit-mode" id="edit-mode" value="edit" checked="checked" class="radio-btn">
-                                    <label for="edit-mode" style="margin-right:3px;">Edit</label>
-                                    <input type="radio" name="edit-mode" id="preview-mode" value="preview" class="radio-btn">
-                                    <label for="preview-mode">Preview</label>
-                                </div>
-                                <a href="#" class="go-zen"><i class="s s--zen">Edit in Zen Mode</i></a>
-                                @help.markdown()
-                                <div class="textarea-box">
-                                    <textarea id="contents" class="content" name="contents" markdown="true"></textarea>
-                                </div>
+                                @common.editor("contents", "", Map("id"->"contents"))
                             </div>
                         </div>
 
@@ -62,9 +73,11 @@
 </div>
 @common.markdown(project)
 
-<link rel="stylesheet" type="text/css" media="screen" href="@routes.Assets.at("javascripts/lib/mentionjs/mention.css")">
-<script type="text/javascript" src="@routes.Assets.at("javascripts/lib/mentionjs/mention.js")"></script>
-
+<link rel="stylesheet" type="text/css" media="screen" href="@routes.Assets.at("javascripts/lib/atjs/jquery.atwho.css")">
+<script type="text/javascript" src="@routes.Assets.at("javascripts/lib/atjs/jquery.caret.min.js")"></script>
+<script type="text/javascript" src="@routes.Assets.at("javascripts/lib/atjs/jquery.atwho.js")"></script>
+<script type="text/javascript" src="@routes.Assets.at("javascripts/lib/atjs/jquery.browser.js")"></script>
+<script type="text/javascript" src="@routes.Assets.at("javascripts/lib/atjs/jquery.firefox.keyfix.js")"></script>
 <link rel="stylesheet" type="text/css" href="@routes.Assets.at("javascripts/lib/pikaday/pikaday.css")" />
 <script type="text/javascript" src="@routes.Assets.at("javascripts/lib/moment-with-langs.min.js")"></script>
 <script type="text/javascript" src="@routes.Assets.at("javascripts/lib/pikaday/pikaday.js")"></script>

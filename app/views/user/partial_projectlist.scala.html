@@ -1,5 +1,25 @@
+@**
+* Yobi, Project Hosting SW
+*
+* Copyright 2013 NAVER Corp.
+* http://yobi.io
+*
+* @Author Suwon Chae
+*
+* Licensed under the Apache License, Version 2.0 (the "License");
+* you may not use this file except in compliance with the License.
+* You may obtain a copy of the License at
+*
+*   http://www.apache.org/licenses/LICENSE-2.0
+*
+* Unless required by applicable law or agreed to in writing, software
+* distributed under the License is distributed on an "AS IS" BASIS,
+* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+* See the License for the specific language governing permissions and
+* limitations under the License.
+**@
 @(project:Project, user:User)
-@import utils.JodaDateUtil
+@import utils.JodaDateUtil._
 @import utils.TemplateHelper._
 
 <li class="project">
@@ -12,7 +32,7 @@
         <div class="pull-left" style="margin-left: 10px;">
             <div class="header">
                 <a href="@routes.UserApp.userInfo(project.owner)" class="owner-name-small">@project.owner</a> / <a href="@routes.ProjectApp.project(project.owner, project.name)" class="project-name">@project.name</a>
-                @if(!project.isPublic){ <i class="yobicon-lock yobicon-small"></i> }
+                @if(project.isPrivate){ <i class="yobicon-lock yobicon-small"></i> }
             </div>
             @if(project.isForkedFromOrigin){
             <div class="forked label">
@@ -29,8 +49,8 @@
             </div>
             <div class="desc">@project.overview</div>
             <div class="name-tag">
-                @Messages("project.create") <strong>@JodaDateUtil.momentFromNow(project.createdDate, lang.language)</strong>
-                @if(project.lastPushedDateAgo() != null) {, @Messages("project.codeUpdate") <strong>@JodaDateUtil.momentFromNow(project.lastPushedDate.getTime, lang.language)}</strong>
+                @Messages("project.create") <strong title="@getDateString(project.createdDate)">@agoOrDateString(project.createdDate)</strong>
+                @if(project.lastPushedDateAgo() != null) {, @Messages("project.codeUpdate") <strong title="@getDateString(project.lastPushedDate)">@agoOrDateString(project.lastPushedDate)}</strong>
             </div>
         </div>
     </div>

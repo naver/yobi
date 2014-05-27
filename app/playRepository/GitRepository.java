@@ -1,3 +1,23 @@
+/**
+ * Yobi, Project Hosting SW
+ *
+ * Copyright 2012 NAVER Corp.
+ * http://yobi.io
+ *
+ * @Author Ahn Hyeok Jun
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *   http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package playRepository;
 
 import controllers.ProjectApp;
@@ -9,7 +29,6 @@ import models.User;
 import models.enumeration.ResourceType;
 import models.resource.Resource;
 import models.support.ModelLock;
-
 import org.apache.commons.collections.IteratorUtils;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -40,7 +59,6 @@ import org.eclipse.jgit.treewalk.filter.PathFilter;
 import org.eclipse.jgit.util.FileUtils;
 import org.eclipse.jgit.util.io.NullOutputStream;
 import org.tmatesoft.svn.core.SVNException;
-
 import play.Logger;
 import play.libs.Json;
 import utils.FileUtil;
@@ -64,6 +82,7 @@ public class GitRepository implements PlayRepository {
     public static final int DIFF_SIZE_LIMIT = 3 * FileDiff.SIZE_LIMIT;
     public static final int DIFF_LINE_LIMIT = 3 * FileDiff.LINE_LIMIT;
     public static final int DIFF_FILE_LIMIT = 2000;
+    public static final int COMMIT_HISTORY_LIMIT = 1000 * 1000;
 
     /**
      * Git 저장소 베이스 디렉토리
@@ -101,12 +120,16 @@ public class GitRepository implements PlayRepository {
      * @param ownerName
      * @param projectName
      * @throws IOException
-     * @see #buildGitRepository(String, String)
+     * @see #buildGitRepository(String, String, boolean)
      */
-    public GitRepository(String ownerName, String projectName) {
+    public GitRepository(String ownerName, String projectName, boolean alternatesMergeRepo) {
         this.ownerName = ownerName;
         this.projectName = projectName;
-        this.repository = buildGitRepository(ownerName, projectName);
+        this.repository = buildGitRepository(ownerName, projectName, alternatesMergeRepo);
+    }
+
+    public GitRepository(String ownerName, String projectName) {
+        this(ownerName, projectName, true);
     }
 
     /**
@@ -117,7 +140,7 @@ public class GitRepository implements PlayRepository {
      * @see #GitRepository(String, String)
      */
     public GitRepository(Project project) throws IOException {
-        this(project.owner, project.name);
+        this(project.owner, project.name, true);
     }
 
     /**
@@ -131,27 +154,44 @@ public class GitRepository implements PlayRepository {
      * @return
      * @throws IOException
      */
-    public static Repository buildGitRepository(String ownerName, String projectName) {
+    public static Repository buildGitRepository(String ownerName, String projectName,
+                                                boolean alternatesMergeRepo) {
         try {
-            return new RepositoryBuilder()
-                .setGitDir(new File(getGitDirectory(ownerName, projectName)))
-                .addAlternateObjectDirectory(new File(getDirectoryForMergingObjects(ownerName, projectName)))
-                .build();
+            RepositoryBuilder repo = new RepositoryBuilder()
+                    .setGitDir(new File(getGitDirectory(ownerName, projectName)));
+
+            if (alternatesMergeRepo) {
+                repo.addAlternateObjectDirectory(new File(getDirectoryForMergingObjects(ownerName,
+                        projectName)));
+            }
+
+            return repo.build();
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
     }
 
+    public static Repository buildGitRepository(String ownerName, String projectName) {
+        return buildGitRepository(ownerName, projectName, true);
+    }
+
     /**
      * {@code project}의 {@link Project#owner}와 {@link Project#name}을 사용하여 {@link Repository} 객체를 생성한다.
+     *
+     * when: {@link RepositoryService#gitAdvertise(models.Project, String, play.mvc.Http.Response)}와
+     * {@link RepositoryService#gitRpc(models.Project, String, play.mvc.Http.Request, play.mvc.Http.Response)}에서 사용한다.
      *
      * @param project
      * @return
      * @throws IOException
-     * @see #buildGitRepository(String, String)
+     * @see #buildGitRepository(String, String, boolean)
      */
     public static Repository buildGitRepository(Project project) {
-        return buildGitRepository(project.owner, project.name);
+        return buildGitRepository(project, true);
+    }
+
+    public static Repository buildGitRepository(Project project, boolean alternatesMergeRepo) {
+        return buildGitRepository(project.owner, project.name, alternatesMergeRepo);
     }
 
     /**
@@ -361,14 +401,13 @@ public class GitRepository implements PlayRepository {
         listData.putAll(new ObjectFinder(basePath, treeWalk, untilCommitId).find());
         result.put("type", "folder");
         result.put("data", listData);
-        return result;
+        return (listData.size() == 0) ? null : result;
     }
 
     public class ObjectFinder {
         private SortedMap<String, JsonNode> found = new TreeMap<>();
         private Map<String, JsonNode> targets = new HashMap<>();
         private String basePath;
-        private AnyObjectId untilCommitId;
         private Iterator<RevCommit> commitIterator;
 
         public ObjectFinder(String basePath, TreeWalk treeWalk, AnyObjectId untilCommitId) throws IOException, GitAPIException {
@@ -379,23 +418,61 @@ public class GitRepository implements PlayRepository {
                 targets.put(path, object);
             }
             this.basePath = basePath;
-            this.untilCommitId = untilCommitId;
-            this.commitIterator = getCommitIterator();
+            this.commitIterator = getCommitIterator(untilCommitId);
         }
 
         public SortedMap<String, JsonNode> find() throws IOException {
-            while (shouldFindMore()) {
-                RevCommit commit = commitIterator.next();
-                Map<String, ObjectId> objects = findObjects(commit);
-                found(commit, objects);
+            RevCommit prev = null;
+            RevCommit curr = null;
+            int i = 0;
+
+            // Empty targets means we have found every interested objects and
+            // no need to continue.
+            for (; i < COMMIT_HISTORY_LIMIT; i++) {
+                if (targets.isEmpty()) {
+                    break;
+                }
+
+                if (!commitIterator.hasNext()) {
+                    // ** Illegal state detected! (JGit bug?) **
+                    //
+                    // If targets still remain but there is no next commit,
+                    // something is wrong because the directory contains the
+                    // targets does not have any commit modified them. Sometimes
+                    // it occurs and it seems a bug of JGit. For the bug report,
+                    // see http://dev.eclipse.org/mhonarc/lists/jgit-dev/msg02461.html
+                    try {
+                        commitIterator = getCommitIterator(curr.getId());
+                    } catch (GitAPIException e) {
+                        play.Logger.warn("An exception occurs while traversing git history", e);
+                        break;
+                    }
+                }
+
+                curr = commitIterator.next();
+
+                if (curr.equals(prev)) {
+                    break;
+                }
+
+                found(curr, findObjects(curr));
+
+                prev = curr;
             }
+
+            if (i >= COMMIT_HISTORY_LIMIT) {
+                play.Logger.warn("Stopped object traversal of '" + basePath + "' in '" +
+                        repository + "' because of reaching the limit");
+            }
+
             return found;
         }
 
         /*
          * get commit logs with untilCommitId and basePath
          */
-        private Iterator<RevCommit> getCommitIterator() throws IOException, GitAPIException {
+        private Iterator<RevCommit> getCommitIterator(AnyObjectId untilCommitId) throws
+                IOException, GitAPIException {
             Git git = new Git(repository);
             LogCommand logCommand = git.log().add(untilCommitId);
             if (StringUtils.isNotEmpty(basePath)) {
@@ -418,14 +495,6 @@ public class GitRepository implements PlayRepository {
                     return iterator.hasNext();
                 }
             };
-        }
-
-        private boolean shouldFindMore() {
-            // If targets is empty, it means we have found every interested objects and no need to continue.
-            if (targets.isEmpty()) {
-                return false;
-            }
-            return commitIterator.hasNext();
         }
 
         private Map<String, ObjectId> findObjects(RevCommit commit) throws IOException {
@@ -650,10 +719,19 @@ public class GitRepository implements PlayRepository {
      * @throws IOException
      */
     public List<FileDiff> getDiff(String rev) throws IOException {
-        return getDiff(repository.resolve(rev));
+        return getDiff(repository, rev);
+    }
+
+    static public List<FileDiff> getDiff(Repository repository, String rev) throws IOException {
+        return getDiff(repository, repository.resolve(rev));
     }
 
     public List<FileDiff> getDiff(ObjectId commitId) throws IOException {
+        return getDiff(repository, commitId);
+    }
+
+    static public List<FileDiff> getDiff(Repository repository, ObjectId commitId) throws
+            IOException {
         if (commitId == null) {
             return null;
         }
@@ -677,6 +755,16 @@ public class GitRepository implements PlayRepository {
 
         return getFileDiffs(repository, repository, commitIdA, commit.getId());
     }
+
+    public static List<FileDiff> getDiff(Repository repository, RevCommit commit) throws IOException {
+        ObjectId commitIdA = null;
+        if (commit.getParentCount() > 0) {
+            commitIdA = commit.getParent(0).getId();
+        }
+
+        return getFileDiffs(repository, repository, commitIdA, commit.getId());
+    }
+
 
     /**
      * {@code untilRevName}에 해당하는 리비전까지의 커밋 목록을 반환한다.
@@ -835,23 +923,6 @@ public class GitRepository implements PlayRepository {
     public static String getGitDirectory(String ownerName, String projectName) {
         return getRepoPrefix() + ownerName + "/" + projectName + ".git";
     }
-
-    /**
-     * {@code project}의 Git 저장소를 반환한다.
-     * <p/>
-     * when: {@link RepositoryService#gitAdvertise(models.Project, String, play.mvc.Http.Response)}와
-     * {@link RepositoryService#gitRpc(models.Project, String, play.mvc.Http.Request, play.mvc.Http.Response)}에서 사용한다.
-     * <p/>
-     * {@link GitRepository#buildGitRepository(models.Project)}를 사용하여 Git 저장소를 참조할 객체를 생성한다.
-     *
-     * @param project
-     * @return
-     * @throws IOException
-     */
-    public static Repository createGitRepository(Project project) {
-        return GitRepository.buildGitRepository(project);
-    }
-
 
     /**
      * {@code gitUrl}의 Git 저장소를 clone 하는 {@code forkingProject}의 Git 저장소를 생성한다.
@@ -1108,6 +1179,13 @@ public class GitRepository implements PlayRepository {
             revWalk.setTreeFilter(PathFilter.create(path));
             revWalk.sort(RevSort.REVERSE);
             RevCommit commit = revWalk.next();
+            // 어떤 파일이 처음 생성된 commit 은 반드시 존재해야 한다.
+            // 하지만 어떤 이유에선지 위와 같이 RevWalk 를 이용했을 때 그 commit 을 찾지 못할 때가 있다.
+            // 아래 commit 이 null 일 경우의 처리는 임시적인 것이며 추후 원인을 분석해서 특정 path 의
+            // 파일이 생성된 commit 을 항상 찾도록 고쳐야 한다.
+            if (commit == null) {
+                return User.anonymous;
+            }
             return findAuthorByPersonIdent(commit.getAuthorIdent());
         } finally {
             if (revWalk != null) {
@@ -1126,7 +1204,7 @@ public class GitRepository implements PlayRepository {
         if (personIdent == null) {
             return User.anonymous;
         }
-        return User.findByCommitterEmail(personIdent.getEmailAddress());
+        return User.findByEmail(personIdent.getEmailAddress());
     }
 
     /**
@@ -1221,6 +1299,10 @@ public class GitRepository implements PlayRepository {
                 // Operation 실행. (현재 위치는 mergingBranch)
                 CloneAndFetch cloneAndFetch = new CloneAndFetch(cloneRepository, destToBranchName, destFromBranchName, mergingBranch);
                 operation.invoke(cloneAndFetch);
+
+                // 코드 받을 브랜치로 이동하고 mergingBranch 삭제
+                new Git(cloneRepository).checkout().setName(destToBranchName).call();
+                new Git(cloneRepository).branchDelete().setForce(true).setBranchNames(mergingBranch).call();
             }
         } catch (GitAPIException e) {
             throw new IllegalStateException(e);
@@ -1689,17 +1771,15 @@ public class GitRepository implements PlayRepository {
                     && Arrays.asList(DELETE, MODIFY, RENAME, COPY).contains(diff.getChangeType())) {
                 TreeWalk t1 = TreeWalk.forPath(repositoryA, pathA, treeA);
                 ObjectId blobA = t1.getObjectId(0);
+                fileDiff.pathA = pathA;
 
                 try {
                     rawA = repositoryA.open(blobA).getBytes();
+                    fileDiff.isBinaryA = RawText.isBinary(rawA);
+                    fileDiff.a = fileDiff.isBinaryA ? null : new RawText(rawA);
                 } catch (org.eclipse.jgit.errors.LargeObjectException e) {
-                    result.add(fileDiff);
-                    continue;
+                    fileDiff.addError(FileDiff.Error.A_SIZE_EXCEEDED);
                 }
-
-                fileDiff.isBinaryA = RawText.isBinary(rawA);
-                fileDiff.a = fileDiff.isBinaryA ? null : new RawText(rawA);
-                fileDiff.pathA = pathA;
             }
 
             byte[] rawB = null;
@@ -1707,26 +1787,28 @@ public class GitRepository implements PlayRepository {
                     && Arrays.asList(ADD, MODIFY, RENAME, COPY).contains(diff.getChangeType())) {
                 TreeWalk t2 = TreeWalk.forPath(repositoryB, pathB, treeB);
                 ObjectId blobB = t2.getObjectId(0);
+                fileDiff.pathB = pathB;
 
                 try {
                     rawB = repositoryB.open(blobB).getBytes();
+                    fileDiff.isBinaryB = RawText.isBinary(rawB);
+                    fileDiff.b = fileDiff.isBinaryB ? null : new RawText(rawB);
                 } catch (org.eclipse.jgit.errors.LargeObjectException e) {
-                    result.add(fileDiff);
-                    continue;
+                    fileDiff.addError(FileDiff.Error.B_SIZE_EXCEEDED);
                 }
-
-                fileDiff.isBinaryB = RawText.isBinary(rawB);
-                fileDiff.b = fileDiff.isBinaryB ? null : new RawText(rawB);
-                fileDiff.pathB = pathB;
             }
 
             if (size > DIFF_SIZE_LIMIT || lines > DIFF_LINE_LIMIT) {
-                fileDiff.setError(FileDiff.Error.OTHERS_SIZE_EXCEEDED);
+                fileDiff.addError(FileDiff.Error.OTHERS_SIZE_EXCEEDED);
                 result.add(fileDiff);
                 continue;
             }
 
-            if (!(fileDiff.isBinaryA || fileDiff.isBinaryB) && Arrays.asList(MODIFY, RENAME).contains(diff.getChangeType())) {
+            // Get diff if necessary
+            if (fileDiff.a != null
+                    && fileDiff.b != null
+                    && !(fileDiff.isBinaryA || fileDiff.isBinaryB)
+                    && Arrays.asList(MODIFY, RENAME).contains(diff.getChangeType())) {
                 DiffAlgorithm diffAlgorithm = DiffAlgorithm.getAlgorithm(
                         repositoryB.getConfig().getEnum(
                                 ConfigConstants.CONFIG_DIFF_SECTION, null,
@@ -1738,16 +1820,19 @@ public class GitRepository implements PlayRepository {
                 lines += fileDiff.getHunks().lines;
             }
 
-            if (!fileDiff.isBinaryB && diff.getChangeType().equals(ADD)) {
+            // update lines and sizes
+            if (fileDiff.b != null && !fileDiff.isBinaryB && diff.getChangeType().equals(ADD)) {
                 lines += fileDiff.b.size();
                 size += rawB.length;
             }
 
-            if (!fileDiff.isBinaryA && diff.getChangeType().equals(DELETE)) {
+            // update lines and sizes
+            if (fileDiff.a != null && !fileDiff.isBinaryA && diff.getChangeType().equals(DELETE)) {
                 lines += fileDiff.a.size();
-                 size += rawA.length;
+                size += rawA.length;
             }
 
+            // Stop if exceeds the limit for total number of files
             if (result.size() > DIFF_FILE_LIMIT) {
                 break;
             }
@@ -1899,16 +1984,7 @@ public class GitRepository implements PlayRepository {
      */
     @Override
     public boolean renameTo(String projectName) {
-
-        repository.close();
-        WindowCacheConfig config = new WindowCacheConfig();
-        config.install();
-        File src = new File(getGitDirectory(this.ownerName, this.projectName));
-        File dest = new File(getGitDirectory(this.ownerName, projectName));
-
-        src.setWritable(true);
-
-        return src.renameTo(dest);
+        return move(this.ownerName, this.projectName, this.ownerName, projectName);
     }
 
     @Override
@@ -1985,5 +2061,40 @@ public class GitRepository implements PlayRepository {
         }
         RevWalk revWalk = new RevWalk(repository);
         return revWalk.parseCommit(objectId);
+    }
+
+    public boolean move(String srcProjectOwner, String srcProjectName, String desrProjectOwner, String destProjectName) {
+        repository.close();
+        WindowCacheConfig config = new WindowCacheConfig();
+        config.install();
+
+        File srcGitDirectory = new File(getGitDirectory(srcProjectOwner, srcProjectName));
+        File destGitDirectory = new File(getGitDirectory(desrProjectOwner, destProjectName));
+        File srcGitDirectoryForMerging = new File(getDirectoryForMerging(srcProjectOwner, srcProjectName));
+        File destGitDirectoryForMerging = new File(getDirectoryForMerging(desrProjectOwner, destProjectName));
+        srcGitDirectory.setWritable(true);
+        srcGitDirectoryForMerging.setWritable(true);
+
+        try {
+            if(srcGitDirectory.exists()) {
+                org.apache.commons.io.FileUtils.moveDirectory(srcGitDirectory, destGitDirectory);
+                play.Logger.debug("[Transfer] Move from: " + srcGitDirectory.getAbsolutePath()
+                        + "to " + destGitDirectory);
+            } else {
+                play.Logger.warn("[Transfer] Nothing to move from: " + srcGitDirectory.getAbsolutePath());
+            }
+
+            if(srcGitDirectoryForMerging.exists()) {
+                org.apache.commons.io.FileUtils.moveDirectory(srcGitDirectoryForMerging, destGitDirectoryForMerging);
+                play.Logger.debug("[Transfer] Move from: " + srcGitDirectoryForMerging.getAbsolutePath()
+                        + "to " + destGitDirectoryForMerging);
+            } else {
+                play.Logger.warn("[Transfer] Nothing to move from: " + srcGitDirectoryForMerging.getAbsolutePath());
+            }
+            return true;
+        } catch (IOException e) {
+            play.Logger.error("[Transfer] Move Failed", e);
+            return false;
+        }
     }
 }

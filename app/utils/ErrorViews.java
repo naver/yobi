@@ -1,5 +1,26 @@
+/**
+ * Yobi, Project Hosting SW
+ *
+ * Copyright 2013 NAVER Corp.
+ * http://yobi.io
+ *
+ * @Author Wansoon Park
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *   http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package utils;
 import controllers.UserApp;
+import models.Organization;
 import models.Project;
 import models.User;
 import play.api.templates.Html;
@@ -22,11 +43,16 @@ public enum ErrorViews {
         }
 
         public Html render(String messageKey, String returnUrl) {
-            if(UserApp.currentUser() == User.anonymous){
+            if (UserApp.currentUser() == User.anonymous) {
                 return views.html.user.login.render("error.fobidden", null, returnUrl);
             } else {
                 return views.html.error.forbidden_default.render(messageKey);
             }
+        }
+
+        @Override
+        public Html render(String messageKey, Organization organization) {
+            return views.html.error.forbidden_organization.render(messageKey, organization);
         }
 
         @Deprecated
@@ -49,6 +75,12 @@ public enum ErrorViews {
         @Override
         public Html render(String messageKey, Project project) {
             return render(messageKey, project, null);
+        }
+
+        @Override
+        public Html render(String messageKey, Organization organization) {
+            // TODO : make notfound view for organization
+            return views.html.error.notfound_default.render(messageKey);
         }
 
         @Override
@@ -78,6 +110,11 @@ public enum ErrorViews {
         }
 
         @Override
+        public Html render(String messageKey, Organization organization) {
+            throw new UnsupportedOperationException();
+        }
+
+        @Override
         public Html render(String messageKey, Project project, String target) {
             throw new UnsupportedOperationException();
         }
@@ -91,6 +128,12 @@ public enum ErrorViews {
         @Override
         public Html render(String messageKey, Project project) {
             return views.html.error.badrequest.render(messageKey, project);
+        }
+
+        @Override
+        public Html render(String messageKey, Organization organization) {
+            // TODO : make badrequest view for organization
+            return views.html.error.badrequest_default.render(messageKey);
         }
 
         @Deprecated
@@ -136,6 +179,16 @@ public enum ErrorViews {
      * @return
      */
     public abstract Html render(String messageKey, Project project);
+
+    /**
+     * 오류페이지 HTML을 레더링 한다.
+     * 메세지는 파라미터로 전달되는 messageKey를 사용하고 레이아웃은 그룹레벨이 된다.
+     *
+     * @param messageKey 메세지키
+     * @param organization 그룹 정보
+     * @return
+     */
+    public abstract Html render(String messageKey, Organization organization);
 
     /**
      * 오류페이지 HTML을 레더링 한다.

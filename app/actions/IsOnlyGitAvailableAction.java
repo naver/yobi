@@ -29,7 +29,8 @@ import utils.AccessLogger;
 import utils.ErrorViews;
 
 /**
- * 프로젝트가 Git 프로젝트인지 확인한다.
+ * After {@link actions.AbstractProjectCheckAction},
+ * Validate whether the project is using GIt or not.
  *
  * @see {@link AbstractProjectCheckAction}
  * @see {@link controllers.annotation.IsOnlyGitAvailable}

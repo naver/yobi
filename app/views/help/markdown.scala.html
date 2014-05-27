@@ -1,3 +1,23 @@
+@**
+* Yobi, Project Hosting SW
+*
+* Copyright 2013 NAVER Corp.
+* http://yobi.io
+*
+* @Author Suwon Chae
+*
+* Licensed under the Apache License, Version 2.0 (the "License");
+* you may not use this file except in compliance with the License.
+* You may obtain a copy of the License at
+*
+*   http://www.apache.org/licenses/LICENSE-2.0
+*
+* Unless required by applicable law or agreed to in writing, software
+* distributed under the License is distributed on an "AS IS" BASIS,
+* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+* See the License for the specific language governing permissions and
+* limitations under the License.
+**@
 <div class="markdown-help">
     <ul class="markdown-help-nav">
         <li>
@@ -16,7 +36,7 @@
         <li class="help-nav" data-toggle="markdown-help" data-target="markdownShortLinks">Short Links</li>
     </ul>
     <ul class="markdown-help-wrap">
-        <li class="markdown-help-item" id="markdownHeaders">
+        <li class="markdown-help-item markdownHeaders">
             <div class="row-fluid thead">
                 <div class="span6">Markdown Input</div>
                 <div class="span6">Markdown Output</div>
@@ -38,7 +58,7 @@
                 </div>
             </div>
         </li>
-        <li class="markdown-help-item" id="markdownLinks">
+        <li class="markdown-help-item markdownLinks">
             <div class="row-fluid thead">
                 <div class="span6">Markdown Input</div>
                 <div class="span6">Markdown Output</div>
@@ -61,7 +81,7 @@ http://yobi.io/
                 </div>
             </div>
         </li>
-        <li class="markdown-help-item" id="markdownLists">
+        <li class="markdown-help-item markdownLists">
             <div class="row-fluid thead">
                 <div class="span6">Markdown Input</div>
                 <div class="span6">Markdown Output</div>
@@ -85,7 +105,7 @@ http://yobi.io/
                 </div>
             </div>
         </li>
-        <li class="markdown-help-item" id="markdownImages">
+        <li class="markdown-help-item markdownImages" >
             <div class="row-fluid thead">
                 <div class="span6">Markdown Input</div>
                 <div class="span6">Markdown Output</div>
@@ -103,7 +123,7 @@ http://yobi.io/
                 </div>
             </div>
         </li>
-        <li class="markdown-help-item" id="markdownBlockquotes">
+        <li class="markdown-help-item markdownBlockquotes">
             <div class="row-fluid thead">
                 <div class="span6">Markdown Input</div>
                 <div class="span6">Markdown Output</div>
@@ -125,7 +145,7 @@ http://yobi.io/
                 </div>
             </div>
         </li>
-        <li class="markdown-help-item" id="markdownCodes">
+        <li class="markdown-help-item markdownCodes">
             <div class="row-fluid thead">
                 <div class="span6">Markdown Input</div>
                 <div class="span6">Markdown Output</div>
@@ -155,7 +175,7 @@ function test() {
                 </div>
             </div>
         </li>
-        <li class="markdown-help-item" id="markdownTables">
+        <li class="markdown-help-item markdownTables">
             <div class="row-fluid thead">
                 <div class="span6">Markdown Input</div>
                 <div class="span6">Markdown Output</div>
@@ -179,7 +199,7 @@ function test() {
                 </div>
             </div>
         </li>
-        <li class="markdown-help-item" id="markdownStyling">
+        <li class="markdown-help-item markdownStyling">
             <div class="row-fluid thead">
                 <div class="span6">Markdown Input</div>
                 <div class="span6">Markdown Output</div>
@@ -202,7 +222,7 @@ function test() {
             </div>
         </li>
         </li>
-        <li class="markdown-help-item" id="markdownShortLinks">
+        <li class="markdown-help-item markdownShortLinks">
             <div class="row-fluid thead">
                 <div class="span6">Markdown Input</div>
                 <div class="span6">Markdown Output</div>
@@ -229,21 +249,28 @@ commit: @{"@"}763575 or @{"@"}763575f177a4ce8b9370954de3ea1a1410205593
 </div>
 
 <script type="text/javascript">
+var helpNavEventSetted;
+var previousClicked;
 $(function(){
-    $('.markdown-help-nav').on('click','[data-toggle="markdown-help"]',function() {
-        var sTarget = $(this).data('target');
-        var welTarget = $('#'+sTarget);
+    if ( helpNavEventSetted === undefined) {
+        $('.markdown-help-nav').on('click','[data-toggle="markdown-help"]',function() {
+            var welPreviousShownMenu = $(this).parent().children('.active');
+            welPreviousShownMenu.toggleClass('active');
 
-        var welCurrentlyActiveElement = $('li[data-toggle="markdown-help"].active');
+            var welPreviousShownContents = $(this).parents('.markdown-help').find('.markdown-help-wrap').children('.active');
+            welPreviousShownContents.toggleClass('active');
 
-        if(welCurrentlyActiveElement.data('target') !== sTarget) {
-            welCurrentlyActiveElement.toggleClass('active');
-            $('#'+welCurrentlyActiveElement.data('target')).toggleClass('active');
-        }
-
-        $(this).toggleClass('active');
-        welTarget.toggleClass('active');
-    });
+            var welClickedMenu = $(this);
+            var sClickedMenuName = welClickedMenu.data('target');
+            var welPreviousShownMenuName = welPreviousShownMenu.data('target');
+            if ( welPreviousShownMenuName !== sClickedMenuName){
+                welClickedMenu.toggleClass('active');
+                var welClickedMenuContent = $(this).parents('.markdown-help').find('.markdown-help-wrap>.'+ sClickedMenuName);
+                welClickedMenuContent.toggleClass('active');
+            }
+        });
+        helpNavEventSetted = true;
+    }
 });
 </script>
 

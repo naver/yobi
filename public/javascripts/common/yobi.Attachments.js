@@ -1,10 +1,22 @@
 /**
- * @(#)yobi.Attachments 2013.08.19
+ * Yobi, Project Hosting SW
  *
- * Copyright NHN Corporation.
- * Released under the MIT license
+ * Copyright 2013 NAVER Corp.
+ * http://yobi.io
  *
- * http://yobi.dev.naver.com/license
+ * @Author JiHan Kim
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *   http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 /**
  * 서버와 직접 통신하는 영역은 yobi.Files 를 사용한다.
@@ -70,13 +82,13 @@ yobi.Attachments = function(htOptions) {
         var sTagName = htOptions.sTagNameForTemporaryUploadFiles || "temporaryUploadFiles";
         htElements.welTemporaryUploadFileList = $('<input type="hidden" name="'+sTagName+'">');
         htElements.welToAttach.prepend(htElements.welTemporaryUploadFileList);
-        aTemporaryFileIds = [];
+        htVar.aTemporaryFileIds = [];
 
         // welContainer
         htElements.welContainer = $(htOptions.elContainer);
         htElements.welContainer.data("isYobiAttachment", true);
-        htVar.sResourceId = htVar.sResourceId || htElements.welContainer.attr('data-resourceId');
-        htVar.sResourceType = htVar.sResourceType || htElements.welContainer.attr('data-resourceType');
+        htVar.sResourceId = htVar.sResourceId || htElements.welContainer.data('resourceId');
+        htVar.sResourceType = htVar.sResourceType || htElements.welContainer.data('resourceType');
 
         // welTextarea (Optional)
         htElements.welTextarea  = $(htOptions.elTextarea);
@@ -222,6 +234,8 @@ yobi.Attachments = function(htOptions) {
             "mimeType": htFile.mimeType
         });
 
+        _showMimetypeIcon(welItem, htFile.mimeType);
+
         // 임시 파일 표시
         if(bTemp){
             welItem.addClass("temporary");
@@ -278,17 +292,17 @@ yobi.Attachments = function(htOptions) {
     }
 
     function _addUploadFileIdToListAndForm(sFileId) {
-        if( aTemporaryFileIds.indexOf(sFileId) === -1) {
-            aTemporaryFileIds.push(sFileId);
-            htElements.welTemporaryUploadFileList.val(aTemporaryFileIds.join(","));
+        if(htVar.aTemporaryFileIds.indexOf(sFileId) === -1) {
+            htVar.aTemporaryFileIds.push(sFileId);
+            htElements.welTemporaryUploadFileList.val(htVar.aTemporaryFileIds.join(","));
         }
     }
 
     function _removeDeletedFileIdFromListAndForm(sFileId) {
-        var nIndex = aTemporaryFileIds.indexOf(sFileId.toString());
+        var nIndex = htVar.aTemporaryFileIds.indexOf(sFileId.toString());
         if( nIndex !== -1){
-            aTemporaryFileIds.splice(nIndex, 1);
-            htElements.welTemporaryUploadFileList.val(aTemporaryFileIds.join(","));
+            htVar.aTemporaryFileIds.splice(nIndex, 1);
+            htElements.welTemporaryUploadFileList.val(htVar.aTemporaryFileIds.join(","));
         }
     }
 
@@ -326,6 +340,8 @@ yobi.Attachments = function(htOptions) {
         var sTempLink = _getTempLinkText(htData.nSubmitId);
         var sRealLink = _getLinkText(welFileItem);
         _replaceLinkInTextarea(sTempLink, sRealLink);
+
+        _showMimetypeIcon(welFileItem, htData.oRes.mimeType);
     }
 
     /**
@@ -449,6 +465,23 @@ yobi.Attachments = function(htOptions) {
     }
 
     /**
+     * @return {Boolean} true if sMimeType is supported by HTML5 video element
+     */
+    function isHtml5Video(sMimeType) {
+        return ["video/mp4", "video/ogg", "video/webm"]
+            .indexOf($.trim(sMimeType).toLowerCase()) >= 0;
+    }
+
+    /**
+     * Show a icon matches sMimeType on welFileItem
+     */
+    function _showMimetypeIcon(welFileItem, sMimeType) {
+        if (isHtml5Video(sMimeType)) {
+            welFileItem.children('i.mimetype').addClass('yobicon-video2').show();
+        }
+    }
+
+    /**
      * 파일 아이템으로부터 링크 텍스트를 생성하여 반환하는 함수
      *
      * @param {Wrapped Element} welItem 템플릿 htVar.sTplFileItem 에 의해 생성된 첨부 파일 아이템
@@ -461,7 +494,18 @@ yobi.Attachments = function(htOptions) {
 
         var sLinkText = '[' + sFileName + '](' + sFilePath + ')\n';
 
-        return  (sMimeType.substr(0,5) === "image") ? '!'+sLinkText : sLinkText;
+        if (sMimeType.substr(0,5) === "image") {
+            return '!' + sLinkText;
+        } else if (isHtml5Video(sMimeType)) {
+            return $('<div>').append(
+                    $('<video>').attr('controls', true)
+                    .append($('<source>').attr('src', sFilePath))
+                    .append(sLinkText)
+                   ).html();
+
+        } else {
+            return sLinkText;
+        }
     }
 
     /**

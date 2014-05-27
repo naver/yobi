@@ -1,3 +1,23 @@
+@**
+* Yobi, Project Hosting SW
+*
+* Copyright 2012 NAVER Corp.
+* http://yobi.io
+*
+* @Author Hwi Ahn
+*
+* Licensed under the Apache License, Version 2.0 (the "License");
+* you may not use this file except in compliance with the License.
+* You may obtain a copy of the License at
+*
+*   http://www.apache.org/licenses/LICENSE-2.0
+*
+* Unless required by applicable law or agreed to in writing, software
+* distributed under the License is distributed on an "AS IS" BASIS,
+* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+* See the License for the specific language governing permissions and
+* limitations under the License.
+**@
 @(message: String, newUserForm: Form[User])
 
 @import utils.TemplateHelper._
@@ -6,9 +26,9 @@
 <div class="page full">
   <div class="center-wrap tag-line-wrap signup">
     <h1 class="title">
-      Sign Up for <span class="high-light">@utils.Config.getSiteName</span>
+      @Html(Messages("title.signupFor", utils.Config.getSiteName))
     </h1>
-    <p class="tag-line">Software development platform for Open Source project.</p>
+    <p class="tag-line">@Messages("app.description")</p>
   </div>
 
   <div class="signup-form-wrap frm-wrap">
@@ -63,7 +83,10 @@
 <script type="text/javascript" src="@routes.Assets.at("javascripts/lib/validate.js")"></script>
 <script type="text/javascript">
     $(document).ready(function() {
-        $yobi.loadModule("user.SignUp");
+        $yobi.loadModule("user.SignUp", {
+            "sLogindIdCheckUrl" : "@routes.UserApp.isUsed("")",
+            "sEmailCheckUrl" : "@routes.UserApp.isEmailExist("")"
+        });
     });
 </script>
 }

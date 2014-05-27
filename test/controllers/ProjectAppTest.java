@@ -1,11 +1,27 @@
+/**
+ * Yobi, Project Hosting SW
+ *
+ * Copyright 2013 NAVER Corp.
+ * http://yobi.io
+ *
+ * @Author Yi EungJun
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *   http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package controllers;
 
-import models.Label;
-import models.Project;
-import models.PushedBranch;
-import models.User;
+import models.*;
 
-import org.apache.commons.lang3.StringUtils;
 import org.codehaus.jackson.JsonNode;
 import org.codehaus.jackson.node.ObjectNode;
 import org.fest.assertions.Condition;
@@ -13,20 +29,24 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
-
+import org.tigris.subversion.javahl.ClientException;
 import play.libs.Json;
 import play.mvc.Http;
 import play.mvc.Result;
 import play.test.FakeApplication;
 import play.test.Helpers;
+import playRepository.GitRepository;
+import playRepository.RepositoryService;
 
+import javax.servlet.ServletException;
+import java.io.File;
+import java.io.IOException;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 
 import static org.fest.assertions.Assertions.assertThat;
-import static play.libs.Json.toJson;
 import static play.test.Helpers.*;
 
 public class ProjectAppTest {
@@ -343,6 +363,20 @@ public class ProjectAppTest {
         testProjectSearch(anonymous, project, acceptJson, contains(project.owner + "/" + project.name));
     }
 
+    @Test
+    public void delete() {
+        // Given
+        User member = User.find.byId(2L);
+        Project project = Project.findByOwnerAndProjectName("yobi", "projectYobi");
+        RecentlyVisitedProjects.addNewVisitation(member, project);
+
+        // When
+        project.delete();
+
+        // Then
+        assertThat(Project.findByOwnerAndProjectName("yobi", "projectYobi")).isNull();
+    }
+
     private void testProjectSearch(User user, Project project, String accept, Condition<String> condition) {
         // Given
         String query = project.name;
@@ -357,6 +391,110 @@ public class ProjectAppTest {
         assertThat(status(result)).isEqualTo(OK);
         assertThat(contentType(result)).isEqualTo(accept);
         assertThat(contentAsString(result)).is(condition);
+    }
+
+    @Test
+    public void testTransferProject() {
+        //Given
+        Project project = Project.findByOwnerAndProjectName("yobi", "projectYobi");
+        User oldOwner = User.findByLoginId("yobi");
+        User newOwner = User.findByLoginId("doortts");
+
+        Map<String,String> data = new HashMap<>();
+        data.put("owner", newOwner.loginId);
+
+        //When
+        Result result = callAction(
+                controllers.routes.ref.ProjectApp.transferProject(project.owner, project.name),
+                fakeRequest(PUT, routes.ProjectApp.transferProject(project.owner, project.name).url()
+                        + "?owner=" + newOwner.loginId)
+                        .withSession(UserApp.SESSION_USERID, oldOwner.id.toString()));
+
+        //Then
+        assertThat(status(result)).isEqualTo(303); // redirection to project home
+        assertThat(redirectLocation(result)).isEqualTo("/yobi/projectYobi");
+
+        ProjectTransfer pt = ProjectTransfer.find.where()
+                .eq("project", project)
+                .eq("sender", oldOwner)
+                .eq("destination", newOwner.loginId)
+                .findUnique();
+
+        assertThat(pt).isNotNull();
+        assertThat(pt.confirmKey).isNotNull();
+        assertThat(pt.accepted).isFalse();
+    }
+
+    @Test
+    public void testTransferProjectToWrongUser() {
+        //Given
+        Project project = Project.findByOwnerAndProjectName("yobi", "projectYobi");
+        User oldOwner = User.findByLoginId("yobi");
+        User newOwner = User.findByLoginId("keesun");
+
+        Map<String,String> data = new HashMap<>();
+        data.put("owner", newOwner.loginId);
+
+        //When
+        Result result = callAction(
+                controllers.routes.ref.ProjectApp.transferProject(project.owner, project.name),
+                fakeRequest(PUT, routes.ProjectApp.transferProject(project.owner, project.name).url()
+                        + "?owner=" + newOwner.loginId)
+                        .withSession(UserApp.SESSION_USERID, oldOwner.id.toString()));
+
+        //Then
+        assertThat(status(result)).isEqualTo(400); // bad request
+    }
+
+    @Test
+    public void testAcceptTransfer() throws IOException, ServletException, ClientException {
+        //Given
+        GitRepository.setRepoPrefix("resources/test/repo/git/");
+
+        Project project = Project.findByOwnerAndProjectName("yobi", "projectYobi");
+        RepositoryService.createRepository(project);
+
+        User sender = User.findByLoginId("yobi");
+        User newOwner = User.findByLoginId("doortts");
+
+        ProjectTransfer pt = ProjectTransfer.requestNewTransfer(project, sender, newOwner.loginId);
+        assertThat(pt.confirmKey).isNotNull();
+
+        //When
+        Result result = callAction(
+                controllers.routes.ref.ProjectApp.acceptTransfer(pt.id, pt.confirmKey),
+                fakeRequest(PUT, routes.ProjectApp.acceptTransfer(pt.id, pt.confirmKey).url())
+                        .withSession(UserApp.SESSION_USERID, newOwner.id.toString()));
+
+        //Then
+        assertThat(status(result)).isEqualTo(303);
+        assertThat(redirectLocation(result)).isEqualTo("/doortts/projectYobi");
+        support.Files.rm_rf(new File(GitRepository.getRepoPrefix()));
+    }
+
+    @Test
+    public void testAcceptTransferWithWrongKey() throws IOException, ServletException, ClientException {
+        //Given
+        GitRepository.setRepoPrefix("resources/test/repo/git/");
+
+        Project project = Project.findByOwnerAndProjectName("yobi", "projectYobi");
+        RepositoryService.createRepository(project);
+
+        User sender = User.findByLoginId("yobi");
+        User newOwner = User.findByLoginId("doortts");
+
+        ProjectTransfer pt = ProjectTransfer.requestNewTransfer(project, sender, newOwner.loginId);
+        assertThat(pt.confirmKey).isNotNull();
+
+        //When
+        Result result = callAction(
+                controllers.routes.ref.ProjectApp.acceptTransfer(pt.id, "wrongKey"),
+                fakeRequest(PUT, routes.ProjectApp.acceptTransfer(pt.id, "wrongKey").url())
+                        .withSession(UserApp.SESSION_USERID, newOwner.id.toString()));
+
+        //Then
+        assertThat(status(result)).isEqualTo(400);
+        support.Files.rm_rf(new File(GitRepository.getRepoPrefix()));
     }
 
     private Condition<String> contains(final String expected) {

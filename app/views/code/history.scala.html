@@ -1,7 +1,28 @@
+@**
+* Yobi, Project Hosting SW
+*
+* Copyright 2012 NAVER Corp.
+* http://yobi.io
+*
+* @Author Yi EungJun
+*
+* Licensed under the Apache License, Version 2.0 (the "License");
+* you may not use this file except in compliance with the License.
+* You may obtain a copy of the License at
+*
+*   http://www.apache.org/licenses/LICENSE-2.0
+*
+* Unless required by applicable law or agreed to in writing, software
+* distributed under the License is distributed on an "AS IS" BASIS,
+* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+* See the License for the specific language governing permissions and
+* limitations under the License.
+**@
 @(project: Project, history: List[playRepository.Commit], page: Integer, selectedBranch: String, path:String)
 
 @import utils.JodaDateUtil._
 @import utils.TemplateHelper._
+@import utils.TemplateHelper.Branches._
 @import utils.Url
 @import playRepository.RepositoryService
 @import java.net.URLEncoder
@@ -81,7 +102,8 @@
                     <ul class="dropdown-menu">
                         @defining(RepositoryService.getRepository(project).getBranches()) { branches =>
                             @for(branch <- branches){
-                                @partial_branchitem(project, branch, "history", "")
+                                @common.branchItem("history", project, branch, null,
+                                    utils.TemplateHelper.equals(branch, selectedBranch))
                             }
                         }
                     </ul>
@@ -123,17 +145,25 @@
                             @defining(getShowCommitURL(project, commit, path)){ showCommitURL =>
                             <tr>
                                 <td class="commit-id">
+                                    <button type="button" class="ybtn ybtn-mini btn-copy-commitId"
+                                            title="@Messages("code.copyCommitId")" data-commitId="@commit.getId()">
+                                        <i class="yobicon-copy"></i>
+                                    </button>
                                     <a href="@showCommitURL" title="@Messages("code.showCommit")">
                                         @commit.getShortId()
                                     </a>
                                 </td>
                                 <td class="messages">
-                                    @defining(CommitComment.count(project, commit.getId, path)){ numOfComment =>
+                                    @defining(
+                                        if(project.isGit()) {
+                                            CommentThread.count(null, commit.getId, path)
+                                        } else {
+                                            CommitComment.count(project, commit.getId, path)
+                                        }){ numOfComment =>
                                         @if(numOfComment > 0) {
                                         <span class="number-of-comments"><i class="yobicon-comments"></i> @numOfComment</span>
                                         }
                                     }
-
                                     @common.commitMsg(commit.getShortMessage(), commit.getMessage(), showCommitURL.toString())
                                 </td>
                                 @if(path != null){
@@ -143,7 +173,7 @@
                                     </a>
                                 </td>
                                 }
-                                <td class="date">@momentFromNow(commit.getAuthorDate(), lang.language)</td>
+                                <td class="date">@agoOrDateString(commit.getAuthorDate)</td>
                                 <td class="author">
                                     @(commit.getAuthor, commit.getAuthorEmail, commit.getAuthorName) match {
                                     case (user: User, _, _) if !user.isAnonymous => {
@@ -196,6 +226,28 @@
 $(document).ready(function(){
     $("button.moreBtn").on("click", function(){
         $(this).next("pre.commitMsg.desc").toggleClass("hidden");
+    });
+
+    // Copy CommitId
+    $("#history").find(".btn-copy-commitId").each(function(i, el){
+        var welBtnCopy = $(el);
+
+        // zclip() works only in visible element
+        welBtnCopy.on("mouseenter", function(){
+            if(!welBtnCopy.data("zclipped")){
+                welBtnCopy.data("zclipped", true);
+
+                $(this).zclip({
+                    "path": "@routes.Assets.at("javascripts/lib/jquery/ZeroClipboard.swf")",
+                    "copy": function(){
+                        return $(this).data("commitid");
+                    },
+                    "afterCopy": function(){
+                        $yobi.notify("@Messages("code.copyCommitId.copied")", 1000);
+                    }
+                });
+            }
+        });
     });
 
     var htKeyMap = {};

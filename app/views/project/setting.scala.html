@@ -1,7 +1,28 @@
+@**
+* Yobi, Project Hosting SW
+*
+* Copyright 2012 NAVER Corp.
+* http://yobi.io
+*
+* @Author Sangcheol Hwang
+*
+* Licensed under the Apache License, Version 2.0 (the "License");
+* you may not use this file except in compliance with the License.
+* You may obtain a copy of the License at
+*
+*   http://www.apache.org/licenses/LICENSE-2.0
+*
+* Unless required by applicable law or agreed to in writing, software
+* distributed under the License is distributed on an "AS IS" BASIS,
+* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+* See the License for the specific language governing permissions and
+* limitations under the License.
+**@
 @(message: String)(projectForm: Form[Project], project: Project, branches: List[String])
 
 @import helper._
 @import utils.TemplateHelper._
+@import utils.TemplateHelper.Branches._
 
 @projectLayout(message, project, utils.MenuType.PROJECT_SETTING) {
 @projectMenu(project, utils.MenuType.PROJECT_SETTING, "")
@@ -51,8 +72,11 @@
                 <div class="box-wrap middle">
                     <div class="cu-label">@Messages("project.shareOption")</div>
                     <div class="cu-desc">
-                        <input name="isPublic" type="radio" @if(project.isPublic){checked="checked"} id="public" value="true" class="radio-btn"><label for="public" class="bg-radiobtn label-public">@Messages("project.public")</label>
-                        <input name="isPublic" type="radio" @if(!project.isPublic){checked="checked"} id="private" value="false" class="radio-btn"><label for="private" class="bg-radiobtn label-private">@Messages("project.private")</label>
+                        <input name="projectScope" type="radio" @if(project.isPublic){checked="checked"} id="public" value="PUBLIC" class="radio-btn"><label for="public" class="bg-radiobtn label-public">@Messages("project.public")</label>
+                        @if(project.hasGroup){
+                        <input name="projectScope" type="radio" @if(project.isProtected){checked="checked"} id="protected" value="PROTECTED" class="radio-btn"><label for="protected" class="bg-radiobtn label-protected">@Messages("project.protected")</label>
+                        }
+                        <input name="projectScope" type="radio" @if(project.isPrivate){checked="checked"} id="private" value="PRIVATE" class="radio-btn"><label for="private" class="bg-radiobtn label-private">@Messages("project.private")</label>
                         <span class="note">@Messages("project.private.notice")</span>
                     </div>
                 </div>
@@ -91,10 +115,8 @@
                                 <span class="d-caret"><span class="caret"></span></span>
                             </button>
                             <ul class="dropdown-menu">
-                                @for(branch <- branches if branchItemType(branch) == "branch"){
-                                @defining(branchItemName(branch)){ branchName =>
-                                <li data-value="@branch"><a>@Html(branchName)</a></li>
-                                }
+                                @for(branch <- branches if Branches.itemType(branch).equals("branch")){
+                                    @common.branchItem("projectSetting", project, branch, null, false)
                                 }
                             </ul>
                         </div>

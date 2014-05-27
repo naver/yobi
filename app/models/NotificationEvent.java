@@ -1,3 +1,23 @@
+/**
+ * Yobi, Project Hosting SW
+ *
+ * Copyright 2013 NAVER Corp.
+ * http://yobi.io
+ *
+ * @Author Yi EungJun
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *   http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package models;
 
 import controllers.UserApp;
@@ -12,9 +32,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.eclipse.jgit.revwalk.RevCommit;
 import org.joda.time.DateTime;
 import org.tmatesoft.svn.core.SVNException;
-import play.Configuration;
 import play.api.i18n.Lang;
-import play.api.mvc.Call;
 import play.db.ebean.Model;
 import play.i18n.Messages;
 import play.libs.Akka;
@@ -23,6 +41,7 @@ import playRepository.GitCommit;
 import playRepository.GitConflicts;
 import playRepository.RepositoryService;
 import scala.concurrent.duration.Duration;
+import utils.EventConstants;
 import utils.RouteUtil;
 
 import javax.persistence.*;
@@ -38,13 +57,6 @@ import static models.enumeration.EventType.*;
 @Entity
 public class NotificationEvent extends Model {
     private static final long serialVersionUID = 1L;
-
-    private static final int NOTIFICATION_DRAFT_TIME_IN_MILLIS = Configuration.root()
-            .getMilliseconds("application.notification.draft-time", 30 * 1000L).intValue();
-
-    private static final int NOTIFICATION_KEEP_TIME_DEFAULT = -1;
-    private static final int NOTIFICATION_KEEP_TIME_IN_DAYS = Configuration.root().getInt(
-            "application.notification.keep-time", NOTIFICATION_KEEP_TIME_DEFAULT);
 
     @Id
     public Long id;
@@ -113,7 +125,7 @@ public class NotificationEvent extends Model {
             case NEW_POSTING:
             case NEW_COMMENT:
             case NEW_PULL_REQUEST:
-            case NEW_PULL_REQUEST_COMMENT:
+            case NEW_REVIEW_COMMENT:
             case NEW_COMMIT:
             case ISSUE_BODY_CHANGED:
                 return newValue;
@@ -135,10 +147,26 @@ public class NotificationEvent extends Model {
                 } else {
                     return Messages.get(lang, "notification.member.enroll.cancel");
                 }
-            case PULL_REQUEST_REVIEWED:
-                return Messages.get(lang, "notification.pullrequest.reviewed", newValue);
-            case PULL_REQUEST_UNREVIEWED:
-                return Messages.get(lang, "notification.pullrequest.unreviewed", newValue);
+            case ORGANIZATION_MEMBER_ENROLL_REQUEST:
+                if (RequestState.REQUEST.name().equals(newValue)) {
+                    return Messages.get(lang, "notification.organization.member.enroll.request");
+                } else  if (RequestState.ACCEPT.name().equals(newValue)) {
+                    return Messages.get(lang, "notification.organization.member.enroll.accept");
+                } else {
+                    return Messages.get(lang, "notification.organization.member.enroll.cancel");
+                }
+            case PULL_REQUEST_REVIEW_STATE_CHANGED:
+                if (PullRequestReviewAction.DONE.name().equals(newValue)) {
+                    return Messages.get(lang, "notification.pullrequest.reviewed", User.find.byId(senderId).loginId);
+                } else {
+                    return Messages.get(lang, "notification.pullrequest.unreviewed", User.find.byId(senderId).loginId);
+                }
+            case REVIEW_THREAD_STATE_CHANGED:
+                if (newValue.equals(CommentThread.ThreadState.CLOSED.name())) {
+                    return Messages.get(lang, "notification.reviewthread.closed");
+                } else {
+                    return Messages.get(lang, "notification.reviewthread.reopened");
+                }
             default:
                 return null;
         }
@@ -172,6 +200,15 @@ public class NotificationEvent extends Model {
         }
     }
 
+    public Organization getOrganization() {
+        switch (resourceType) {
+            case ORGANIZATION:
+                return Organization.find.byId(Long.valueOf(resourceId));
+            default:
+                return null;
+        }
+    }
+
     public boolean resourceExists() {
         return Resource.exists(resourceType, resourceId);
     }
@@ -182,7 +219,7 @@ public class NotificationEvent extends Model {
             event.notificationMail.notificationEvent = event;
         }
 
-        Date draftDate = DateTime.now().minusMillis(NOTIFICATION_DRAFT_TIME_IN_MILLIS).toDate();
+        Date draftDate = DateTime.now().minusMillis(EventConstants.DRAFT_TIME_IN_MILLIS).toDate();
 
         NotificationEvent lastEvent = NotificationEvent.find.where()
                 .eq("resourceId", event.resourceId)
@@ -229,6 +266,10 @@ public class NotificationEvent extends Model {
             @Override
             public boolean evaluate(Object obj) {
                 User receiver = (User) obj;
+                if(receiver.loginId == null) {
+                    return false;
+                }
+
                 if (!Watch.isWatching(receiver, resource)) {
                     return true;
                 }
@@ -271,6 +312,13 @@ public class NotificationEvent extends Model {
                     return routes.ProjectApp.members(
                             getProject().owner, getProject().name).url();
                 }
+            case ORGANIZATION_MEMBER_ENROLL_REQUEST:
+                Organization organization = getOrganization();
+                if (organization == null) {
+                    return null;
+                }
+                return routes.OrganizationApp.members(organization.name).url();
+
             case NEW_COMMIT:
                 if (getProject() == null) {
                     return null;
@@ -335,18 +383,20 @@ public class NotificationEvent extends Model {
      * @param sender
      * @param pullRequest
      * @param newComment
-     * @see {@link controllers.PullRequestCommentApp#newComment(String, String, Long)}
+     * @param urlToView
+     * @see {@link controllers.PullRequestApp#newComment(String, String, Long, String)}
      */
-    public static void afterNewComment(User sender, PullRequest pullRequest, PullRequestComment newComment) {
+    public static void afterNewComment(User sender, PullRequest pullRequest,
+                                       ReviewComment newComment, String urlToView) {
         NotificationEvent notiEvent = createFrom(sender, newComment);
         notiEvent.title = formatReplyTitle(pullRequest);
-        Set<User> receivers = getMentionedUsers(newComment.contents);
+        Set<User> receivers = getMentionedUsers(newComment.getContents());
         receivers.addAll(getReceivers(sender, pullRequest));
-        receivers.remove(User.findByLoginId(newComment.authorLoginId));
+        receivers.remove(User.findByLoginId(newComment.author.loginId));
         notiEvent.receivers = receivers;
-        notiEvent.eventType = NEW_PULL_REQUEST_COMMENT;
+        notiEvent.eventType = NEW_REVIEW_COMMENT;
         notiEvent.oldValue = null;
-        notiEvent.newValue = newComment.contents;
+        notiEvent.newValue = newComment.getContents();
 
         NotificationEvent.add(notiEvent);
     }
@@ -376,6 +426,8 @@ public class NotificationEvent extends Model {
         notiEvent.eventType = NEW_COMMENT;
         notiEvent.oldValue = null;
         notiEvent.newValue = comment.contents;
+        notiEvent.resourceType = comment.asResource().getType();
+        notiEvent.resourceId = comment.asResource().getId();
 
         NotificationEvent.add(notiEvent);
     }
@@ -424,6 +476,52 @@ public class NotificationEvent extends Model {
 
         return notiEvent;
     }
+
+    /**
+     * 상태 변경에 대한 알림을 추가한다.
+     *
+     * 등록된 notification은 사이트 메인 페이지를 통해 사용자에게 보여지며 또한
+     * {@link models.NotificationMail#startSchedule()} 에 의해 메일로 발송된다.
+     *
+     * @param oldState
+     * @param thread
+     */
+    public static NotificationEvent afterStateChanged(
+            CommentThread.ThreadState oldState, CommentThread thread)
+            throws IOException, SVNException, ServletException {
+        NotificationEvent notiEvent = createFromCurrentUser(thread);
+
+        notiEvent.eventType = REVIEW_THREAD_STATE_CHANGED;
+        notiEvent.oldValue = oldState.name() != null ? oldState.name() : null;
+        notiEvent.newValue = thread.state.name();
+
+        // Set receivers
+        Set<User> receivers;
+        if (thread.isOnPullRequest()) {
+            PullRequest pullRequest = thread.pullRequest;
+            notiEvent.title = formatReplyTitle(pullRequest);
+            receivers = pullRequest.getWatchers();
+        } else {
+            String commitId;
+            if (thread instanceof CodeCommentThread) {
+                commitId = ((CodeCommentThread)thread).commitId;
+            } else {
+                commitId = ((NonRangedCodeCommentThread)thread).commitId;
+            }
+            Project project = thread.project;
+            Commit commit = RepositoryService.getRepository(project).getCommit(commitId);
+            notiEvent.title = formatReplyTitle(project, commit);
+            receivers = commit.getWatchers(project);
+        }
+        receivers.remove(UserApp.currentUser());
+        notiEvent.receivers = receivers;
+
+        NotificationEvent.add(notiEvent);
+
+        return notiEvent;
+    }
+
+
 
     /**
      * 담당자 변경에 대한 알림을 추가한다.
@@ -492,7 +590,25 @@ public class NotificationEvent extends Model {
         NotificationEvent.add(notiEvent);
     }
 
-    public static void afterNewCommitComment(Project project, CommitComment codeComment) throws IOException, SVNException, ServletException {
+    public static void afterNewCommitComment(Project project, ReviewComment comment,
+                                             String commitId) throws
+            IOException, SVNException, ServletException {
+        Commit commit = RepositoryService.getRepository(project).getCommit(commitId);
+        Set<User> watchers = commit.getWatchers(project);
+        watchers.addAll(getMentionedUsers(comment.getContents()));
+        watchers.remove(UserApp.currentUser());
+
+        NotificationEvent notiEvent = createFromCurrentUser(comment);
+        notiEvent.title = formatReplyTitle(project, commit);
+        notiEvent.receivers = watchers;
+        notiEvent.eventType = NEW_COMMENT;
+        notiEvent.oldValue = null;
+        notiEvent.newValue = comment.getContents();
+
+        NotificationEvent.add(notiEvent);
+    }
+
+    public static void afterNewSVNCommitComment(Project project, CommitComment codeComment) throws IOException, SVNException, ServletException {
         Commit commit = RepositoryService.getRepository(project).getCommit(codeComment.commitId);
         Set<User> watchers = commit.getWatchers(project);
         watchers.addAll(getMentionedUsers(codeComment.contents));
@@ -524,15 +640,54 @@ public class NotificationEvent extends Model {
             notiEvent.receivers.remove(UserApp.currentUser());
             notiEvent.receivers.add(user);
         }
-        if (state == RequestState.REQUEST) {
-            notiEvent.title = formatNewTitle(project, user);
-            notiEvent.oldValue = RequestState.CANCEL.name();
-        } else {
-            notiEvent.title = formatReplyTitle(project, user);
-            notiEvent.oldValue = RequestState.REQUEST.name();
+
+        switch (state) {
+            case REQUEST:
+                notiEvent.title = formatMemberRequestTitle(project, user);
+                notiEvent.oldValue = RequestState.CANCEL.name();
+                break;
+            case CANCEL:
+                notiEvent.title = formatMemberRequestCancelTitle(project, user);
+                notiEvent.oldValue = RequestState.REQUEST.name();
+                break;
+            case ACCEPT:
+                notiEvent.title = formatMemberAcceptTitle(project, user);
+                notiEvent.oldValue = RequestState.REQUEST.name();
+                break;
         }
+
         notiEvent.resourceType = project.asResource().getType();
         notiEvent.resourceId = project.asResource().getId();
+        NotificationEvent.add(notiEvent);
+    }
+
+    public static void afterOrganizationMemberRequest(Organization organization, User user, RequestState state) {
+        NotificationEvent notiEvent = createFromCurrentUser(organization);
+        notiEvent.eventType = ORGANIZATION_MEMBER_ENROLL_REQUEST;
+        notiEvent.receivers = getReceivers(organization);
+        notiEvent.newValue = state.name();
+        if (state == RequestState.ACCEPT || state == RequestState.REJECT) {
+            notiEvent.receivers.remove(UserApp.currentUser());
+            notiEvent.receivers.add(user);
+        }
+
+        switch (state) {
+            case REQUEST:
+                notiEvent.title = formatMemberRequestTitle(organization, user);
+                notiEvent.oldValue = RequestState.CANCEL.name();
+                break;
+            case CANCEL:
+                notiEvent.title = formatMemberRequestCancelTitle(organization, user);
+                notiEvent.oldValue = RequestState.REQUEST.name();
+                break;
+            case ACCEPT:
+                notiEvent.title = formatMemberAcceptTitle(organization, user);
+                notiEvent.oldValue = RequestState.REQUEST.name();
+                break;
+        }
+
+        notiEvent.resourceType = organization.asResource().getType();
+        notiEvent.resourceId = organization.asResource().getId();
         NotificationEvent.add(notiEvent);
     }
 
@@ -562,10 +717,10 @@ public class NotificationEvent extends Model {
      * 코드 보내기 리뷰 완료 또는 리뷰 완료 취소할 때 알림을 추가한다.
      *
      * @param pullRequest
-     * @param eventType
+     * @param reviewAction
      * @return
      */
-    public static NotificationEvent afterReviewed(PullRequest pullRequest, EventType eventType) {
+    public static NotificationEvent afterReviewed(PullRequest pullRequest, PullRequestReviewAction reviewAction) {
         String title = formatReplyTitle(pullRequest);
         Resource resource = pullRequest.asResource();
         Set<User> receivers = pullRequest.getWatchers();
@@ -580,8 +735,9 @@ public class NotificationEvent extends Model {
         notiEvent.receivers = receivers;
         notiEvent.resourceId = resource.getId();
         notiEvent.resourceType = resource.getType();
-        notiEvent.eventType = eventType;
-        notiEvent.newValue = reviewer.loginId;
+        notiEvent.eventType = EventType.PULL_REQUEST_REVIEW_STATE_CHANGED;
+        notiEvent.oldValue = reviewAction.getOppositAction().name();
+        notiEvent.newValue = reviewAction.name();
 
         add(notiEvent);
 
@@ -732,30 +888,84 @@ public class NotificationEvent extends Model {
         return receivers;
     }
 
-    private static String formatNewTitle(Project project, User user) {
-        return String.format("[%s] @%s wants to join your project", project.name, user.loginId);
+    private static Set<User> getReceivers(Organization organization) {
+        Set<User> receivers = new HashSet<>();
+        List<User> managers = User.findUsersByOrganization(organization.id, RoleType.ORG_ADMIN);
+        receivers.addAll(managers);
+
+        return receivers;
     }
 
-    private static String formatReplyTitle(Project project, User user) {
-        return String.format("Re: [%s] @%s wants to join your project", project.name, user.loginId);
+    private static String formatMemberRequestTitle(Project project, User user) {
+        return Messages.get("notification.member.request.title", project.name, user.loginId);
     }
 
-    private static Set<User> getMentionedUsers(String body) {
-        Matcher matcher = Pattern.compile("@" + User.LOGIN_ID_PATTERN).matcher(body);
+    private static String formatMemberRequestCancelTitle(Project project, User user) {
+        return Messages.get("notification.member.request.cancel.title", project.name, user.loginId);
+    }
+
+    private static String formatMemberRequestCancelTitle(Organization organization, User user) {
+        return Messages.get("notification.member.request.cancel.title", organization.name, user.loginId);
+    }
+
+    private static String formatMemberRequestTitle(Organization organization, User user) {
+        return Messages.get("notification.organization.member.request.title", organization.name, user.loginId);
+    }
+
+    private static String formatMemberAcceptTitle(Project project, User user) {
+        return Messages.get("notification.member.request.accept.title", project.name, user.loginId);
+    }
+
+    private static String formatMemberAcceptTitle(Organization organization, User user) {
+        return Messages.get("notification.member.request.accept.title", organization.name, user.loginId);
+    }
+
+    public static Set<User> getMentionedUsers(String body) {
+        Matcher matcher = Pattern.compile("@" + User.LOGIN_ID_PATTERN_ALLOW_FORWARD_SLASH).matcher(body);
         Set<User> users = new HashSet<>();
         while(matcher.find()) {
-            users.add(User.findByLoginId(matcher.group().substring(1)));
+            String mentionWord = matcher.group().substring(1);
+            users.addAll(findOrganizationMembers(mentionWord));
+            users.addAll(findProjectMembers(mentionWord));
+            users.add(User.findByLoginId(mentionWord));
         }
         users.remove(User.anonymous);
         return users;
     }
 
+    private static Set<User> findOrganizationMembers(String mentionWord) {
+        Set<User> users = new HashSet<>();
+        Organization org = Organization.findByName(mentionWord);
+        if (org != null) {
+            for (OrganizationUser orgUser : org.users) {
+                users.add(orgUser.user);
+            }
+        }
+        return users;
+    }
+
+    private static Set<User> findProjectMembers(String mentionWord) {
+        Set<User> users = new HashSet<>();
+        if(mentionWord.contains("/")){
+            String projectName = mentionWord.substring(mentionWord.lastIndexOf("/")+1);
+            String loginId = mentionWord.substring(0, mentionWord.lastIndexOf("/"));
+            Project mentionedProject = Project.findByOwnerAndProjectName(loginId, projectName);
+            if(mentionedProject == null) {
+                return users;
+            }
+            for(ProjectUser projectUser: mentionedProject.members() ){
+                users.add(projectUser.user);
+            }
+        }
+        return users;
+    }
+
     /**
-     * 하루에 한번 {@code NOTIFICATION_KEEP_TIME_IN_DAYS} 보다 오래된 알림을 삭제한다.
+     * 하루에 한번 {@code KEEP_TIME_IN_DAYS} 보다 오래된 알림을 삭제한다.
      * 값이 지정되지 않았거나 양수가 아니라면 동작하지 않는다.
      */
     public static void scheduleDeleteOldNotifications() {
-        if (NOTIFICATION_KEEP_TIME_IN_DAYS > 0) {
+        if (EventConstants.KEEP_TIME_IN_DAYS > 0) {
             Akka.system()
                     .scheduler()
                     .schedule(
@@ -765,7 +975,7 @@ public class NotificationEvent extends Model {
                                 @Override
                                 public void run() {
                                     Date threshold = DateTime.now()
-                                            .minusDays(NOTIFICATION_KEEP_TIME_IN_DAYS).toDate();
+                                            .minusDays(EventConstants.KEEP_TIME_IN_DAYS).toDate();
                                     List<NotificationEvent> olds = find.where()
                                             .lt("created", threshold).findList();
                                     for (NotificationEvent old : olds) {

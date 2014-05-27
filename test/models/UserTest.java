@@ -1,3 +1,23 @@
+/**
+ * Yobi, Project Hosting SW
+ *
+ * Copyright 2012 NAVER Corp.
+ * http://yobi.io
+ *
+ * @Author Sangcheol Hwang
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *   http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package models;
 
 import static org.fest.assertions.Assertions.assertThat;
@@ -70,7 +90,7 @@ public class UserTest extends ModelTest<User> {
         // When
         Map<String, String> userOptions = User.options();
         // Then
-        assertThat(userOptions).hasSize(6);
+        assertThat(userOptions).hasSize(7);
     }
 
 	@Test
@@ -158,4 +178,24 @@ public class UserTest extends ModelTest<User> {
         assertThat(project.getWatchingCount()).isEqualTo(0);
     }
 
+    @Test
+    public void changeState() {
+        // Given
+        User user = new User();
+        user.loginId = "foo";
+        user.save();
+        Project project = new Project();
+        project.save();
+        Issue issue = new Issue();
+        issue.project = project;
+        issue.assignee = new Assignee(user.id, project.id);
+        issue.save();
+
+        // When
+        user.changeState(UserState.DELETED);
+
+        // Then
+        issue.refresh();
+        assertThat(issue.assignee).isNull();
+    }
 }

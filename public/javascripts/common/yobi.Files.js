@@ -1,10 +1,22 @@
 /**
- * @(#)yobi.Files 2013.08.06
+ * Yobi, Project Hosting SW
  *
- * Copyright NHN Corporation.
- * Released under the MIT license
+ * Copyright 2013 NAVER Corp.
+ * http://yobi.io
  *
- * http://yobi.dev.naver.com/license
+ * @Author JiHan Kim
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *   http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 /**
  * yobi.Files
@@ -48,12 +60,12 @@ yobi.Files = (function(){
 
         // HTTPS connection is required for XHR upload on MSIE Browsers
         // even if FormData feature available.
-        if(htVar.bXHR2 && navigator.userAgent.toLowerCase().indexOf("trident") > -1){
+        if(navigator.userAgent.toLowerCase().indexOf("trident") > -1){
             htVar.bXHR2 = htVar.bXHR2 && (location.protocol.toLowerCase().indexOf("https") > -1);
         }
 
         // HTML5 FileAPI required
-        htVar.bDroppable = (typeof window.File != "undefined");
+        htVar.bDroppable = (typeof window.File != "undefined") && htVar.bXHR2;
 
         // onpaste & XHR2 required
         htVar.bPastable = (typeof document.onpaste != "undefined") && htVar.bXHR2

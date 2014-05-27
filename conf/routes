@@ -22,12 +22,27 @@ GET            /UIKit                                                           
 GET            /import                                                                controllers.ImportApp.importForm()
 POST           /import                                                                controllers.ImportApp.newProject()
 
+# Organization
+GET            /organizations/new                                                     controllers.OrganizationApp.newForm()
+POST           /organizations/new                                                     controllers.OrganizationApp.newOrganization()
+GET            /organizations/:name                                                   controllers.OrganizationApp.organization(name: String)
+POST           /organizations/:organizationName/setting                               controllers.OrganizationApp.updateOrganizationInfo(organizationName: String)
+GET            /organizations/:organizationName/settingform                           controllers.OrganizationApp.settingForm(organizationName: String)
+GET            /organizations/:organizationName/members                               controllers.OrganizationApp.members(organizationName: String)
+POST           /organizations/:organizationName/members                               controllers.OrganizationApp.addMember(organizationName: String)
+POST           /organizations/:organizationName/member/:userId/edit                   controllers.OrganizationApp.editMember(organizationName: String, userId: Long)
+DELETE         /organizations/:organizationName/member/:userId/delete                 controllers.OrganizationApp.deleteMember(organizationName: String, userId: Long)
+
+# Enrolling Organization
+POST           /organizations/:organizationName/enroll                                controllers.EnrollOrganizationApp.enroll(organizationName)
+POST           /organizations/:organizationName/cancel/enroll                         controllers.EnrollOrganizationApp.cancelEnroll(organizationName)
+
 # Notification
 POST           /noti/toggle/:projectId/:notiType                                      controllers.WatchProjectApp.toggle(projectId: Long, notiType)
 
 # User
 GET            /users                                                                 controllers.UserApp.users(query: String ?= "")
-GET            /user/issues                                                 controllers.IssueApp.userIssues(state:String ?= "", format:String ?= "html", pageNum: Int ?= 1)
+GET            /user/issues                                                           controllers.IssueApp.userIssues(state:String ?= "", format:String ?= "html", pageNum: Int ?= 1)
 GET            /users/loginform                                                       controllers.UserApp.loginForm()
 POST           /users/login                                                           controllers.UserApp.login()
 GET            /users/logout                                                          controllers.UserApp.logout()
@@ -36,8 +51,8 @@ POST           /users/signup                                                    
 GET            /user/editform                                                         controllers.UserApp.editUserInfoForm()
 POST           /user/edit                                                             controllers.UserApp.editUserInfo()
 POST           /user/resetPassword                                                    controllers.UserApp.resetUserPassword()
-GET            /user/isExist/:loginId                                                 controllers.UserApp.isUserExist(loginId)
-GET            /user/isEmailExist/:email                                              controllers.UserApp.isEmailExist(email)
+GET            /user/isUsed                                                           controllers.UserApp.isUsed(name:String)
+GET            /user/isEmailExist                                                     controllers.UserApp.isEmailExist(email:String)
 GET            /info/leave/:user/:project                                             controllers.UserApp.leave(user, project)
 POST           /user/email                                                            controllers.UserApp.addEmail()
 DELETE         /user/email/delete/:emailId                                            controllers.UserApp.deleteEmail(emailId:Long)
@@ -71,8 +86,7 @@ POST           /files/:id/?                                                     
 POST           /files/:id                                                             controllers.AttachmentApp.deleteFile(id: Long)
 
 # Pull Request Comment
-POST           /:ownerName/:project/pullRequest/:pullRequestId/comments               controllers.PullRequestCommentApp.newComment(ownerName, project, pullRequestId: Long)
-DELETE         /comment/:id/delete                                                    controllers.PullRequestCommentApp.deleteComment(id: Long)
+POST           /:ownerName/:project/pullRequest/:pullRequestId/comments               controllers.PullRequestApp.newComment(ownerName, project, pullRequestId: Long, commitId: String ?= null)
 
 # Boards
 GET            /:user/:project/posts                                                  controllers.BoardApp.posts(user, project, pageNum: Int ?= 1)
@@ -114,6 +128,12 @@ POST           /:user/:project/members                                          
 POST           /:user/:project/member/:id/edit                                        controllers.ProjectApp.editMember(user, project, id:Long)
 DELETE         /:user/:project/member/:id/delete                                      controllers.ProjectApp.deleteMember(user, project, id:Long)
 DELETE         /:user/:project/pushedBranch/:id/delete                                controllers.ProjectApp.deletePushedBranch(user, project, id:Long)
+GET            /:user/:project/transfer                                               controllers.ProjectApp.transferForm(user, project)
+PUT            /:user/:project/transfer                                               controllers.ProjectApp.transferProject(user, project)
+GET            /project/transfer/:id/:key                                             controllers.ProjectApp.acceptTransfer(id: Long, key)
+
+# Project Review Menu
+GET            /:user/:project/reviews                                                controllers.ReviewThreadApp.reviewThreads(user, project)
 
 # Milestones
 GET            /:user/:project/milestones                                             controllers.MilestoneApp.milestones(user, project)
@@ -138,7 +158,6 @@ POST           /:user/:project/issue/$number<[0-9]+>/edit                       
 GET            /:user/:project/issue/$number<[0-9]+>/nextstate                        controllers.IssueApp.nextState(user, project, number:Long)
 DELETE         /:user/:project/issue/$number<[0-9]+>/delete                           controllers.IssueApp.deleteIssue(user, project, number:Long)
 POST           /:user/:project/issue/$number<[0-9]+>/comments                         controllers.IssueApp.newComment(user, project, number:Long)
-POST           /:user/:project/issue/$number<[0-9]+>/commentsWithState                controllers.IssueApp.newCommentWithState(user, project, number:Long)
 DELETE         /:user/:project/issue/$number<[0-9]+>/comment/:commentId/delete        controllers.IssueApp.deleteComment(user, project, number:Long, commentId:Long)
 GET            /:user/:project/issue/$number<[0-9]+>/timeline                         controllers.IssueApp.timeline(user, project, number:Long)
 
@@ -153,16 +172,16 @@ GET            /:ownerName/:project/info/refs                                   
 POST           /:ownerName/:project/$service<git-upload-pack|git-receive-pack>        controllers.GitApp.serviceRpc(ownerName:String, project:String, service:String)
 
 # Fork & Pull Request
-GET            /:ownerName/:project/newFork                                           controllers.PullRequestApp.newFork(ownerName:String, project:String)
+GET            /:ownerName/:project/newFork                                           controllers.PullRequestApp.newFork(ownerName:String, project:String, forkOwner:String ?= null)
 POST           /:ownerName/:project/fork                                              controllers.PullRequestApp.fork(ownerName:String, project:String)
-POST           /:ownerName/:project/clone                                             controllers.PullRequestApp.doClone(ownerName:String, project:String, name:String, isPublic:Boolean)
+POST           /:ownerName/:project/clone                                             controllers.PullRequestApp.doClone(ownerName:String, project:String)
 GET            /:ownerName/:project/pullRequests                                      controllers.PullRequestApp.pullRequests(ownerName, project)
 
 GET            /:ownerName/:project/closedPullRequests                                controllers.PullRequestApp.closedPullRequests(ownerName, project)
 GET            /:ownerName/:project/sentPullRequests                                  controllers.PullRequestApp.sentPullRequests(ownerName, project)
 GET            /:ownerName/:project/pullRequest/:id                                   controllers.PullRequestApp.pullRequest(ownerName, project, id: Long)
-GET            /:ownerName/:project/pullRequest/:id/commits                           controllers.PullRequestApp.pullRequestCommits(ownerName, project, id: Long)
 GET            /:ownerName/:project/pullRequest/:id/changes                           controllers.PullRequestApp.pullRequestChanges(ownerName, project, id: Long)
+GET            /:ownerName/:project/pullRequest/:id/changes/:commitId                 controllers.PullRequestApp.specificChange(ownerName, project, id: Long, commitId: String)
 GET            /:ownerName/:project/pullRequest/:id/state                             controllers.PullRequestApp.pullRequestState(ownerName, project, id: Long)
 GET            /:ownerName/:project/newPullRequestForm                                controllers.PullRequestApp.newPullRequestForm(ownerName:String, project:String)
 POST           /:ownerName/:project/pullRequests                                      controllers.PullRequestApp.newPullRequest(ownerName, project)
@@ -173,8 +192,6 @@ GET            /:ownerName/:project/pullRequest/:id/editform                    
 POST           /:ownerName/:project/pullRequest/:id/edit                              controllers.PullRequestApp.editPullRequest(ownerName, project, id: Long)
 DELETE         /:ownerName/:project/pullRequest/:id/deletefrombranch                  controllers.PullRequestApp.deleteFromBranch(ownerName, project, id: Long)
 POST           /:ownerName/:project/pullRequest/:id/restorefrombranch                 controllers.PullRequestApp.restoreFromBranch(ownerName, project, id: Long)
-GET            /:ownerName/:project/pullRequest/:id/commit/:commitId                  controllers.PullRequestApp.commitView(ownerName, project, id: Long, commitId)
-
 
 # SVN
 HEAD           /svn/*path                                                             controllers.SvnApp.serviceWithPath(path:String)
@@ -241,11 +258,15 @@ POST           /:user/:project/pullRequest/:number/review                       
 POST           /:user/:project/pullRequest/:number/unreview                           controllers.ReviewApp.unreview(user, project, number: Long)
 
 # Compare
-GET            /:user/:project/compare/:revA..:revB                                             controllers.CompareApp.compare(user, project, revA, revB)
+GET            /:user/:project/compare/:revA..:revB                                   controllers.CompareApp.compare(user, project, revA, revB)
 
 # Vote
 POST           /:user/:project/issue/:number/vote                                     controllers.VoteApp.vote(user, project, number: Long)
 POST           /:user/:project/issue/:number/unvote                                   controllers.VoteApp.unvote(user, project, number: Long)
+
+# Comment Thread
+POST           /threads/:id/open                                                      controllers.CommentThreadApp.open(id: Long)
+POST           /threads/:id/close                                                     controllers.CommentThreadApp.close(id: Long)
 
 # remove trailing slash - must be the bottom of this file
 GET            /*paths                                                                controllers.Application.removeTrailer(paths)

@@ -1,3 +1,23 @@
+@**
+* Yobi, Project Hosting SW
+*
+* Copyright 2012 NAVER Corp.
+* http://yobi.io
+*
+* @Author Ahn Hyeok Jun
+*
+* Licensed under the Apache License, Version 2.0 (the "License");
+* you may not use this file except in compliance with the License.
+* You may obtain a copy of the License at
+*
+*   http://www.apache.org/licenses/LICENSE-2.0
+*
+* Unless required by applicable law or agreed to in writing, software
+* distributed under the License is distributed on an "AS IS" BASIS,
+* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+* See the License for the specific language governing permissions and
+* limitations under the License.
+**@
 @(post:Posting, commentForm:Form[PostingComment],  project:Project)
 
 @import utils.JodaDateUtil
@@ -8,10 +28,6 @@
 
 @urlToPostings = @{ urlToList(request.getHeader("Referer"), routes.BoardApp.posts(project.owner, project.name).toString()) }
 
-@isAuthorComment(commentId: String) = @{
-    if(commentId == UserApp.currentUser().loginId) {"author"}
-}
-
 @projectLayout(post.title, project, utils.MenuType.BOARD){
 @projectMenu(project, utils.MenuType.BOARD, "main-menu-only")
 <div class="page-wrap-outer">
@@ -20,7 +36,7 @@
         <div class="board-header issue">
             <div class="pull-right mr10 mt10">
                 <div class="date" title="@JodaDateUtil.getDateString(post.createdDate)">
-                    @agoString(post.ago)
+                    @agoOrDateString(post.createdDate)
                 </div>
             </div>
             <div class="title">
@@ -44,11 +60,15 @@
     			</div>
     		</div>
     		<div class="content markdown-wrap markdown-before" markdown="true">@post.body</div>
-    		<div class="attachments" id="attachments" data-resourceType="@ResourceType.BOARD_POST" data-resourceId="@post.id"></div>
+            <div class="attachments" id="attachments" data-resource-type="@ResourceType.BOARD_POST" data-resource-id="@post.id"></div>
     	</div>
     	<div class="board-footer board-actrow">
     	    <div class="pull-left">
-                <a href="@urlToPostings" class="ybtn">@Messages("button.list")</a>
+                @if(isAllowed(UserApp.currentUser(), post.asResource(), Operation.WATCH)){
+                    <button id="watch-button" type="button" class="ybtn @if(post.getWatchers.contains(UserApp.currentUser())){ybtn-watching}" data-toggle="button" data-watching="@if(post.getWatchers.contains(UserApp.currentUser())){true}else{false}">
+                    @if(post.getWatchers.contains(UserApp.currentUser())) { @Messages("project.unwatch") } else { @Messages("project.watch") }
+                    </button>
+                }
             </div>
 
             @if(isAllowed(UserApp.currentUser(), post.asResource(), Operation.DELETE)){
@@ -58,52 +78,16 @@
             @if(isAllowed(UserApp.currentUser(), post.asResource(), Operation.UPDATE)){
             <a href="@routes.BoardApp.editPostForm(project.owner, project.name, post.getNumber)" class="ybtn">@Messages("button.edit")</a>
             }
-
-            @if(isAllowed(UserApp.currentUser(), post.asResource(), Operation.WATCH)){
-            <button id="watch-button" type="button" class="ybtn" data-toggle="button" data-watching="@if(post.getWatchers.contains(UserApp.currentUser())){true}else{false}">
-                @if(post.getWatchers.contains(UserApp.currentUser())) { @Messages("project.unwatch") } else { @Messages("project.watch") }
-            </button>
-            }
     	</div>
 
     	@** Comment **@
     	<div id="comments" class="board-comment-wrap">
-    		<div class="comment-header"><i class="yobicon-comments"></i> <strong>@Messages("common.comment")</strong> <strong class="num">@post.comments.size</strong></div>
-    	    <hr class="nm" />
+            @partial_comments(project, post)
 
-    	    <ul class="comments">
-    	    @for(comment <-post.comments){
-    			<li class="comment @isAuthorComment(comment.authorLoginId)" id="comment-@comment.id">
-                    <div class="comment-avatar">
-                        <a href="@routes.UserApp.userInfo(comment.authorLoginId)" class="avatar-wrap" data-toggle="tooltip" data-placement="top" title="@comment.authorName">
-                            <img src="@User.findByLoginId(comment.authorLoginId).avatarUrl" width="32" height="32" alt="@comment.authorLoginId">
-                        </a>
-                    </div>
-                    <div class="media-body">
-                        <div class="meta-info">
-                            <span class="comment_author pull-left">
-                                <a href="@routes.UserApp.userInfo(comment.authorLoginId)" data-toggle="tooltip" data-placement="top" title="@comment.authorName">
-                                    <strong>@comment.authorLoginId </strong>
-                                </a>
-                            </span>
-                            <a href="#comment-@comment.id" class="ago">@utils.TemplateHelper.agoString(comment.ago())</a>
-                            @if(isAllowed(UserApp.currentUser(), comment.asResource(), Operation.DELETE)){
-                            <span class="edit pull-right">
-                                <button type="button" class="btn-transparent close" data-toggle="comment-delete" data-request-uri="@routes.BoardApp.deleteComment(project.owner, project.name, post.getNumber, comment.id)" title="@Messages("common.comment.delete")"><i class="yobicon-trash"></i></button>
-                            </span>
-                            }
-                        </div>
-
-                        <div class="comment-body markdown-wrap markdown-before" markdown="true">@comment.contents</div>
-
-                        <div class="attachments pull-right" data-resourceType="@ResourceType.NONISSUE_COMMENT" data-resourceId="@comment.id"></div>
-                    </div>
-                </li>
-    	    }
-    		</ul>
-
-            @common.commentForm(project, ResourceType.NONISSUE_COMMENT, routes.BoardApp.newComment(project.owner, project.name, post.getNumber).toString())
+            @common.commentForm(post.asResource(), ResourceType.NONISSUE_COMMENT, routes.BoardApp.newComment(project.owner, project.name, post.getNumber).toString())
     	</div>
+
+        <a href="@urlToPostings" class="ybtn pull-left">@Messages("button.list")</a>
 
     	@help.keymap("boardDetail", project)
     </div>
@@ -132,8 +116,11 @@
 @common.markdown(project)
 @common.commentDeleteModal()
 
-<link rel="stylesheet" type="text/css" media="screen" href="@routes.Assets.at("javascripts/lib/mentionjs/mention.css")">
-<script type="text/javascript" src="@routes.Assets.at("javascripts/lib/mentionjs/mention.js")"></script>
+<link rel="stylesheet" type="text/css" media="screen" href="@routes.Assets.at("javascripts/lib/atjs/jquery.atwho.css")">
+<script type="text/javascript" src="@routes.Assets.at("javascripts/lib/atjs/jquery.caret.min.js")"></script>
+<script type="text/javascript" src="@routes.Assets.at("javascripts/lib/atjs/jquery.atwho.js")"></script>
+<script type="text/javascript" src="@routes.Assets.at("javascripts/lib/atjs/jquery.browser.js")"></script>
+<script type="text/javascript" src="@routes.Assets.at("javascripts/lib/atjs/jquery.firefox.keyfix.js")"></script>
 <script type="text/javascript">
 	$(document).ready(function(){
 		$yobi.loadModule("board.View", {
@@ -144,7 +131,7 @@
         // yobi.ShortcutKey
         yobi.ShortcutKey.setKeymapLink({
             "N": "@routes.BoardApp.newPostForm(project.owner, project.name)",
-            "L": "@routes.BoardApp.posts(project.owner, project.name)"
+            "L": "@urlToPostings"
             @if(isAllowed(UserApp.currentUser(), post.asResource(), Operation.UPDATE)){
            ,"E": "@routes.BoardApp.editPostForm(project.owner, project.name, post.getNumber)"
             }

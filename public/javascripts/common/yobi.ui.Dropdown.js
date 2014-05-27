@@ -1,12 +1,23 @@
 /**
- * @(#)yobi.ui.Dropdown.js 2013.04.11
+ * Yobi, Project Hosting SW
  *
- * Copyright NHN Corporation.
- * Released under the MIT license
+ * Copyright 2013 NAVER Corp.
+ * http://yobi.io
  *
- * http://yobi.dev.naver.com/license
+ * @Author Jihan Kim
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *   http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
-
 /**
  * bootstrap-dropdown.js 에서는 단순히 목록 토글 기능만 제공하므로
  * yobi.Dropdown 로 해당 영역을 지정하면 <select> 의 기능을 하도록 만든다
@@ -59,6 +70,47 @@
             // ul.dropdown-menu 전체에 설정하는 것이 메모리 절약
 
             htElement.welList.on("click", "li", _onClickItem);
+            htElement.welList.on("mousewheel", _onScrollList);
+        }
+
+        /**
+         * 목록 영역에서 스크롤 할 때의 이벤트 핸들러 (mousewheel)
+         *
+         * 최상단에서 위쪽으로 스크롤 하려 하거나,
+         * 최하단에서 아래쪽으로 스크롤 하려 하는 경우
+         * 브라우저의 기본 동작을 막고 이벤트를 취소한다
+         *
+         * @param weEvt
+         * @returns {boolean}
+         * @private
+         */
+        function _onScrollList(weEvt){
+            if((weEvt.originalEvent.deltaY > 0 && _isScrollEndOfList()) ||
+               (weEvt.originalEvent.deltaY < 0 && _isScrollTopOfList())){
+                weEvt.preventDefault();
+                weEvt.stopPropagation();
+                return false;
+            }
+        }
+
+        /**
+         * 목록 영역의 스크롤 위치가 최상단인지의 여부를 반환한다
+         *
+         * @returns {boolean}
+         * @private
+         */
+        function _isScrollTopOfList(){
+            return (htElement.welList.scrollTop() === 0);
+        }
+
+        /**
+         * 목록 영역의 스크롤 위치가 최하단인지의 여부를 반환한다
+         *
+         * @returns {boolean}
+         * @private
+         */
+        function _isScrollEndOfList(){
+            return (htElement.welList.scrollTop() + htElement.welList.height() === htElement.welList.get(0).scrollHeight);
         }
 
         /**

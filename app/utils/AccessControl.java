@@ -1,9 +1,26 @@
+/**
+ * Yobi, Project Hosting SW
+ *
+ * Copyright 2012 NAVER Corp.
+ * http://yobi.io
+ *
+ * @Author Yi EungJun
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *   http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package utils;
 
-import controllers.UserApp;
-import models.Project;
-import models.ProjectUser;
-import models.User;
+import models.*;
 import models.enumeration.Operation;
 import models.enumeration.ResourceType;
 import models.resource.GlobalResource;
@@ -12,83 +29,112 @@ import models.resource.Resource;
 public class AccessControl {
 
     /**
-     * user가 주어진 resourceType을 생성할 수 있는지 여부를 반환한다.
+     * Checks if an user has a permission to create a global resource.
      *
-     * 현재는 Global Resource 중에서 Project를 생성할 때만 사용한다.
-     *
-     * 유저가 로그인하지 않았으면 생성권한이 없다고 판단한다.
+     * Currently it always returns true if the user is not anonymous.
      *
      * @param user
-     * @return user가 해당 resourceType을 생성할 수 있는지 여부
+     * @return true if the user has the permission
      */
     public static boolean isGlobalResourceCreatable(User user) {
         return !user.isAnonymous();
     }
 
     /**
-     * user가 해당 project에서 주어진 resourceType의 resource를 생성할 수 있는 여부를 반환한다.
+     * Checks if an user has a permission to create a resource of the given
+     * type in the given project.
      *
-     * 자신이 프로젝트 멤버일 경우에는 프로젝트에 속하는 모든 리소스에 대한 생성권한을 갖고
-     * 로그인 유저일 경우에는 이슈와 게시물에 한해서만 생성할 수 있다.
+     * 주의: 어떤 리소스의 저자이기 때문에 그 리소스에 속한 리소스를 생성할 수 있는지에 대한
+     * 여부는 검사하지 않는다.
      *
      * @param user
      * @param project
      * @param resourceType
-     * @return user가 해당 project에서 주어진 resourceType의 resource를 생성할 수 있는지 여부
+     * @return true if the user has the permission
      */
-
     public static boolean isProjectResourceCreatable(User user, Project project, ResourceType resourceType) {
-        if (user == null) return false;
-        if (user.isSiteManager()) {
+        // Anonymous user cannot create anything.
+        if (user == null || user.isAnonymous()) {
+            return false;
+        }
+
+        // Site manager, Group admin, Project members can create anything.
+        if (user.isSiteManager()
+            || OrganizationUser.isAdmin(project.organization, user)
+            || ProjectUser.isMember(user.id, project.id)
+            || isAllowedIfGroupMember(project, user)) {
             return true;
         }
 
-        if (ProjectUser.isMember(user.id, project.id)) {
-            // Project members can create anything.
+        // If the project is not public, nonmembers cannot create anything.
+        if (!project.isPublic()) {
+            return false;
+        }
+
+        // If the project is public, login users can create issues and posts.
+        switch (resourceType) {
+        case ISSUE_POST:
+        case BOARD_POST:
+        case ISSUE_COMMENT:
+        case NONISSUE_COMMENT:
+        case FORK:
+        case COMMIT_COMMENT:
+        case REVIEW_COMMENT:
             return true;
-        } else {
-            // If the project is private, nonmembers cannot create anything.
-            if (!project.isPublic) {
-                return false;
-            }
-
-            // If the project is public, login users can create issues and posts.
-            if (!user.isAnonymous()) {
-                switch(resourceType){
-                case ISSUE_POST:
-                case BOARD_POST:
-                case ISSUE_COMMENT:
-                case NONISSUE_COMMENT:
-                case FORK:
-                case COMMIT_COMMENT:
-                case PULL_REQUEST_COMMENT:
-                    return true;
-                default:
-                    return false;
-                }
-            }
-
+        default:
             return false;
         }
     }
 
     /**
-     * Global 리소스에 대해 주어진 리소스의 operation을 허용하는지 여부
+     * If the project that is belong to a group and is protected or public,
+     * then allow the operation to the member of the group.
+     * @param project
+     * @param user
+     * @return
+     */
+    private static boolean isAllowedIfGroupMember(Project project, User user) {
+        return project.hasGroup()
+                && (project.isPublic() || project.isProtected())
+                && OrganizationUser.isMember(project.organization, user);
+    }
+
+    public static boolean isResourceCreatable(User user, Resource container, ResourceType resourceType) {
+        if (isAllowedIfAuthor(user, container) || isAllowedIfAssignee(user, container)) {
+            return true;
+        }
+
+        Project project = (container.getType() == ResourceType.PROJECT) ?
+            Project.find.byId(Long.valueOf(container.getId())) : container.getProject();
+
+        if (project == null) {
+            return isGlobalResourceCreatable(user);
+        } else {
+            return isProjectResourceCreatable(user, project, resourceType);
+        }
+    }
+
+    /**
+     * Checks if an user has a permission to do the given operation to the given
+     * resource.
      *
-     * 임시 업로드 파일은 해당 파일을 업로드한 사용자만 접근할 수 있다.
-     * 비공개 프로젝트는 해당 프로젝트의 멤버만 접근할 수 있다.
-     * 공개 프로젝트는 모든 사용자가 접근할 수 있다.
-     * 사용자 및 사용자의 아바타는 그 사용자 본인만 갱신 혹은 삭제할 수 있다.
-     * 프로젝트는 그 프로젝트의 관리자만이 갱신 혹은 삭제할 수 있다.
-     * 익명의 사용자는 지켜보기를 사용 할 수 없다. 비공개 프로젝트에서는 프로젝트 멤버만이 지켜보기를 사용 할 수 있다.
+     * See docs/technical/access-control.md for more information.
+     *
      *
      * @param user
      * @param resource
      * @param operation
-     * @return
+     * @return true if the user has the permission
+     * @see docs/technical/access-control.md
      */
     private static boolean isGlobalResourceAllowed(User user, GlobalResource resource,
                                                    Operation operation) {
+        if(operation == Operation.ASSIGN_ISSUE && resource.getType() == ResourceType.PROJECT) {
+            Project project = Project.find.byId(Long.parseLong(resource.getId()));
+            return ProjectUser.isMember(user.id, project.id)
+                    || (!project.isPrivate() && OrganizationUser.isMember(project.organization, user));
+        }
+
         // Temporary attachments are allowed only for the user who uploads them.
         if (resource.getType() == ResourceType.ATTACHMENT
                 && resource.getContainer().getType() == ResourceType.USER) {
@@ -98,7 +144,13 @@ public class AccessControl {
         if (operation == Operation.READ) {
             if (resource.getType() == ResourceType.PROJECT) {
                 Project project = Project.find.byId(Long.valueOf(resource.getId()));
-                return project != null && (project.isPublic || ProjectUser.isMember(user.id, project.id));
+                if (project == null) {
+                    return false;
+                }
+                return project.isPublic()
+                    || ProjectUser.isMember(user.id, project.id)
+                    || OrganizationUser.isAdmin(project.organization, user)
+                    || isAllowedIfGroupMember(project, user);
             }
 
             // anyone can read any resource which is not a project.
@@ -108,7 +160,13 @@ public class AccessControl {
         if (operation == Operation.WATCH) {
             if (resource.getType() == ResourceType.PROJECT) {
                 Project project = Project.find.byId(Long.valueOf(resource.getId()));
-                return project != null && project.isPublic ? !user.isAnonymous() : ProjectUser.isMember(user.id, project.id);
+                if (project == null) {
+                    return false;
+                }
+                return (project.isPublic() && !user.isAnonymous())
+                        || (ProjectUser.isMember(user.id, project.id)
+                        || OrganizationUser.isAdmin(project.organization, user))
+                        || isAllowedIfGroupMember(project, user);
             }
         }
 
@@ -125,9 +183,17 @@ public class AccessControl {
         case USER_AVATAR:
             return user.id.toString().equals(resource.getId());
         case PROJECT:
-            return ProjectUser.isManager(user.id, Long.valueOf(resource.getId()));
-        case PULL_REQUEST_COMMENT:
-            return user.isSiteManager() || isEditableAsAuthor(user, resource);
+            if(ProjectUser.isManager(user.id, Long.valueOf(resource.getId()))) {
+                return true;
+            }
+            // allow to admins of the group of the project.
+            Project project = Project.find.byId(Long.valueOf(resource.getId()));
+            if (project == null) {
+                return false;
+            }
+            return OrganizationUser.isAdmin(project.organization, user);
+        case ORGANIZATION:
+            return OrganizationUser.isAdmin(Long.valueOf(resource.getId()), user.id);
         default:
             // undefined
             return false;
@@ -135,8 +201,8 @@ public class AccessControl {
     }
 
     /**
-     * {@code user}가 프로젝트 리소스인 {@code resource}에 {@code operation}을
-     * 하는 것이 허용되는지의 여부를 반환한다.
+     * Checks if an user has a permission to do the given operation to the given
+     * resource belongs to the given project.
      *
      * See docs/technical/access-control.md for more information.
      *
@@ -144,60 +210,84 @@ public class AccessControl {
      * @param project
      * @param resource
      * @param operation
-     * @return
+     * @return true if the user has the permission
      */
     private static boolean isProjectResourceAllowed(User user, Project project, Resource resource, Operation operation) {
-        if (user.isSiteManager() || ProjectUser.isManager(user.id, project.id)) {
+        if (OrganizationUser.isAdmin(project.organization, user)) {
             return true;
         }
 
-        // If the resource is an attachment, the permission depends on its container.
-        if (resource.getType() == ResourceType.ATTACHMENT) {
-            switch(operation) {
-                case READ:
-                    return isAllowed(user, resource.getContainer(), Operation.READ);
-                case UPDATE:
-                case DELETE:
-                    return isAllowed(user, resource.getContainer(), Operation.UPDATE);
+        if (user.isSiteManager()
+                || ProjectUser.isManager(user.id, project.id)
+                || isAllowedIfAuthor(user, resource)
+                || isAllowedIfAssignee(user, resource)
+                || isAllowedIfGroupMember(project, user)) {
+            return true;
+        }
+
+        // If the resource is a project_transfer, only new owner can accept the request.
+        if(resource.getType() == ResourceType.PROJECT_TRANSFER) {
+            switch (operation) {
+                case ACCEPT:
+                    ProjectTransfer pt = ProjectTransfer.find.byId(Long.parseLong(resource.getId()));
+                    User to = User.findByLoginId(pt.destination);
+                    if(!to.isAnonymous()) {
+                        return user.loginId.equals(pt.destination);
+                    } else {
+                        Organization receivingOrg = Organization.findByName(pt.destination);
+                        return receivingOrg != null && OrganizationUser.isAdmin(receivingOrg.id, user.id);
+                    }
+                default:
+                    return false;
             }
         }
 
-        // Access Control for members, nonmembers and anonymous.
+        // Some resource's permission depends on their container.
+        switch(resource.getType()) {
+            case ISSUE_STATE:
+            case ISSUE_ASSIGNEE:
+            case ISSUE_MILESTONE:
+            case ATTACHMENT:
+                switch (operation) {
+                    case READ:
+                        return isAllowed(user, resource.getContainer(), Operation.READ);
+                    case UPDATE:
+                    case DELETE:
+                        return isAllowed(user, resource.getContainer(), Operation.UPDATE);
+                }
+        }
+
+        // Access Control for members, group members, nonmembers and anonymous.
         // - Anyone can read public project's resource.
+        // - Group members can read protected projects' resource.
         // - Members can update anything and delete anything except code repository.
         // - Nonmember can update or delete a resource if only
-        //     * the user is the author of the resource,
         //     * the resource is not a code repository,
         //     * and the project to which the resource belongs is public.
         // See docs/technical/access-control.md for more information.
         switch(operation) {
         case READ:
-            return project.isPublic || ProjectUser.isMember(user.id, project.id);
+            return project.isPublic()
+                    || ProjectUser.isMember(user.id, project.id)
+                    || isAllowedIfGroupMember(project, user);
         case UPDATE:
-            if (ProjectUser.isMember(user.id, project.id)) {
-                return true;
-            }
-
-            if (resource.getType() == ResourceType.CODE) {
-                // Nonmember cannot update the repository.
-                return false;
-            } else {
-                return project.isPublic && isEditableAsAuthor(user, resource);
-            }
+            return ProjectUser.isMember(user.id, project.id)
+                    || isAllowedIfGroupMember(project, user);
         case DELETE:
             if (resource.getType() == ResourceType.CODE) {
                 return false;
-            } else {
-                return ProjectUser.isMember(user.id, project.id) ||
-                        (project.isPublic && isEditableAsAuthor(user, resource));
             }
+            return ProjectUser.isMember(user.id, project.id)
+                    || isAllowedIfGroupMember(project, user);
         case ACCEPT:
-            return ProjectUser.isMember(user.id, project.id);
         case CLOSE:
         case REOPEN:
-            return ProjectUser.isMember(user.id, project.id) || isEditableAsAuthor(user, resource);
+            return ProjectUser.isMember(user.id, project.id)
+                    || isAllowedIfGroupMember(project, user);
         case WATCH:
-            return project.isPublic ? !user.isAnonymous() : ProjectUser.isMember(user.id, project.id);
+            return (project.isPublic() && !user.isAnonymous())
+                    || (ProjectUser.isMember(user.id, project.id))
+                    || isAllowedIfGroupMember(project, user);
         default:
             // undefined
             return false;
@@ -206,14 +296,13 @@ public class AccessControl {
     }
 
     /**
-     * {@code user}가 {@code resource}에 {@code operation}을 하는 것이
-     * 허용되는지의 여부를 반환한다.
+     * Checks if an user has a permission to do the given operation to the given
+     * resource.
      *
      * @param user
      * @param resource
      * @param operation
-     * @return {@code user}가 {@code resource}에 {@code operation}을
-     *         하는 것이 허용되는지의 여부
+     * @return true if the user has the permission
      */
     public static boolean isAllowed(User user, Resource resource, Operation operation)
             throws IllegalStateException {
@@ -235,28 +324,49 @@ public class AccessControl {
     }
 
     /**
-     * {@code user}가 {@code project}의 {@code resource}에 대해 저자로서의
-     * 수정 권한을 갖는지의 여부를 반환한다.
+     * Checks if an user has a permission to do something to the given
+     * resource as an author.
      *
-     * 현재는 이슈 및 게시물과 그것들의 댓글에 대해서만 동작한다.
+     * Returns true if and only if these are all true:
+     * - {@code resource} gives permission to read, modify and delete to its author.
+     * - {@code user} is an author of the resource.
      *
      * @param user
      * @param resource
-     * @return {@code user}가 {@code project}의 {@code resource}에
-     *         대해 저자로서의 수정 권한을 갖는지의 여부를 반환한다.
+     * @return true if the user has the permission
      */
-    private static boolean isEditableAsAuthor(User user, Resource resource) {
+    private static boolean isAllowedIfAuthor(User user, Resource resource) {
         switch (resource.getType()) {
         case ISSUE_POST:
-        case ISSUE_STATE:
-        case ISSUE_ASSIGNEE:
         case ISSUE_COMMENT:
         case NONISSUE_COMMENT:
         case BOARD_POST:
         case COMMIT_COMMENT:
-        case PULL_REQUEST:
-        case PULL_REQUEST_COMMENT:
-            return resource.getAuthorId().equals(user.id);
+        case COMMENT_THREAD:
+        case REVIEW_COMMENT:
+            return resource.isAuthoredBy(user);
+        default:
+            return false;
+        }
+    }
+
+    /**
+     * Checks if an user has a permission to do something to the given
+     * resource as an assignee.
+     *
+     * Returns true if and only if these are all true:
+     * - {@code resource} gives permission to read, modify and delete to its assignee.
+     * - {@code user} is an assignee of the resource.
+     *
+     * @param user
+     * @param resource
+     * @return true if the user has the permission
+     */
+    private static boolean isAllowedIfAssignee(User user, Resource resource) {
+        switch (resource.getType()) {
+        case ISSUE_POST:
+            Assignee assignee = Issue.finder.byId(Long.valueOf(resource.getId())).assignee;
+            return assignee != null && assignee.user.id.equals(user.id);
         default:
             return false;
         }

@@ -399,12 +399,7 @@
 
         //Decode just in case stuff like this is submitted:
         //<a href="http://%77%77%77%2E%67%6F%6F%67%6C%65%2E%63%6F%6D">Google</a>
-        try {
-          str = decodeURIComponent(str);
-        } catch (e) {
-          // str was not actually URI-encoded
-        }
-
+        
         //Convert character entities to ASCII - this permits our tests below to work reliably.
         //We only convert entities that are within tags since these are the ones that will pose security problems.
         str = str.replace(/[a-z]+=([\'\"]).*?\1/gi, function(m, match) {
@@ -440,7 +435,7 @@
             });
         }
 
-        //Remove disallowed Javascript in links or img tags
+        //Remove disallowed Javascript in links, img tags or video tags
         do {
             var original = str;
 
@@ -455,6 +450,13 @@
                 str = str.replace(/<img\s+([^>]*?)(\s?\/?>|$)/gi, function(m, attributes, end_tag) {
                     attributes = filter_attributes(attributes.replace('<','').replace('>',''));
                     return m.replace(attributes, attributes.replace(/src=.*?(alert\(|alert&\#40;|javascript\:|charset\=|window\.|document\.|\.cookie|<script|<xss|base64\s*,)/gi, ''));
+                });
+            }
+
+            if (str.match(/<video/i)) {
+                str = str.replace(/<video\s+([^>]*?)(\s?\/?>|$)/gi, function(m, attributes, end_tag) {
+                    attributes = filter_attributes(attributes.replace('<','').replace('>',''));
+                    return m.replace(attributes, attributes.replace(/poster=.*?(alert\(|alert&\#40;|javascript\:|charset\=|window\.|document\.|\.cookie|<script|<xss|base64\s*,)/gi, ''));
                 });
             }
 
@@ -481,7 +483,7 @@
         //below is found, the tag gets converted to entities.
         //So this: <blink>
         //Becomes: &lt;blink&gt;
-        naughty = 'alert|applet|audio|basefont|base|behavior|bgsound|blink|body|embed|expression|form|frameset|frame|head|html|ilayer|iframe|input|isindex|layer|link|meta|object|plaintext|style|script|textarea|title|video|xml|xss';
+        naughty = 'alert|applet|audio|basefont|base|behavior|bgsound|blink|body|embed|expression|form|frameset|frame|head|html|ilayer|iframe|input|isindex|layer|link|meta|object|plaintext|style|script|textarea|title|xml|xss';
         str = str.replace(new RegExp('<(/*\\s*)('+naughty+')([^><]*)([><]*)', 'gi'), function(m, a, b, c, d) {
             return '&lt;' + a + b + c + d.replace('>','&gt;').replace('<','&lt;');
         });
