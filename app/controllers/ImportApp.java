@@ -53,7 +53,7 @@ import static play.data.Form.form;
 public class ImportApp extends Controller {
 
     /**
-     * Git repository에서 코드를 가져와서 프로젝트를 만드는 폼을 보여준다.
+     * Displays a form to create a project by taking codes from a Git repository.
      *
      * @return
      */
@@ -64,8 +64,8 @@ public class ImportApp extends Controller {
     }
 
     /**
-     * 새 프로젝트 시작 폼에 추가로 Git 저장소 URL을 추가로 입력받고
-     * 해당 저장소를 clone하여 프로젝트의 Git 저장소를 생성한다.
+     * Gets the URL of a Git repository entered into a new project form and
+     * clones the repository to create a repository for the project.
      *
      * @return
      */
@@ -99,10 +99,10 @@ public class ImportApp extends Controller {
                 ProjectUser.assignRole(UserApp.currentUser().id, projectId, RoleType.MANAGER);
             }
         } catch (InvalidRemoteException e) {
-            // It is not an url.
+            // It is not a URL.
             errorMessageKey = "project.import.error.wrong.url";
         } catch (JGitInternalException e) {
-            // The url seems that does not locate a git repository.
+            // The URL doesn’t seem  to locate a git repository.
             errorMessageKey = "project.import.error.wrong.url";
         } catch (TransportException e) {
             errorMessageKey = "project.import.error.transport";
