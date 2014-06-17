@@ -3,6 +3,10 @@
 # ~~~~
 
 # This fake route is required to submit a seed to generate Site Secret.
+GET            /issueAPI/:user/:project                                               controllers.APIs.issueAPI(user, project, pageNum:Int ?= 1)
+GET            /searchAPI                                                             controllers.APIs.searchAPI(state:String ?= "", pageNum:Int ?= 1, authorId:String ?= "", assigneeId:String ?= "", mentionId:String ?= "")
+#GET            /milestoneAPI/:user/:project                                           controllers.APIs.milestoneAPI(user, project, pageNum:Int ?= 1)
+
 POST           /                                                                      controllers.Application.fake()
 
 GET            /navitest                                                              controllers.Application.navi()
@@ -271,3 +275,5 @@ POST           /threads/:id/close                                               
 
 # remove trailing slash - must be the bottom of this file
 GET            /*paths                                                                controllers.Application.removeTrailer(paths)
+
+# API
