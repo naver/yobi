@@ -54,10 +54,10 @@ public class CodeApp extends Controller {
     public static String hostName;
 
     /**
-     * 기본 코드 브라우저 표시
+     * Displays the default code browser.
      *
-     * @param userName 프로젝트 소유자 이름
-     * @param projectName 프로젝트 이름
+     * @param userName a project owner
+     * @param projectName a project name
      */
     @IsAllowed(Operation.READ)
     public static Result codeBrowser(String userName, String projectName)
@@ -70,7 +70,7 @@ public class CodeApp extends Controller {
 
         PlayRepository repository = RepositoryService.getRepository(project);
 
-        // GIT 저장소이면서 브랜치가 하나도 없는 경우 NOHEAD 안내문 표시
+        // Displays the NOHEAD message if the repository is a Git repository that has no branch.
         if(repository.isEmpty()) {
             switch (project.vcs) {
                 case RepositoryService.VCS_GIT:
@@ -91,12 +91,12 @@ public class CodeApp extends Controller {
     }
 
     /**
-     * 브랜치, 파일 경로를 인자로 받는 코드 브라우저 표시
+     * Displays a code browser that receives a branch and a file path as its parameters.
      *
-     * @param userName 프로젝트 소유자 이름
-     * @param projectName 프로젝트 이름
-     * @param branch 브랜치 이름
-     * @param path 파일 경로
+     * @param userName a project owner
+     * @param projectName a project name
+     * @param branch a branch name
+     * @param path a file path
      */
     @With(DefaultProjectCheckAction.class)
     public static Result codeBrowserWithBranch(String userName, String projectName, String branch, String path)
@@ -117,7 +117,7 @@ public class CodeApp extends Controller {
         List<ObjectNode> recursiveData = new ArrayList<>();
         List<String> branches = repository.getBranches();
 
-        /** 해당 경로가 폴더이고 최상위가 아니면, 최상위 경로부터 순서대로 정보를 추가한다 **/
+        /** If the given path is a folder and is not a top-level directory, it adds information to the path from the top level path in order **/
         if(fileInfo.get("type").getTextValue().equals("folder") && !path.equals("")){
             recursiveData.addAll(RepositoryService.getMetaDataFromAncestorDirectories(repository, branch, path));
         }
@@ -127,11 +127,11 @@ public class CodeApp extends Controller {
     }
 
     /**
-     * AJAX 호출로 지정한 프로젝트 지정한 경로의 정보를 얻고자 할 때 사용된다
+     * This method is used to get the information about the project path specified by AJAX request.
      *
-     * @param userName 프로젝트 소유자 이름
-     * @param projectName 프로젝트 이름
-     * @param path 파일 또는 폴더의 경로
+     * @param userName a project owner
+     * @param projectName a project name
+     * @param path the path of a file or folder
      */
     @With(DefaultProjectCheckAction.class)
     public static Result ajaxRequest(String userName, String projectName, String path) throws Exception{
@@ -146,12 +146,12 @@ public class CodeApp extends Controller {
     }
 
     /**
-     * AJAX 호출로 지정한 프로젝트의 특정 브랜치에서 지정한 경로의 정보를 얻고자 할 때 사용된다
+     * This method is used to get information about the specified path in the branch of a project called in AJAX request.
      *
-     * @param userName 프로젝트 소유자 이름
-     * @param projectName 프로젝트 이름
-     * @param branch 브랜치 이름
-     * @param path 파일 또는 폴더의 경로
+     * @param userName a project owner
+     * @param projectName a project name
+     * @param branch a branch name
+     * @param path the path of a file or folder
      */
     @With(DefaultProjectCheckAction.class)
     public static Result ajaxRequestWithBranch(String userName, String projectName, String branch, String path)
@@ -168,7 +168,7 @@ public class CodeApp extends Controller {
     }
 
     /**
-     * 지정한 프로젝트의 지정한 파일의 원본을 보여준다
+     * Displays the original file specified in a given project.
      *
      * @param userName
      * @param projectName
@@ -210,8 +210,8 @@ public class CodeApp extends Controller {
     private static Tika tika = new Tika();
 
     /**
-     * 프로젝트의 저장소 URL을 반환하는 함수
-     * 화면에 저장소 URL을 표시하기 위해 사용된다
+     * A function that returns the URL of a project repository
+     * It is used to display the URL of a repository on the screen.
      *
      * @param ownerName
      * @param projectName
@@ -234,9 +234,9 @@ public class CodeApp extends Controller {
     }
 
     /**
-     * 현재 로그인 된 사용자 정보가 있으면
-     * 프로젝트 저장소 URL에 사용자 ID를 포함해서 반환한다
-     * 예: protocol://user@host.name/path
+     * Return the URL of the project repository including user ID,
+     * if there’s no current logged-in user information.
+     * Example: protocol://user@host.name/path
      *
      * @param project
      */
@@ -251,8 +251,8 @@ public class CodeApp extends Controller {
         return url;
     }
 
-     /**
-     * 지정한 프로젝트의 지정한 파일을 연다.
+    /**
+     * Opens the selected file of a specified project.
      *
      * @param userName
      * @param revision
