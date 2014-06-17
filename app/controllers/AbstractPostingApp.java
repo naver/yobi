@@ -39,13 +39,13 @@ import utils.*;
 import java.io.IOException;
 
 /**
- * {@link BoardApp}과 {@link IssueApp}에서 공통으로 사용하는 기능을 담고 있는 컨트롤러 클래스
+ * The AbstractPostingApp class contains functions used in {@link BoardApp} and {@link IssueApp}
  */
 public class AbstractPostingApp extends Controller {
     public static final int ITEMS_PER_PAGE = 15;
 
     /**
-     * 검색 조건
+     * Search conditions.
      */
     public static class SearchCondition {
         public String orderBy;
@@ -54,7 +54,7 @@ public class AbstractPostingApp extends Controller {
         public int pageNum;
 
         /**
-         * 기본 검색 조건으로 id 역순이며 1페이지를 보여준다.
+         * One of the basic search criteria that shows the first page, order by id desc.
          */
         public SearchCondition() {
             this.orderDir = Direction.DESC.direction();
@@ -65,11 +65,10 @@ public class AbstractPostingApp extends Controller {
     }
 
     /**
-     * 새 댓글 저장 핸들러
+     * A handler that saves a new comment.
      *
-     * {@code commentForm}에서 입력값을 꺼내 현재 사용자를 작성자로 설정하고 댓글을 저장한다.
-     * 현재 사용자 임시 저장소에 있는 첨부파일을 댓글의 첨부파일로 옮긴다.
-     *
+     * Sets a current user as the author of a comment and 
+     * saves the comment by taking the input values from {@code commentForm}.
      *
      * @param comment
      * @param commentForm
@@ -103,9 +102,9 @@ public class AbstractPostingApp extends Controller {
 
 
     /**
-     * {@code target}을 삭제하고 {@code redirectTo}로 이동한다.
+     * Deletes {@code target} and moves to {@code redirectTo}
      *
-     * when: 게시물이나 이슈 또는 그곳에 달린 댓글을 삭제할 때 사용한다.
+     * This method is used when deleting posts, issues or comments added to them.
      *
      * @param target
      * @param resource
@@ -119,7 +118,7 @@ public class AbstractPostingApp extends Controller {
 
         target.delete();
 
-        // XHR 호출에 의한 경우라면 204 No Content 와 Location 헤더로 응답한다
+        // Returns 204 No Content and the Location header, if it is the XHR call.
         if(HttpUtil.isRequestedWithXHR(request())){
             response().setHeader("Location", redirectTo.url());
             return status(204);
@@ -129,13 +128,10 @@ public class AbstractPostingApp extends Controller {
     }
 
     /**
-     * {@code posting}에 {@code original} 정보를 채우고 갱신한다.
+     * Fills out {@code posting} with {@code original} and updates.
      *
-     * when: 게시물이나 이슈를 수정할 떄 사용한다.
-     *
-     * 게시물이나 이슈가 수정될 때 {@code noti} 객체가 null이 아니면 알림을 발송한다.
-     *
-     *
+     * This is used when editing posts or issues.
+     * If {@code noti} is not null when posts or issues are edited, this method sends notifications.
      *
      * @param original
      * @param posting
@@ -177,14 +173,13 @@ public class AbstractPostingApp extends Controller {
     }
 
     /**
-     * 특정 리소스(게시글이나 댓글)에 사용자가 이전 폼에서 업로드한 임시파일을 첨부시킨다
+     * Attaches temp files uploaded to a certain resource, such as a post or a comment, by a user.
      *
-     * when: 이슈등록/수정, 게시판에 글 등록/수정, 댓글쓰기 등에서 업로드한 파일을 해당 리소스에 연결할 때
+     * This method is used when linking upload files to a specified resource.
+     * Each file id value separated by a comma is placed in 
+     * {code AttachmentApp.TAG_NAME_FOR_TEMPORARY_UPLOAD_FILES}
      *
-     * {code AttachmentApp.TAG_NAME_FOR_TEMPORARY_UPLOAD_FILES}에 지정된 이름의 input tag에
-     * 업로드한 임시파일의 file id 값이 ,(comma) separator로 구분되어 들어가 있다.
-     *
-     * @param resource 이슈글,게시판글,댓글
+     * @param resource  issues, messages, comments
      */
     public static void attachUploadFilesToPost(Resource resource) {
         final String[] temporaryUploadFiles = getTemporaryFileListFromHiddenForm();
