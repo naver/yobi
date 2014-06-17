@@ -37,14 +37,11 @@ import views.html.code.branches;
 import java.io.IOException;
 import java.util.List;
 
-/**
- * @author Keesun Baik
- */
 @IsOnlyGitAvailable
 public class BranchApp extends Controller {
 
     /**
-     * 저장소에 존재하는 브랜치 목록 표시
+     * Displays the list of branch in a repository.
      *
      * @param loginId
      * @param projectName
@@ -72,8 +69,7 @@ public class BranchApp extends Controller {
     }
 
     /**
-     * 지정한 브랜치를 삭제한다
-     * 삭제한 뒤 브랜치 목록으로 돌아간
+     * Deletes a brach and returns to the list of branches.
      *
      * @param loginId
      * @param projectName
@@ -91,7 +87,7 @@ public class BranchApp extends Controller {
     }
 
     /**
-     * 지정한 브랜치를 기본 브랜치로 설정한다
+     * Sets a branch as the default branch.
      *
      * @param loginId
      * @param projectName
