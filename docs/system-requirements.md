@@ -2,6 +2,7 @@ Server
 ------
 
 * Java 7
+* Required Memory 247 Mega bytes or more
 
 Client
 ------
