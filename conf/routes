@@ -9,6 +9,12 @@ GET            /navitest                                                        
 
 # Home page
 GET            /                                                                      controllers.Application.index()
+
+# API
+GET            /issueAPI/:user/:project                                               controllers.APIs.issueAPI(user, project, pageNum:Int ?= 1)
+GET            /detailAPI/:user/:project/$number<[0-9]+>                              controllers.DetailAPI.detailAPI(user, project, number:Long)
+GET            /searchAPI                                                             controllers.APIs.searchAPI(state:String ?= "", pageNum:Int ?= 1, authorId:String ?= "", assigneeId:String ?= "", mentionId:String ?= "")
+
 # Map static resources from the /public folder to the /assets URL path
 GET            /assets/*file                                                          controllers.Assets.at(path="/public", file)
 GET            /messages.js                                                           controllers.Application.jsMessages()

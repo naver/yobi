@@ -250,6 +250,18 @@ public class User extends Model implements ResourceConvertible {
         }
     }
 
+
+    public static User findById(Long id) {
+        User user = find.where().eq("id", id).findUnique();
+        if (user == null) {
+            return anonymous;
+        }
+        else {
+            return user;
+        }
+    }
+
+
     /**
      *
      * Find a user by email account.
