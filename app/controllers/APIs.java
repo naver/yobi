@@ -5,6 +5,7 @@ import utils.LabelSearchUtil;
 
 import models.Issue;
 import models.Project;
+import models.User;
 
 import org.codehaus.jackson.node.ObjectNode;
 
@@ -43,23 +44,30 @@ public class APIs extends AbstractPostingApp{
 
         return issuesAsJson_List(project, issues);
     }
+
 	public static Result searchAPI(String state, int pageNum, String authorId, String assigneeId, String mentionId) throws WriteException, IOException {
-int authorid, assigneeid, mentionid;
+        int authorid, assigneeid, mentionid;
         //authorId가 0이 아닐경우는 내가 작성한 이슈를 검색하여 json형식으로 리턴해준다. 
         if(authorId.length()==0){
             authorid=0;
         }else{
+//            User user = User.findByLoginId(authorId);
+//            authorid = user.id;
             authorid=Integer.parseInt(authorId);
         }
         //assigneeId가 0이 아닐경우는 내가 담당된 이슈를 검색하여 json형식으로 리턴해준다.
         if(assigneeId.length()==0){
             assigneeid=0;
         }else{
+//            User user = User.findByLoginId(assigneeId);
+//            assigneeid = user.id;
             assigneeid=Integer.parseInt(assigneeId);
         }
         if(mentionId.length()==0){
             mentionid=0;
         }else{
+//            User user = User.findByLoginId(mentionId);
+//            mentionid = user.id;
             mentionid=Integer.parseInt(mentionId);
         }
 	    Project project = null;
@@ -80,12 +88,14 @@ int authorid, assigneeid, mentionid;
             el=searchCondition.asExpressionList();
             issues=el.findPagingList(itemsPerPage).getPage(searchCondition.pageNum);
         }
-        return issuesAsJson_Search(project, issues,assigneeid,authorid,mentionid);
+        return issuesAsJson_Search(project, issues, assigneeid, authorid, mentionid);
     }
+
     private static boolean hasNotConditions(models.support.SearchCondition searchCondition) {
         return searchCondition.assigneeId == null && searchCondition.authorId == null && searchCondition.mentionId == null;
     }
-    private static Integer getItemsPerPage(){
+
+	private static Integer getItemsPerPage(){
         Integer itemsPerPage = ITEMS_PER_PAGE;
         String amountStr = request().getQueryString("itemsPerPage");
 
@@ -95,7 +105,7 @@ int authorid, assigneeid, mentionid;
             } catch (NumberFormatException ignored){}
         }
         return Math.min(itemsPerPage, ITEMS_PER_PAGE_MAX);
-    }
+    }//
 
     //unique id는 전체 프로젝트 내에서 해당 이슈의 id를 의미합니다. 
     //예를들어 test project의 1번 이슈는 1이라는 unique id와 1이라는 id가 붙지만
