@@ -31,7 +31,7 @@ import javax.persistence.*;
 import java.util.Set;
 
 /**
- * A label to be attached to a project
+ * A label for projects
  */
 @Entity
 @Table(uniqueConstraints = @UniqueConstraint(columnNames = {"category", "name"}))
@@ -53,10 +53,10 @@ public class Label extends Model implements ResourceConvertible {
     public Set<Project> projects;
 
     /**
-     * Construct a label by the given {@code name} and {@code category}.
+     * Constructs a label with the given {@code name} and {@code category}.
      *
-     * @param category the category to which this label belongs
-     * @param name the name of this label
+     * @param category  category to which this label belongs
+     * @param name      name of this label
      */
     public Label(String category, String name) {
         if (category == null) {
@@ -67,9 +67,9 @@ public class Label extends Model implements ResourceConvertible {
     }
 
     /**
-     * Delete this label.
+     * Deletes a label.
      *
-     * Remove this label from every project and delete it.
+     * Removes a label from every project and then delete it.
      */
     @Override
     public void delete() {
@@ -84,7 +84,7 @@ public class Label extends Model implements ResourceConvertible {
     /**
      * Returns a string representation of this label.
      *
-     * @return a string concatenated {@link Label#category}, "-" and {@link Label#name}
+     * @return string concatenated {@link Label#category}, "-" and {@link Label#name}
      *         e.g. "os - linux"
      */
     @Override
@@ -93,12 +93,12 @@ public class Label extends Model implements ResourceConvertible {
     }
 
     /**
-     * Returns a {@link Resource} representation of this label.
+     * Returns {@link Resource} representation of this label.
      *
-     * {@link utils.AccessControl}.may use this method to check if an user has
+     * {@link utils.AccessControl}.may use this method to check if a user has
      * a permission to access this label.
      *
-     * @return a {@link Resource} representation of this label
+     * @return {@link Resource} representation of this label
      */
     @Override
     public Resource asResource() {
@@ -116,7 +116,7 @@ public class Label extends Model implements ResourceConvertible {
     }
 
     /**
-     * Remove this label from a project.
+     * Removes this label from a project.
      *
      * @param project the project from which this label is removed
      */
