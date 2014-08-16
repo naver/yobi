@@ -35,6 +35,8 @@ import play.mvc.With;
 import views.html.reviewthread.list;
 
 /**
+ * This class handles review threads
+ *
  * @author Changsung Kim
  * @author Keesun Baik
  */
@@ -42,6 +44,13 @@ public class ReviewThreadApp extends Controller {
 
     public static final int REVIEWS_PER_PAGE = 15;
 
+    /**
+     * Displays review threads that belongs to a project.
+     *
+     * @param ownerName
+     * @param projectName
+     * @return
+     */
     @With(AnonymousCheckAction.class)
     @IsAllowed(value = Operation.READ)
     public static Result reviewThreads(String ownerName, String projectName) {
