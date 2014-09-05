@@ -48,6 +48,9 @@ import java.util.List;
 
 import static play.data.Form.form;
 
+/**
+ * Managing milestones
+ */
 public class MilestoneApp extends Controller {
 
     public static class MilestoneCondition {
@@ -63,7 +66,14 @@ public class MilestoneApp extends Controller {
     }
 
     /**
+     * Retrieves the milestones list of the project that matches {@code userName} and {@code projectName}
      * when: GET /:user/:project/milestones
+     *
+     * Sets the basic search and sorting options with the input values from {@link MilestoneCondition}
+     *
+     * @param userName
+     * @param projectName
+     * @return
      */
     @IsAllowed(Operation.READ)
     public static Result milestones(String userName, String projectName) {
@@ -79,7 +89,14 @@ public class MilestoneApp extends Controller {
     }
 
     /**
+     * Moves to an input form to add a new milestone of a project that matches {@code userName} and {@code projectName}
      * when: GET /:user/:project/newMilestoneForm
+     *
+     * If no project matches the given condition, this method returns {@link #notFound()}
+     *
+     * @param userName
+     * @param projectName
+     * @return
      */
     @With(AnonymousCheckAction.class)
     @IsCreatable(ResourceType.MILESTONE)
@@ -89,8 +106,17 @@ public class MilestoneApp extends Controller {
     }
 
     /**
+     * Adds a new milestone to a project that matches {@code userName} and {@code *projectName}
      * when: POST /:user/:project/milestones
      *
+     * Creates a new milestone by using the input data from {@link Milestone}
+     * If there’s no project matching the given condition, the method returns {@link #notFound()}
+     * Checks if there is any milestone that has the same with it.
+     * When the method found a milestone with the same name, you will move to the new milestone form.
+     *
+     * @param userName
+     * @param projectName
+     * @return
      * @see {@link #validate(models.Project, play.data.Form)}
      */
     @Transactional
@@ -118,6 +144,13 @@ public class MilestoneApp extends Controller {
         }
     }
 
+    /**
+     * Checks if there is a milestone that has the same name in {@code project}
+     * If there is a milestone that has the same name, the method puts duplicate milestone name error message to the flash scope.
+     *
+     * @param project
+     * @param milestoneForm
+     */
     private static void validate(Project project, Form<Milestone> milestoneForm) {
         if (!Milestone.isUniqueProjectIdAndTitle(project.id, milestoneForm.field("title").value())) {
             milestoneForm.reject("title", "milestone.title.duplicated");
@@ -126,7 +159,15 @@ public class MilestoneApp extends Controller {
     }
 
     /**
+     * Moves to the edit milestone page for the milestone that matches {@code milestoneId} in the project that has {@code userName} and {@code projectName}
      * when: GET /:user/:project/milestone/:id/editform
+     *
+     * If no project has been matched, the method returns {@link #notFound()}
+     *
+     * @param userName
+     * @param projectName
+     * @param milestoneId
+     * @return
      */
     @With(AnonymousCheckAction.class)
     @IsAllowed(value = Operation.UPDATE, resourceType = ResourceType.MILESTONE)
@@ -139,7 +180,16 @@ public class MilestoneApp extends Controller {
     }
 
     /**
+     * Updates a milestone with {@code milestoneId} in the project that matches {@code userName} and {@code projectName}
      * when: POST /:user/:project/milestone/:id/edit
+     *
+     * After changing the milestone name, check again if there’s no duplicate name.
+     * If there’s no project that matches the given condition, it returns {@link #notFound()}.
+     *
+     * @param userName
+     * @param projectName
+     * @param milestoneId
+     * @return
      */
     @Transactional
     @IsAllowed(value = Operation.UPDATE, resourceType = ResourceType.MILESTONE)
@@ -170,7 +220,16 @@ public class MilestoneApp extends Controller {
     }
 
     /**
+     * Deletes the milestone with {@code milestoneId} in the project that matches {@code userName} and {@code projectName}
      * when: GET /:user/:project/milestone/:id/delete
+     *
+     * If no project has been matched, the method returns {@link #notFound()}
+     * If the project id doesn’t match up with the project id of the milestone, it returns {@link #internalServerError()}.
+     *
+     * @param userName
+     * @param projectName
+     * @param id
+     * @return
      */
     @Transactional
     @IsAllowed(value = Operation.DELETE, resourceType = ResourceType.MILESTONE)
@@ -183,6 +242,7 @@ public class MilestoneApp extends Controller {
         }
         milestone.delete();
 
+        // IF this is response to XHR, return 204 No Content with a location header
         if(HttpUtil.isRequestedWithXHR(request())){
             response().setHeader("Location", routes.MilestoneApp.milestones(userName, projectName).toString());
             return status(204);
@@ -191,6 +251,14 @@ public class MilestoneApp extends Controller {
         return redirect(routes.MilestoneApp.milestones(userName, projectName));
     }
 
+    /**
+     * Changes the status of the milestone with {@code milestoneId} into ‘unsolved’.
+     *
+     * @param userName
+     * @param projectName
+     * @param id
+     * @return
+     */
     @Transactional
     @IsAllowed(value = Operation.UPDATE, resourceType = ResourceType.MILESTONE)
     public static Result open(String userName, String projectName, Long id) {
@@ -199,6 +267,14 @@ public class MilestoneApp extends Controller {
         return redirect(routes.MilestoneApp.milestone(userName, projectName, id));
     }
 
+    /**
+     * Changes the status of the milestone with {@code milestoneId} into ‘solved’.
+     *
+     * @param userName
+     * @param projectName
+     * @param id
+     * @return
+     */
     @Transactional
     @IsAllowed(value = Operation.UPDATE, resourceType = ResourceType.MILESTONE)
     public static Result close(String userName, String projectName, Long id) {
@@ -208,7 +284,13 @@ public class MilestoneApp extends Controller {
     }
 
     /**
+     * Retrieves detailed information about the milestone that has {@code milestoneId}.
      * when: GET /:user/:project/milestone/:id
+     *
+     * @param userName
+     * @param projectName
+     * @param id
+     * @return
      */
     @IsAllowed(value = Operation.READ, resourceType = ResourceType.MILESTONE)
     public static Result milestone(String userName, String projectName, Long id) {
