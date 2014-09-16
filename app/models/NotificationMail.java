@@ -293,12 +293,18 @@ public class NotificationMail extends Model {
 
     private static String getHtmlMessage(Lang lang, String message, String urlToView, Resource resource) {
         String content = getRenderedHTMLWithTemplate(lang, Markdown.render(message), urlToView, resource);
+
         Document doc = Jsoup.parse(content);
 
         handleLinks(doc);
         handleImages(doc);
 
-        return doc.html();
+        // This is required for NCS email which convert HTML to text ugly
+        doc.outputSettings().indentAmount(0).outline(false).prettyPrint(false);
+
+        String html = doc.html();
+
+        return html;
     }
 
     private static String getRenderedHTMLWithTemplate(Lang lang, String message, String urlToView, Resource resource){
