@@ -1,4 +1,4 @@
-﻿<a name="english"></a>
+<a name="english"></a>
 [[한국어]](#korean)
 Yobi
 =======
@@ -125,6 +125,30 @@ Copy the below file and directories to another place.
 
 	file: yobi.h2.db
 	directory: repo, uploads
+
+
+### Automatic start Yobi on system startup (tested on Ubuntu 14.04)
+
+1. Create 'run.yobi' contained following code to '/etc/init.d'
+
+	````
+	#! /bin/sh
+	export PLAY_HOME=/home/yobi/play-2.1.0         # << Change this line to your system.
+	export YOBI_HOME=$PLAY_HOME/yobi              # << Change this line to your system.
+	export _JAVA_OPTIONS="-Xmx2048m -Xms1024m"
+	
+	cd $YOBI_HOME
+	sudo ../play stop 1> /dev/null 2>&1
+	sudo rm ./RUNNING_PID 1> /dev/null 2>&1
+	sudo nohup ../play "start -DapplyEvolutions.default=true -Dhttp.port=9000" $_JAVAOPTIONS 1> /dev/null 2>&1 &
+	````
+
+2. Type following command
+
+	````
+	sudo update-rc.d run.yobi defaults
+	````
+3. Reboot and enjoy it.
 
 <br/>
 <br/>
@@ -258,3 +282,28 @@ case2. 압축파일을 내려받을 경우
 
 	file: yobi.h2.db
 	directory: repo, uploads
+
+
+### 시스템 시작시 Yobi 자동 실행 (Ubuntu 14.04 기준)
+
+1. '/etc/init.d'에 아래의 내용으로 'run.yobi' 파일을 생성합니다. 
+
+	````
+	#! /bin/sh
+	export PLAY_HOME=/home/yobi/play-2.1.0         # << 이 부분을 실제 경로에 맞게 고쳐주세요.
+	export YOBI_HOME=$PLAY_HOME/yobi               # << 이 부분을 실제 경로에 맞게 고쳐주세요.
+	export _JAVA_OPTIONS="-Xmx2048m -Xms1024m"
+	
+	cd $YOBI_HOME
+	sudo ../play stop 1> /dev/null 2>&1
+	sudo rm ./RUNNING_PID 1> /dev/null 2>&1
+	sudo nohup ../play "start -DapplyEvolutions.default=true -Dhttp.port=9000" $_JAVAOPTIONS 1> /dev/null 2>&1 &
+	````
+
+2. 다음 명령어를 입력합니다.
+
+	````
+	sudo update-rc.d run.yobi defaults
+	````
+
+3. 재부팅 후 테스트합니다.
