@@ -113,7 +113,7 @@ public class BasicAuthAction extends Action<Object> {
         }
 
         if (!user.isAnonymous()) {
-            UserApp.addUserInfoToSession(user);
+            UserApp.saveUser(user);
         }
 
         return delegate.call(context);

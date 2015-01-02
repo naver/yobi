@@ -32,7 +32,7 @@ context
 - [args](http://www.playframework.com/documentation/2.1.x/api/java/play/mvc/Http.Context.html#args) 라는 Map 객체를 이용해서 custom data 를 저장하고 꺼내올 수 있다.
 - token 정보를 이용해 생성한 사용자 객체를 cache 하는 용도로 사용한다.
 
-`UserApp#initTokenUser()`
+`UserApp#autoLogin()`
 -------------------------
 
 - token 정보를 이용해서 사용자 객체를 생성한다.
@@ -46,13 +46,13 @@ context
 - session 정보를 이용해서 사용자 객체를 생성한다.
 - 생성된 객체가 익명이 아닐 경우 이를 현재 사용자로 판단한다.
 - 사용자 객체를 생성할 수 없거나 생성된 객체가 익명일 경우 context 에 저장된 정보를 현재 사용자로 판단한다.
-    - context 에 저장된 정보가 없을 경우 `UserApp#initTokenUser()` 를 호출하여 객체 생성/저장 후 사용한다.
+    - context 에 저장된 정보가 없을 경우 `UserApp#autoLogin()` 를 호출하여 객체 생성/저장 후 사용한다.
 
 notes
 -----
 
-- `UserApp#currentUser()` 에서 session 정보가 없을 경우 context, token 정보까지 활용하게 되는데 controller 에 action composition 이 적용되어 있을 경우 `UserApp#initTokenUser()` 보다 먼저 실행 될 수 있기 때문이다. (아래 action composition 실행 순서를 참고)
-- context 를 사용해서 `UserApp#initTokenUser()` 의 결과를 저장해 두는건 하나의 요청 내에서 `UserApp#currentUser()` 의 결과가 token 정보를 중복활용하는 것을 방지하기 위해서이다.
+- `UserApp#currentUser()` 에서 session 정보가 없을 경우 context, token 정보까지 활용하게 되는데 controller 에 action composition 이 적용되어 있을 경우 `UserApp#autoLogin()` 보다 먼저 실행 될 수 있기 때문이다. (아래 action composition 실행 순서를 참고)
+- context 를 사용해서 `UserApp#autoLogin()` 의 결과를 저장해 두는건 하나의 요청 내에서 `UserApp#currentUser()` 의 결과가 token 정보를 중복활용하는 것을 방지하기 위해서이다.
 
 action composition 실행 순서
 ---------------------------

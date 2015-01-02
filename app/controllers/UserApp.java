@@ -26,7 +26,6 @@ import models.*;
 import models.enumeration.Operation;
 import models.enumeration.UserState;
 
-import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.shiro.crypto.RandomNumberGenerator;
 import org.apache.shiro.crypto.SecureRandomNumberGenerator;
@@ -41,6 +40,7 @@ import play.i18n.Messages;
 import play.libs.Json;
 import play.mvc.*;
 import play.mvc.Http.Cookie;
+import security.*;
 import utils.*;
 import views.html.user.*;
 
@@ -69,6 +69,21 @@ public class UserApp extends Controller {
     public static final String DEFAULT_SELECTED_TAB = "projects";
     public static final String TOKEN_USER = "TOKEN_USER";
 
+    private static UserDetailsService userDetailsService;
+    private static SecurityContextRepository securityContextRepository;
+    private static RememberMeService rememberMeService;
+    private static List<LogoutHandler> logoutHandlers = new ArrayList<>();
+
+    static {
+        userDetailsService = new BasicUserDetailsService();
+
+        securityContextRepository = new BasicSecurityContextRepository();
+        rememberMeService = new BasicRememberMeService();
+
+        logoutHandlers.add((LogoutHandler)securityContextRepository);
+        logoutHandlers.add((LogoutHandler)rememberMeService);
+    }
+
     @AnonymousCheck
     public static Result users(String query) {
         if (!request().accepts("application/json")) {
@@ -76,7 +91,7 @@ public class UserApp extends Controller {
         }
 
         ExpressionList<User> el = User.find.select("loginId, name").where()
-            .ne("state", UserState.DELETED).disjunction();
+                .ne("state", UserState.DELETED).disjunction();
         el.icontains("loginId", query);
         el.icontains("name", query);
         el.endJunction();
@@ -162,43 +177,41 @@ public class UserApp extends Controller {
             return badRequest(login.render("title.login", authInfoForm, null));
         }
 
-        User sourceUser = User.findByLoginKey(authInfoForm.get().loginIdOrEmail);
+        User authenticate = userDetailsService.loadUserDetails(authInfoForm.get().loginIdOrEmail, authInfoForm.get().password);
 
         if (isUseSignUpConfirm()) {
-            if (User.findByLoginId(sourceUser.loginId).state == UserState.LOCKED) {
+            if (authenticate.state == UserState.LOCKED) {
                 flash(Constants.WARNING, "user.locked");
                 return redirect(getLoginFormURLWithRedirectURL());
             }
         }
 
-        if (User.findByLoginId(sourceUser.loginId).state == UserState.DELETED) {
+        if (authenticate.state == UserState.DELETED) {
             flash(Constants.WARNING, "user.deleted");
             return redirect(getLoginFormURLWithRedirectURL());
         }
 
-        User authenticate = authenticateWithPlainPassword(sourceUser.loginId, authInfoForm.get().password);
-
-        if (!authenticate.isAnonymous()) {
-            addUserInfoToSession(authenticate);
-
-            if (authInfoForm.get().rememberMe) {
-                setupRememberMe(authenticate);
-            }
-
-            authenticate.lang = play.mvc.Http.Context.current().lang().code();
-            authenticate.update();
-
-            String redirectUrl = getRedirectURLFromParams();
-
-            if(StringUtils.isEmpty(redirectUrl)){
-                return redirect(routes.Application.index());
-            } else {
-                return redirect(redirectUrl);
-            }
+        if (authenticate.isAnonymous()) {
+            flash(Constants.WARNING, "user.login.invalid");
+            return redirect(routes.UserApp.loginForm());
         }
 
-        flash(Constants.WARNING, "user.login.invalid");
-        return redirect(routes.UserApp.loginForm());
+        saveUser(authenticate);
+
+        if (authInfoForm.get().rememberMe) {
+            rememberMeService.loginSuccess(Http.Context.current(), authenticate);
+        }
+
+        authenticate.lang = play.mvc.Http.Context.current().lang().code();
+        authenticate.update();
+
+        String redirectUrl = getRedirectURLFromParams();
+
+        if(StringUtils.isEmpty(redirectUrl)){
+            return redirect(routes.Application.index());
+        } else {
+            return redirect(redirectUrl);
+        }
     }
 
     /**
@@ -220,34 +233,32 @@ public class UserApp extends Controller {
             return badRequest(getObjectNodeWithMessage("user.login.required"));
         }
 
-        User sourceUser = User.findByLoginKey(authInfoForm.get().loginIdOrEmail);
+        User authenticate = userDetailsService.loadUserDetails(authInfoForm.get().loginIdOrEmail, authInfoForm.get().password);
 
         if (isUseSignUpConfirm()) {
-            if (User.findByLoginId(sourceUser.loginId).state == UserState.LOCKED) {
+            if (authenticate.state == UserState.LOCKED) {
                 return forbidden(getObjectNodeWithMessage("user.locked"));
             }
         }
 
-        if (User.findByLoginId(sourceUser.loginId).state == UserState.DELETED) {
+        if (authenticate.state == UserState.DELETED) {
             return notFound(getObjectNodeWithMessage("user.deleted"));
         }
 
-        User authenticate = authenticateWithPlainPassword(sourceUser.loginId, authInfoForm.get().password);
-
-        if (!authenticate.isAnonymous()) {
-            addUserInfoToSession(authenticate);
-
-            if (authInfoForm.get().rememberMe) {
-                setupRememberMe(authenticate);
-            }
-
-            authenticate.lang = play.mvc.Http.Context.current().lang().code();
-            authenticate.update();
-
-            return ok("{}");
+        if (authenticate.isAnonymous()) {
+            return forbidden(getObjectNodeWithMessage("user.login.invalid"));
         }
 
-        return forbidden(getObjectNodeWithMessage("user.login.invalid"));
+        saveUser(authenticate);
+
+        if (authInfoForm.get().rememberMe) {
+            rememberMeService.loginSuccess(Http.Context.current(), authenticate);
+        }
+
+        authenticate.lang = play.mvc.Http.Context.current().lang().code();
+        authenticate.update();
+
+        return ok("{}");
     }
 
     /**
@@ -311,7 +322,7 @@ public class UserApp extends Controller {
             if (user.state == UserState.LOCKED) {
                 flash(Constants.INFO, "user.signup.requested");
             } else {
-                addUserInfoToSession(user);
+                saveUser(user);
             }
             return redirect(routes.Application.index());
         }
@@ -328,20 +339,20 @@ public class UserApp extends Controller {
         User currentUser = currentUser();
         User user = userForm.get();
 
-        if(!isValidPassword(currentUser, user.oldPassword)) {
-            Form<User> currentUserForm = new Form<>(User.class);
-            currentUserForm = currentUserForm.fill(currentUser);
+        if(isValidPassword(currentUser, user.oldPassword)) {
+            resetPassword(currentUser, user.password);
 
-            flash(Constants.WARNING, "user.wrongPassword.alert");
-            return badRequest(edit.render(currentUserForm, currentUser));
+            //go to login page
+            processLogout();
+            flash(Constants.WARNING, "user.loginWithNewPassword");
+            return redirect(routes.UserApp.loginForm());
         }
 
-        resetPassword(currentUser, user.password);
+        Form<User> currentUserForm = new Form<>(User.class);
+        currentUserForm = currentUserForm.fill(currentUser);
 
-        //go to login page
-        processLogout();
-        flash(Constants.WARNING, "user.loginWithNewPassword");
-        return redirect(routes.UserApp.loginForm());
+        flash(Constants.WARNING, "user.wrongPassword.alert");
+        return badRequest(edit.render(currentUserForm, currentUser));
 
     }
 
@@ -357,69 +368,14 @@ public class UserApp extends Controller {
     }
 
     public static User currentUser() {
-        User user = getUserFromSession();
-        if (!user.isAnonymous()) {
-            return user;
-        }
-        return getUserFromContext();
-    }
+        User user = securityContextRepository.loadUser(Http.Context.current());
 
-    private static User getUserFromSession() {
-        String userId = session().get(SESSION_USERID);
-        if (userId == null) {
-            return User.anonymous;
+        if (user == null || user.isAnonymous()) {
+            // this logic is relate with action composition. Read current-user.md
+            user = autoLogin();
         }
-        if (!StringUtils.isNumeric(userId)) {
-            return invalidSession();
-        }
-        User user = User.find.byId(Long.valueOf(userId));
-        if (user == null) {
-            return invalidSession();
-        }
+
         return user;
-    }
-
-    private static User getUserFromContext() {
-        Object cached = Http.Context.current().args.get(TOKEN_USER);
-        if (cached instanceof User) {
-            return (User) cached;
-        }
-        initTokenUser();
-        return (User) Http.Context.current().args.get(TOKEN_USER);
-    }
-
-    public static void initTokenUser() {
-        User user = getUserFromToken();
-        Http.Context.current().args.put(TOKEN_USER, user);
-        if (!user.isAnonymous() && getUserFromSession().isAnonymous()) {
-            addUserInfoToSession(user);
-        }
-    }
-
-    private static User getUserFromToken() {
-        Cookie cookie = request().cookies().get(TOKEN);
-        if (cookie == null) {
-            return User.anonymous;
-        }
-        String[] subject =  StringUtils.split(cookie.value(), TOKEN_SEPARATOR);
-        if (ArrayUtils.getLength(subject) != TOKEN_LENGTH) {
-            return invalidToken();
-        }
-        User user = authenticateWithHashedPassword(subject[0], subject[1]);
-        if (user.isAnonymous()) {
-            return invalidToken();
-        }
-        return user;
-    }
-
-    private static User invalidSession() {
-        session().clear();
-        return User.anonymous;
-    }
-
-    private static User invalidToken() {
-        response().discardCookie(TOKEN);
-        return User.anonymous;
     }
 
     @AnonymousCheck
@@ -598,7 +554,7 @@ public class UserApp extends Controller {
         }
 
         public static UserInfoFormTabType fromString(String text)
-            throws IllegalArgumentException {
+                throws IllegalArgumentException {
             for(UserInfoFormTabType tab : UserInfoFormTabType.values()){
                 if (tab.value().equalsIgnoreCase(text)) {
                     return tab;
@@ -772,7 +728,7 @@ public class UserApp extends Controller {
         }
 
         if(email.validate(token)) {
-            addUserInfoToSession(email.user);
+            saveUser(email.user);
             return redirect(routes.UserApp.editUserInfoForm());
         } else {
             return forbidden(ErrorViews.NotFound.render());
@@ -824,14 +780,10 @@ public class UserApp extends Controller {
         return useSignUpConfirm != null && useSignUpConfirm.equals("true");
     }
 
-    private static void setupRememberMe(User user) {
-        response().setCookie(TOKEN, user.loginId + ":" + user.password, MAX_AGE);
-        Logger.debug("remember me enabled");
-    }
-
     private static void processLogout() {
-        session().clear();
-        response().discardCookie(TOKEN);
+        for (LogoutHandler logoutHandler : logoutHandlers) {
+            logoutHandler.logout(Http.Context.current(), currentUser());
+        }
     }
 
     private static void validate(Form<User> newUserForm) {
@@ -848,7 +800,7 @@ public class UserApp extends Controller {
         }
 
         if (User.isLoginIdExist(newUserForm.field("loginId").value())
-            || Organization.isNameExist(newUserForm.field("loginId").value())) {
+                || Organization.isNameExist(newUserForm.field("loginId").value())) {
             newUserForm.reject("loginId", "user.loginId.duplicate");
         }
 
@@ -869,12 +821,6 @@ public class UserApp extends Controller {
         }
         Email.deleteOtherInvalidEmails(user.email);
         return user;
-    }
-
-    public static void addUserInfoToSession(User user) {
-        session(SESSION_USERID, String.valueOf(user.id));
-        session(SESSION_LOGINID, user.loginId);
-        session(SESSION_USERNAME, user.name);
     }
 
     public static void updatePreferredLanguage() {
@@ -925,5 +871,15 @@ public class UserApp extends Controller {
             json.put("reason", "FORBIDDEN");
             return forbidden(json);
         }
+    }
+
+    public static void saveUser(User user) {
+        securityContextRepository.saveUser(user, Http.Context.current());
+    }
+
+    public static User autoLogin() {
+        User user = rememberMeService.autoLogin(Http.Context.current());
+        saveUser(user);
+        return user;
     }
 }

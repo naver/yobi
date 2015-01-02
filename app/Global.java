@@ -111,7 +111,7 @@ public class Global extends GlobalSettings {
         final long start = System.currentTimeMillis();
         return new Action.Simple() {
             public Promise<Result> call(Http.Context ctx) throws Throwable {
-                UserApp.initTokenUser();
+                UserApp.autoLogin();
                 UserApp.updatePreferredLanguage();
                 ctx.response().setHeader("Date", DateUtils.formatDate(new Date()));
                 ctx.response().setHeader("Cache-Control", "no-cache");

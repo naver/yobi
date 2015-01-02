@@ -132,6 +132,7 @@ public class UserAppTest extends ContextTest {
         user.email = "fakeuser@fake.com";
         user.name = "racoon";
         user.password = "somefakepassword";
+        user.passwordSalt = "[B@1032a4";
         user.createdDate = JodaDateUtil.now();
         user.state = UserState.LOCKED;
         user.save();
