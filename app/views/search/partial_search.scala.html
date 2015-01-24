@@ -36,7 +36,7 @@
 }
 
 @makeTilte(search_type:SearchType) =@{
-    search_type match {
+    (search_type:  @unchecked) match {
         case SearchType.ISSUE => { Messages("search.menu.issues") }
         case SearchType.USER => { Messages("search.menu.users") }
         case SearchType.PROJECT => { Messages("search.menu.projects") }
@@ -50,7 +50,7 @@
 }
 
 @getCurrentlySearchCount(search_type:SearchType) =@{
-    search_type match {
+    (search_type:  @unchecked) match {
         case SearchType.ISSUE => { searchResult.getIssuesCount }
         case SearchType.USER => { searchResult.getUsersCount }
         case SearchType.PROJECT => { searchResult.getProjectsCount }
