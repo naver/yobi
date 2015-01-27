@@ -1274,7 +1274,11 @@ function marked(src, opt, callback) {
   }
   try {
     if (opt) opt = merge({}, marked.defaults, opt);
-    return Parser.parse(Lexer.lex(src, opt), opt);
+    if (opt.inline) {
+      return InlineLexer.output(src, {}, opt);
+    } else {
+      return Parser.parse(Lexer.lex(src, opt), opt);
+    }
   } catch (e) {
     e.message += '\nPlease report this to https://github.com/chjj/marked.';
     if ((opt || marked.defaults).silent) {
@@ -1297,6 +1301,7 @@ marked.setOptions = function(opt) {
 };
 
 marked.defaults = {
+  inline: false,
   gfm: true,
   tables: true,
   hook: null,
