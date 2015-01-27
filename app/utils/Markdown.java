@@ -165,4 +165,15 @@ public class Markdown {
     public static String render(String source, Project project) {
         return render(source, project, true);
     }
+
+    public static String renderInline(String source) {
+        try {
+            Object options = engine.eval("new Object({inline: true, gfm: true});");
+            String rendered = (String) ((Invocable) engine).invokeFunction("marked", source,
+                    options);
+            return sanitize(rendered);
+        } catch (Exception ex) {
+            throw new RuntimeException(ex);
+        }
+    }
 }

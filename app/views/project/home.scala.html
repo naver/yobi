@@ -24,6 +24,7 @@
 @import utils.JodaDateUtil
 @import utils.TemplateHelper._
 @import utils.AccessControl._
+@import utils.Markdown
 @import models.enumeration._
 @import scala.collection.immutable._
 
@@ -37,8 +38,8 @@
     <div class="project-page-wrap">
         <div class="project-home-header row-fluid">
             <div class="project-overview span9">
-                <div class="project-description" data-toggle="project-description-tab">
-                <h3><span id="project-description">@if(StringUtils.isEmpty(project.overview)) {@Messages("project.description.placeholder")} else {@project.overview}</span>
+                <div class="project-description markdown-wrap" data-toggle="project-description-tab">
+                <h3><span id="project-description">@if(StringUtils.isEmpty(project.overview)) {@Messages("project.description.placeholder")} else {@Html(Markdown.renderInline(project.overview))}</span>
                     @if(isAllowed(UserApp.currentUser(), project.asResource(), Operation.UPDATE)){
                 <button type="button" class="ybtn ybtn-minimum" data-toggle="description-edit"><i class="yobicon-edit"></i></button>
                     }
