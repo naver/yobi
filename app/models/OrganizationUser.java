@@ -28,6 +28,7 @@ import javax.persistence.ManyToOne;
 
 import models.enumeration.RoleType;
 import play.db.ebean.Model;
+import search.SearchEngine;
 
 @Entity
 public class OrganizationUser extends Model {
@@ -161,5 +162,23 @@ public class OrganizationUser extends Model {
                 .order().asc("organization.name")
                 .setMaxRows(size)
                 .findList();
+    }
+
+    @Override
+    public void save() {
+        super.save();
+        SearchEngine.update(this.user);
+    }
+
+    @Override
+    public void update() {
+        super.update();
+        SearchEngine.update(this.user);
+    }
+
+    @Override
+    public void delete() {
+        super.delete();
+        SearchEngine.update(this.user);
     }
 }

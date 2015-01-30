@@ -33,10 +33,10 @@
     buildQueryString(routes.IssueApp.issues(project.owner, project.name, _state),Map("milestoneId"->mId.toString))
 }
 
-@defining(searchResult.getMilestones) { page =>
-    @if(page.getList.size > 0) {
+@defining(searchResult.getMilestones) { list =>
+    @if(list.size > 0) {
     <ul class="search-list-wrap">
-        @for(milestone <- page.getList) {
+        @for(milestone <- list) {
         <li class="search-list-item">
             <div class="title-wrap">
                 <a href="@routes.MilestoneApp.milestone(milestone.project.owner, milestone.project.name, milestone.id)" class="title">
@@ -70,7 +70,7 @@
 
     <script type="text/javascript">
         $(document).ready(function(){
-            yobi.Pagination.update($("#pagination"), @page.getTotalPageCount);
+            yobi.Pagination.update($("#pagination"), @searchResult.getTotalPageCount);
         });
     </script>
     } else {

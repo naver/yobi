@@ -24,10 +24,10 @@
 @import utils.TemplateHelper._
 @import utils.JodaDateUtil._
 
-@defining(searchResult.getProjects) { page =>
-    @if(page.getList.size > 0) {
+@defining(searchResult.getProjects) { list =>
+    @if(list.size > 0) {
     <ul class="search-list-wrap">
-        @for(project <- page.getList) {
+        @for(project <- list) {
             @defining(User.findByLoginId(project.owner)){ user =>
             <li class="search-list-item project">
                 <a href="@routes.ProjectApp.project(project.owner, project.name)" class="avatar-wrap">
@@ -72,6 +72,15 @@
             }
         }
     </ul>
+    <!-- pagination.js will fill here. -->
+    <div id="pagination"></div>
+
+    <script type="text/javascript">
+        $(document).ready(function(){
+            yobi.Pagination.update($("#pagination"), @searchResult.getTotalPageCount);
+        });
+    </script>
+
     } else {
         <div class="empty-result"></div>
     }

@@ -22,11 +22,16 @@ package models;
 
 import models.enumeration.ResourceType;
 import models.resource.Resource;
+import search.DataSynchronizer;
+import search.Indexable;
 
+import javax.annotation.Nonnull;
 import javax.persistence.*;
+import java.util.HashMap;
+import java.util.Map;
 
 @Entity
-public class PostingComment extends Comment {
+public class PostingComment extends Comment implements Indexable {
     private static final long serialVersionUID = 1L;
     public static Finder<Long, PostingComment> find = new Finder<>(Long.class, PostingComment.class);
 
@@ -77,4 +82,35 @@ public class PostingComment extends Comment {
             }
         };
     }
+
+    @Override
+    public String indexId() {
+        return id.toString();
+    }
+
+    @Nonnull
+    @Override
+    public Map<String, Object> source() {
+        Map<String, Object> source = new HashMap<>();
+        if (this.contents != null) {
+            source.put("contents", this.contents);
+        }
+        if (this.createdDate != null) {
+            source.put("createdDate", this.createdDate);
+        }
+        if (this.posting != null) {
+            source.put("postingId", this.posting.id);
+        }
+        if (this.posting != null && this.posting.project != null) {
+            source.put("projectId", this.posting.project.id);
+        }
+        if (this.authorId != null) {
+            source.put("authorId", this.authorId);
+        }
+        if (this.posting != null && this.posting.authorId != null) {
+            source.put("postingAuthorId", this.posting.authorId);
+        }
+        return source;
+    }
+
 }

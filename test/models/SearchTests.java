@@ -209,7 +209,7 @@ public class SearchTests {
     @Test
     public void findUsersByLoginId() {
         // When
-        List<User> users = Search.findUsers("door", onePageFiveSize).getList();
+        List<User> users = Search.findUsers("door", onePageFiveSize);
         // Then
         assertThat(users.size()).isEqualTo(1);
         assertThat(users).onProperty("name").contains("suwon");
@@ -218,7 +218,7 @@ public class SearchTests {
     @Test
     public void findUsersByName() {
         // When
-        List<User> users = Search.findUsers("suwon", onePageFiveSize).getList();
+        List<User> users = Search.findUsers("suwon", onePageFiveSize);
         // Then
         assertThat(users.size()).isEqualTo(1);
         assertThat(users).onProperty("loginId").contains("doortts");
@@ -227,7 +227,7 @@ public class SearchTests {
     @Test
     public void findUser_from_public_project() {
         // When
-        List<User> users = Search.findUsers("Jihan", Project.find.byId(2l), onePageFiveSize).getList();
+        List<User> users = Search.findUsers("Jihan", Project.find.byId(2l), onePageFiveSize);
         // Then
         assertThat(users.size()).isEqualTo(1);
         assertThat(users).onProperty("loginId").contains("laziel");
@@ -236,7 +236,7 @@ public class SearchTests {
     @Test
     public void findUser_from_organization() {
         // When
-        List<User> users = Search.findUsers(groupMember.name, labs, onePageFiveSize).getList();
+        List<User> users = Search.findUsers(groupMember.name, labs, onePageFiveSize);
 
         // Then
         assertThat(users.size()).isEqualTo(1);
@@ -250,7 +250,7 @@ public class SearchTests {
     @Test
     public void anonymous_findProjects() {
         // When
-        List<Project> projects = Search.findProjects("yobi", User.anonymous, onePageFiveSize).getList();
+        List<Project> projects = Search.findProjects("yobi", User.anonymous, onePageFiveSize);
         // Then
         assertThat(projects.size()).isEqualTo(2);
         assertThat(projects).onProperty("name").contains("projectYobi");
@@ -260,7 +260,7 @@ public class SearchTests {
     @Test
     public void groupMember_findProjects() {
         // When
-        List<Project> projects = Search.findProjects("project", groupMember, onePageFiveSize).getList();
+        List<Project> projects = Search.findProjects("project", groupMember, onePageFiveSize);
         // Then
         assertThat(projects.size()).isEqualTo(4);
         assertThat(projects).onProperty("name").contains("projectYobi");
@@ -272,7 +272,7 @@ public class SearchTests {
     @Test
     public void projectMember_findProjects() {
         // When
-        List<Project> projects = Search.findProjects("project", projectMember, onePageFiveSize).getList();
+        List<Project> projects = Search.findProjects("project", projectMember, onePageFiveSize);
         // Then
         assertThat(projects.size()).isEqualTo(4);
         assertThat(projects).onProperty("name").contains("projectYobi");
@@ -284,7 +284,7 @@ public class SearchTests {
     @Test
     public void projectAndGroupMember_findProjects() {
         // When
-        List<Project> projects = Search.findProjects("project", groupAndProjectMember, onePageFiveSize).getList();
+        List<Project> projects = Search.findProjects("project", groupAndProjectMember, onePageFiveSize);
         // Then
         assertThat(projects.size()).isEqualTo(5);
         assertThat(projects).onProperty("name").contains("projectYobi");
@@ -301,7 +301,7 @@ public class SearchTests {
     @Test
     public void anonymous_findPosts_from_all_repos() {
         // When
-        List<Posting> posts = Search.findPosts("post", User.anonymous, onePageFiveSize).getList();
+        List<Posting> posts = Search.findPosts("post", User.anonymous, onePageFiveSize);
         // Then
         assertThat(posts.size()).isEqualTo(1);
         assertThat(posts).onProperty("title").contains("public post");
@@ -310,7 +310,7 @@ public class SearchTests {
     @Test
     public void autor_findPosts_from_all_repos() {
         // When
-        List<Posting> posts = Search.findPosts("post", author, onePageFiveSize).getList();
+        List<Posting> posts = Search.findPosts("post", author, onePageFiveSize);
         // Then
         assertThat(posts.size()).isEqualTo(2);
         assertThat(posts).onProperty("title").contains("public post");
@@ -321,7 +321,7 @@ public class SearchTests {
     @Test
     public void groupMember_findPosts_from_all_repos() {
         // When
-        List<Posting> posts = Search.findPosts("post", groupMember, onePageFiveSize).getList();
+        List<Posting> posts = Search.findPosts("post", groupMember, onePageFiveSize);
         // Then
         assertThat(posts.size()).isEqualTo(2);
         assertThat(posts).onProperty("title").contains("public post");
@@ -331,7 +331,7 @@ public class SearchTests {
     @Test
     public void projectMember_findPosts_from_all_repos() {
         // When
-        List<Posting> posts = Search.findPosts("post", projectMember, onePageFiveSize).getList();
+        List<Posting> posts = Search.findPosts("post", projectMember, onePageFiveSize);
         // Then
         assertThat(posts.size()).isEqualTo(2);
         assertThat(posts).onProperty("title").contains("public post");
@@ -342,7 +342,7 @@ public class SearchTests {
     @Test
     public void groupMemberAndProjectMember_findPosts_from_all_repos() {
         // When
-        List<Posting> posts = Search.findPosts("post", groupAndProjectMember, onePageFiveSize).getList();
+        List<Posting> posts = Search.findPosts("post", groupAndProjectMember, onePageFiveSize);
         // Then
         assertThat(posts.size()).isEqualTo(3);
         assertThat(posts).onProperty("title").contains("public post");
@@ -353,7 +353,7 @@ public class SearchTests {
     @Test
     public void anonymous_findPosts_from_public_project() {
         // When
-        List<Posting> posts = Search.findPosts("post", User.anonymous, publicProject, onePageFiveSize).getList();
+        List<Posting> posts = Search.findPosts("post", User.anonymous, publicProject, onePageFiveSize);
         // Then
         assertThat(posts.size()).isEqualTo(1);
         assertThat(posts).onProperty("title").contains("public post");
@@ -362,7 +362,7 @@ public class SearchTests {
     @Test
     public void anonymous_findPosts_from_protected_project() {
         // When
-        List<Posting> posts = Search.findPosts("post", User.anonymous, protectedProject, onePageFiveSize).getList();
+        List<Posting> posts = Search.findPosts("post", User.anonymous, protectedProject, onePageFiveSize);
         // Then
         assertThat(posts.size()).isEqualTo(0);
 
@@ -371,7 +371,7 @@ public class SearchTests {
     @Test
     public void anonymous_findPosts_from_private_project() {
         // When
-        List<Posting> posts = Search.findPosts("post", User.anonymous, privateProject, onePageFiveSize).getList();
+        List<Posting> posts = Search.findPosts("post", User.anonymous, privateProject, onePageFiveSize);
         // Then
         assertThat(posts.size()).isEqualTo(0);
 
@@ -380,7 +380,7 @@ public class SearchTests {
     @Test
     public void groupMember_findPosts_from_public_project() {
         // When
-        List<Posting> posts = Search.findPosts("post", groupMember, publicProject, onePageFiveSize).getList();
+        List<Posting> posts = Search.findPosts("post", groupMember, publicProject, onePageFiveSize);
         // Then
         assertThat(posts.size()).isEqualTo(1);
         assertThat(posts).onProperty("title").contains("public post");
@@ -390,7 +390,7 @@ public class SearchTests {
     @Test
     public void groupMember_findPosts_from_protected_project() {
         // When
-        List<Posting> posts = Search.findPosts("post", groupMember, protectedProject, onePageFiveSize).getList();
+        List<Posting> posts = Search.findPosts("post", groupMember, protectedProject, onePageFiveSize);
         // Then
         assertThat(posts.size()).isEqualTo(1);
         assertThat(posts).onProperty("title").contains("protected post");
@@ -399,7 +399,7 @@ public class SearchTests {
     @Test
     public void groupMember_findPosts_from_private_project() {
         // When
-        List<Posting> posts = Search.findPosts("post", groupMember, privateProject, onePageFiveSize).getList();
+        List<Posting> posts = Search.findPosts("post", groupMember, privateProject, onePageFiveSize);
         // Then
         assertThat(posts.size()).isEqualTo(0);
     }
@@ -407,7 +407,7 @@ public class SearchTests {
     @Test
     public void projectMember_findPosts_from_public_project() {
         // When
-        List<Posting> posts = Search.findPosts("post", projectMember, publicProject, onePageFiveSize).getList();
+        List<Posting> posts = Search.findPosts("post", projectMember, publicProject, onePageFiveSize);
         // Then
         assertThat(posts.size()).isEqualTo(1);
         assertThat(posts).onProperty("title").contains("public post");
@@ -416,7 +416,7 @@ public class SearchTests {
     @Test
     public void projectMember_findPosts_from_protected_project() {
         // When
-        List<Posting> posts = Search.findPosts("post", projectMember, protectedProject, onePageFiveSize).getList();
+        List<Posting> posts = Search.findPosts("post", projectMember, protectedProject, onePageFiveSize);
         // Then
         assertThat(posts.size()).isEqualTo(0);
     }
@@ -424,7 +424,7 @@ public class SearchTests {
     @Test
     public void projectMember_findPosts_from_private_project() {
         // When & Then
-        List<Posting> posts = Search.findPosts("post", projectMember, privateProject, onePageFiveSize).getList();
+        List<Posting> posts = Search.findPosts("post", projectMember, privateProject, onePageFiveSize);
         assertThat(posts.size()).isEqualTo(1);
         assertThat(posts).onProperty("title").contains("private post");
     }
@@ -432,7 +432,7 @@ public class SearchTests {
     @Test
     public void groupAndProjectMember_findPosts_from_protected_project() {
         // When
-        List<Posting> posts = Search.findPosts("post", groupAndProjectMember, protectedProject, onePageFiveSize).getList();
+        List<Posting> posts = Search.findPosts("post", groupAndProjectMember, protectedProject, onePageFiveSize);
         // Then
         assertThat(posts.size()).isEqualTo(1);
         assertThat(posts).onProperty("title").contains("protected post");
@@ -441,7 +441,7 @@ public class SearchTests {
     @Test
     public void groupAndProjectMember_findPosts_from_private_project() {
         // When
-        List<Posting> posts = Search.findPosts("post", groupAndProjectMember, privateProject, onePageFiveSize).getList();
+        List<Posting> posts = Search.findPosts("post", groupAndProjectMember, privateProject, onePageFiveSize);
         // Then
         assertThat(posts.size()).isEqualTo(1);
         assertThat(posts).onProperty("title").contains("private post");
@@ -450,7 +450,7 @@ public class SearchTests {
     @Test
     public void author_findPosts_from_public_project() {
         // When
-        List<Posting> posts = Search.findPosts("post", author, publicProject, onePageFiveSize).getList();
+        List<Posting> posts = Search.findPosts("post", author, publicProject, onePageFiveSize);
         // Then
         assertThat(posts.size()).isEqualTo(1);
         assertThat(posts).onProperty("title").contains("public post");
@@ -459,7 +459,7 @@ public class SearchTests {
     @Test
     public void author_findPosts_from_protected_project() {
         // When
-        List<Posting> posts = Search.findPosts("post", author, protectedProject, onePageFiveSize).getList();
+        List<Posting> posts = Search.findPosts("post", author, protectedProject, onePageFiveSize);
         // Then
         assertThat(posts.size()).isEqualTo(0);
     }
@@ -467,7 +467,7 @@ public class SearchTests {
     @Test
     public void author_findPosts_from_private_project() {
         // When
-        List<Posting> posts = Search.findPosts("post", author, privateProject, onePageFiveSize).getList();
+        List<Posting> posts = Search.findPosts("post", author, privateProject, onePageFiveSize);
         // Then
         assertThat(posts.size()).isEqualTo(1);
         assertThat(posts).onProperty("title").contains("private post");
@@ -476,7 +476,7 @@ public class SearchTests {
     @Test
     public void anonymous_findPosts_from_group() {
         // When
-        List<Posting> posts = Search.findPosts("post", User.anonymous, labs, onePageFiveSize).getList();
+        List<Posting> posts = Search.findPosts("post", User.anonymous, labs, onePageFiveSize);
         // Then
         assertThat(posts.size()).isEqualTo(1);
         assertThat(posts).onProperty("title").contains("public post");
@@ -485,7 +485,7 @@ public class SearchTests {
     @Test
     public void groupMember_findPosts_from_group() {
         // When
-        List<Posting> posts = Search.findPosts("post", groupMember, labs, onePageFiveSize).getList();
+        List<Posting> posts = Search.findPosts("post", groupMember, labs, onePageFiveSize);
         // Then
         assertThat(posts.size()).isEqualTo(2);
         assertThat(posts).onProperty("title").contains("public post");
@@ -496,7 +496,7 @@ public class SearchTests {
     @Test
     public void projectMember_findPosts_from_group() {
         // When
-        List<Posting> posts = Search.findPosts("post", projectMember, labs, onePageFiveSize).getList();
+        List<Posting> posts = Search.findPosts("post", projectMember, labs, onePageFiveSize);
         // Then
         assertThat(posts.size()).isEqualTo(2);
         assertThat(posts).onProperty("title").contains("public post");
@@ -507,7 +507,7 @@ public class SearchTests {
     @Test
     public void projectAndGroupMember_findPosts_from_group() {
         // When
-        List<Posting> posts = Search.findPosts("post", groupAndProjectMember, labs, onePageFiveSize).getList();
+        List<Posting> posts = Search.findPosts("post", groupAndProjectMember, labs, onePageFiveSize);
         // Then
         assertThat(posts.size()).isEqualTo(3);
         assertThat(posts).onProperty("title").contains("public post");
@@ -518,7 +518,7 @@ public class SearchTests {
     @Test
     public void author_findPosts_from_group() {
         // When
-        List<Posting> posts = Search.findPosts("post", author, labs, onePageFiveSize).getList();
+        List<Posting> posts = Search.findPosts("post", author, labs, onePageFiveSize);
         // Then
         assertThat(posts.size()).isEqualTo(2);
         assertThat(posts).onProperty("title").contains("public post");
@@ -532,7 +532,7 @@ public class SearchTests {
     @Test
     public void anonymous_findIssues_from_all_repos() {
         // When
-        List<Issue> issues = Search.findIssues("issue", User.anonymous, onePageFiveSize).getList();
+        List<Issue> issues = Search.findIssues("issue", User.anonymous, onePageFiveSize);
         // Then
         assertThat(issues.size()).isEqualTo(1);
         assertThat(issues).onProperty("title").contains("public issue");
@@ -541,7 +541,7 @@ public class SearchTests {
     @Test
     public void projectMember_findIssues_from_all_repos() {
         // When
-        List<Issue> issues = Search.findIssues("issue", projectMember, onePageFiveSize).getList();
+        List<Issue> issues = Search.findIssues("issue", projectMember, onePageFiveSize);
         // Then
         assertThat(issues.size()).isEqualTo(2);
         assertThat(issues).onProperty("title").contains("public issue");
@@ -551,7 +551,7 @@ public class SearchTests {
     @Test
     public void groupMember_findIssues_from_all_repos() {
         // When
-        List<Issue> issues = Search.findIssues("issue", groupMember, onePageFiveSize).getList();
+        List<Issue> issues = Search.findIssues("issue", groupMember, onePageFiveSize);
         // Then
         assertThat(issues.size()).isEqualTo(2);
         assertThat(issues).onProperty("title").contains("public issue");
@@ -561,7 +561,7 @@ public class SearchTests {
     @Test
     public void assignee_findIssues_from_all_repos() {
         // When
-        List<Issue> issues = Search.findIssues("issue", assignee, onePageFiveSize).getList();
+        List<Issue> issues = Search.findIssues("issue", assignee, onePageFiveSize);
         // Then
         assertThat(issues.size()).isEqualTo(2);
         assertThat(issues).onProperty("title").contains("public issue");
@@ -571,7 +571,7 @@ public class SearchTests {
     @Test
     public void anonymous_findIssues_from_group() {
         // When
-        List<Issue> issues = Search.findIssues("issue", User.anonymous, labs, onePageFiveSize).getList();
+        List<Issue> issues = Search.findIssues("issue", User.anonymous, labs, onePageFiveSize);
         // Then
         assertThat(issues.size()).isEqualTo(1);
         assertThat(issues).onProperty("title").contains("public issue");
@@ -580,7 +580,7 @@ public class SearchTests {
     @Test
     public void projectMember_findIssues_from_group() {
         // When
-        List<Issue> issues = Search.findIssues("issue", projectMember, labs, onePageFiveSize).getList();
+        List<Issue> issues = Search.findIssues("issue", projectMember, labs, onePageFiveSize);
         // Then
         assertThat(issues.size()).isEqualTo(2);
         assertThat(issues).onProperty("title").contains("public issue");
@@ -590,7 +590,7 @@ public class SearchTests {
     @Test
     public void groupMember_findIssues_from_group() {
         // When
-        List<Issue> issues = Search.findIssues("issue", groupMember, labs, onePageFiveSize).getList();
+        List<Issue> issues = Search.findIssues("issue", groupMember, labs, onePageFiveSize);
         // Then
         assertThat(issues.size()).isEqualTo(2);
         assertThat(issues).onProperty("title").contains("public issue");
@@ -600,7 +600,7 @@ public class SearchTests {
     @Test
     public void groupAndProjectMember_findIssues_from_group() {
         // When
-        List<Issue> issues = Search.findIssues("issue", groupAndProjectMember, labs, onePageFiveSize).getList();
+        List<Issue> issues = Search.findIssues("issue", groupAndProjectMember, labs, onePageFiveSize);
         // Then
         assertThat(issues.size()).isEqualTo(3);
         assertThat(issues).onProperty("title").contains("public issue");
@@ -611,7 +611,7 @@ public class SearchTests {
     @Test
     public void author_findIssues_from_group() {
         // When
-        List<Issue> issues = Search.findIssues("issue", author, labs, onePageFiveSize).getList();
+        List<Issue> issues = Search.findIssues("issue", author, labs, onePageFiveSize);
         // Then
         assertThat(issues.size()).isEqualTo(2);
         assertThat(issues).onProperty("title").contains("public issue");
@@ -621,7 +621,7 @@ public class SearchTests {
     @Test
     public void assignee_findIssues_from_group() {
         // When
-        List<Issue> issues = Search.findIssues("issue", assignee, labs, onePageFiveSize).getList();
+        List<Issue> issues = Search.findIssues("issue", assignee, labs, onePageFiveSize);
         // Then
         assertThat(issues.size()).isEqualTo(2);
         assertThat(issues).onProperty("title").contains("public issue");
@@ -631,7 +631,7 @@ public class SearchTests {
     @Test
     public void anonymous_findIssues_from_public_project() {
         // When
-        List<Issue> issues = Search.findIssues("issue", User.anonymous, publicProject, onePageFiveSize).getList();
+        List<Issue> issues = Search.findIssues("issue", User.anonymous, publicProject, onePageFiveSize);
         // Then
         assertThat(issues.size()).isEqualTo(1);
         assertThat(issues).onProperty("title").contains("public issue");
@@ -640,7 +640,7 @@ public class SearchTests {
     @Test
     public void anonymous_findIssues_from_protected_project() {
         // When
-        List<Issue> issues = Search.findIssues("issue", User.anonymous, protectedProject, onePageFiveSize).getList();
+        List<Issue> issues = Search.findIssues("issue", User.anonymous, protectedProject, onePageFiveSize);
         // Then
         assertThat(issues.size()).isEqualTo(0);
     }
@@ -648,7 +648,7 @@ public class SearchTests {
     @Test
     public void anonymous_findIssues_from_private_project() {
         // When
-        List<Issue> issues = Search.findIssues("issue", User.anonymous, privateProject, onePageFiveSize).getList();
+        List<Issue> issues = Search.findIssues("issue", User.anonymous, privateProject, onePageFiveSize);
         // Then
         assertThat(issues.size()).isEqualTo(0);
     }
@@ -656,7 +656,7 @@ public class SearchTests {
     @Test
     public void projectMember_findIssues_from_public_project() {
         // When
-        List<Issue> issues = Search.findIssues("issue", projectMember, publicProject, onePageFiveSize).getList();
+        List<Issue> issues = Search.findIssues("issue", projectMember, publicProject, onePageFiveSize);
         // Then
         assertThat(issues.size()).isEqualTo(1);
         assertThat(issues).onProperty("title").contains("public issue");
@@ -665,7 +665,7 @@ public class SearchTests {
     @Test
     public void projectMember_findIssues_from_protected_project() {
         // When
-        List<Issue> issues = Search.findIssues("issue", projectMember, protectedProject, onePageFiveSize).getList();
+        List<Issue> issues = Search.findIssues("issue", projectMember, protectedProject, onePageFiveSize);
         // Then
         assertThat(issues.size()).isEqualTo(0);
     }
@@ -673,7 +673,7 @@ public class SearchTests {
     @Test
     public void projectMember_findIssues_from_private_project() {
         // When
-        List<Issue> issues = Search.findIssues("issue", projectMember, privateProject, onePageFiveSize).getList();
+        List<Issue> issues = Search.findIssues("issue", projectMember, privateProject, onePageFiveSize);
         // Then
         assertThat(issues.size()).isEqualTo(1);
         assertThat(issues).onProperty("title").contains("private issue");
@@ -682,7 +682,7 @@ public class SearchTests {
     @Test
     public void groupMember_findIssues_from_public_project() {
         // When
-        List<Issue> issues = Search.findIssues("issue", groupMember, publicProject, onePageFiveSize).getList();
+        List<Issue> issues = Search.findIssues("issue", groupMember, publicProject, onePageFiveSize);
         // Then
         assertThat(issues.size()).isEqualTo(1);
         assertThat(issues).onProperty("title").contains("public issue");
@@ -691,7 +691,7 @@ public class SearchTests {
     @Test
     public void groupMember_findIssues_from_protected_project() {
         // When
-        List<Issue> issues = Search.findIssues("issue", groupMember, protectedProject, onePageFiveSize).getList();
+        List<Issue> issues = Search.findIssues("issue", groupMember, protectedProject, onePageFiveSize);
         // Then
         assertThat(issues.size()).isEqualTo(1);
         assertThat(issues).onProperty("title").contains("protected issue");
@@ -700,7 +700,7 @@ public class SearchTests {
     @Test
     public void groupMember_findIssues_from_private_project() {
         // When
-        List<Issue> issues = Search.findIssues("issue", groupMember, privateProject, onePageFiveSize).getList();
+        List<Issue> issues = Search.findIssues("issue", groupMember, privateProject, onePageFiveSize);
         // Then
         assertThat(issues.size()).isEqualTo(0);
     }
@@ -708,7 +708,7 @@ public class SearchTests {
     @Test
     public void author_findIssues_from_public_project() {
         // When
-        List<Issue> issues = Search.findIssues("issue", author, publicProject, onePageFiveSize).getList();
+        List<Issue> issues = Search.findIssues("issue", author, publicProject, onePageFiveSize);
         // Then
         assertThat(issues.size()).isEqualTo(1);
         assertThat(issues).onProperty("title").contains("public issue");
@@ -717,7 +717,7 @@ public class SearchTests {
     @Test
     public void author_findIssues_from_protected_project() {
         // When
-        List<Issue> issues = Search.findIssues("issue", author, protectedProject, onePageFiveSize).getList();
+        List<Issue> issues = Search.findIssues("issue", author, protectedProject, onePageFiveSize);
         // Then
         assertThat(issues.size()).isEqualTo(0);
     }
@@ -725,7 +725,7 @@ public class SearchTests {
     @Test
     public void author_findIssues_from_private_project() {
         // When
-        List<Issue> issues = Search.findIssues("issue", author, privateProject, onePageFiveSize).getList();
+        List<Issue> issues = Search.findIssues("issue", author, privateProject, onePageFiveSize);
         // Then
         assertThat(issues.size()).isEqualTo(1);
         assertThat(issues).onProperty("title").contains("private issue");
@@ -734,7 +734,7 @@ public class SearchTests {
     @Test
     public void assignee_findIsses_from_public_project() {
         // When
-        List<Issue> issues = Search.findIssues("issue", assignee, publicProject, onePageFiveSize).getList();
+        List<Issue> issues = Search.findIssues("issue", assignee, publicProject, onePageFiveSize);
         // Then
         assertThat(issues.size()).isEqualTo(1);
         assertThat(issues).onProperty("title").contains("public issue");
@@ -743,7 +743,7 @@ public class SearchTests {
     @Test
     public void assignee_findIsses_from_protected_project() {
         // When
-        List<Issue> issues = Search.findIssues("issue", assignee, protectedProject, onePageFiveSize).getList();
+        List<Issue> issues = Search.findIssues("issue", assignee, protectedProject, onePageFiveSize);
         // Then
         assertThat(issues.size()).isEqualTo(0);
     }
@@ -751,7 +751,7 @@ public class SearchTests {
     @Test
     public void assignee_findIsses_from_private_project() {
         // When
-        List<Issue> issues = Search.findIssues("issue", assignee, privateProject, onePageFiveSize).getList();
+        List<Issue> issues = Search.findIssues("issue", assignee, privateProject, onePageFiveSize);
         // Then
         assertThat(issues.size()).isEqualTo(1);
         assertThat(issues).onProperty("title").contains("private issue");
@@ -764,7 +764,7 @@ public class SearchTests {
     @Test
     public void anonymous_findMilestone_from_all_repos() {
         // When
-        List<Milestone> milestones = Search.findMilestones("milestone", User.anonymous, onePageFiveSize).getList();
+        List<Milestone> milestones = Search.findMilestones("milestone", User.anonymous, onePageFiveSize);
         // Then
         assertThat(milestones.size()).isEqualTo(1);
         assertThat(milestones).onProperty("title").contains("public milestone");
@@ -773,7 +773,7 @@ public class SearchTests {
     @Test
     public void groupMember_findMilestone_from_all_repos() {
         // When
-        List<Milestone> milestones = Search.findMilestones("milestone", groupMember, onePageFiveSize).getList();
+        List<Milestone> milestones = Search.findMilestones("milestone", groupMember, onePageFiveSize);
         // Then
         assertThat(milestones.size()).isEqualTo(2);
         assertThat(milestones).onProperty("title").contains("public milestone");
@@ -783,7 +783,7 @@ public class SearchTests {
     @Test
     public void projectMember_findMilestone_from_all_repos() {
         // When
-        List<Milestone> milestones = Search.findMilestones("milestone", projectMember, onePageFiveSize).getList();
+        List<Milestone> milestones = Search.findMilestones("milestone", projectMember, onePageFiveSize);
         // Then
         assertThat(milestones.size()).isEqualTo(2);
         assertThat(milestones).onProperty("title").contains("public milestone");
@@ -793,7 +793,7 @@ public class SearchTests {
     @Test
     public void projectAndGroupMember_findMilestone_from_all_repos() {
         // When
-        List<Milestone> milestones = Search.findMilestones("milestone", groupAndProjectMember, onePageFiveSize).getList();
+        List<Milestone> milestones = Search.findMilestones("milestone", groupAndProjectMember, onePageFiveSize);
         // Then
         assertThat(milestones.size()).isEqualTo(3);
         assertThat(milestones).onProperty("title").contains("public milestone");
@@ -804,7 +804,7 @@ public class SearchTests {
     @Test
     public void anonymous_findMilestone_from_public_project() {
         // When
-        List<Milestone> milestones = Search.findMilestones("milestone", User.anonymous, publicProject, onePageFiveSize).getList();
+        List<Milestone> milestones = Search.findMilestones("milestone", User.anonymous, publicProject, onePageFiveSize);
         // Then
         assertThat(milestones.size()).isEqualTo(1);
         assertThat(milestones).onProperty("title").contains("public milestone");
@@ -813,7 +813,7 @@ public class SearchTests {
     @Test
     public void groupMember_findMilestone_from_public_project() {
         // When
-        List<Milestone> milestones = Search.findMilestones("milestone", groupMember, publicProject, onePageFiveSize).getList();
+        List<Milestone> milestones = Search.findMilestones("milestone", groupMember, publicProject, onePageFiveSize);
         // Then
         assertThat(milestones.size()).isEqualTo(1);
         assertThat(milestones).onProperty("title").contains("public milestone");
@@ -822,7 +822,7 @@ public class SearchTests {
     @Test
     public void groupMember_findMilestone_from_protected_project() {
         // When
-        List<Milestone> milestones = Search.findMilestones("milestone", groupMember, protectedProject, onePageFiveSize).getList();
+        List<Milestone> milestones = Search.findMilestones("milestone", groupMember, protectedProject, onePageFiveSize);
         // Then
         assertThat(milestones.size()).isEqualTo(1);
         assertThat(milestones).onProperty("title").contains("protected milestone");
@@ -831,7 +831,7 @@ public class SearchTests {
     @Test
     public void projectMember_findMilestone_from_public_project() {
         // When
-        List<Milestone> milestones = Search.findMilestones("milestone", projectMember, publicProject, onePageFiveSize).getList();
+        List<Milestone> milestones = Search.findMilestones("milestone", projectMember, publicProject, onePageFiveSize);
         // Then
         assertThat(milestones.size()).isEqualTo(1);
         assertThat(milestones).onProperty("title").contains("public milestone");
@@ -840,7 +840,7 @@ public class SearchTests {
     @Test
     public void projectMember_findMilestone_from_private_project() {
         // When
-        List<Milestone> milestones = Search.findMilestones("milestone", projectMember, privateProject, onePageFiveSize).getList();
+        List<Milestone> milestones = Search.findMilestones("milestone", projectMember, privateProject, onePageFiveSize);
         // Then
         assertThat(milestones.size()).isEqualTo(1);
         assertThat(milestones).onProperty("title").contains("private milestone");
@@ -849,7 +849,7 @@ public class SearchTests {
     @Test
     public void projectAndGroupMember_findMilestone_from_public_project() {
         // When
-        List<Milestone> milestones = Search.findMilestones("milestone", groupAndProjectMember, publicProject, onePageFiveSize).getList();
+        List<Milestone> milestones = Search.findMilestones("milestone", groupAndProjectMember, publicProject, onePageFiveSize);
         // Then
         assertThat(milestones.size()).isEqualTo(1);
         assertThat(milestones).onProperty("title").contains("public milestone");
@@ -858,7 +858,7 @@ public class SearchTests {
     @Test
     public void projectAndGroupMember_findMilestone_from_protected_project() {
         // When
-        List<Milestone> milestones = Search.findMilestones("milestone", groupAndProjectMember, protectedProject, onePageFiveSize).getList();
+        List<Milestone> milestones = Search.findMilestones("milestone", groupAndProjectMember, protectedProject, onePageFiveSize);
         // Then
         assertThat(milestones.size()).isEqualTo(1);
         assertThat(milestones).onProperty("title").contains("protected milestone");
@@ -867,7 +867,7 @@ public class SearchTests {
     @Test
     public void projectAndGroupMember_findMilestone_from_private_project() {
         // When
-        List<Milestone> milestones = Search.findMilestones("milestone", groupAndProjectMember, privateProject, onePageFiveSize).getList();
+        List<Milestone> milestones = Search.findMilestones("milestone", groupAndProjectMember, privateProject, onePageFiveSize);
         // Then
         assertThat(milestones.size()).isEqualTo(1);
         assertThat(milestones).onProperty("title").contains("private milestone");
@@ -876,7 +876,7 @@ public class SearchTests {
     @Test
     public void anonymous_findMilestone_from_group() {
         // When
-        List<Milestone> milestones = Search.findMilestones("milestone", User.anonymous, labs, onePageFiveSize).getList();
+        List<Milestone> milestones = Search.findMilestones("milestone", User.anonymous, labs, onePageFiveSize);
         // Then
         assertThat(milestones.size()).isEqualTo(1);
         assertThat(milestones).onProperty("title").contains("public milestone");
@@ -885,7 +885,7 @@ public class SearchTests {
     @Test
     public void groupMember_findMilestone_from_group() {
         // When
-        List<Milestone> milestones = Search.findMilestones("milestone", groupMember, labs, onePageFiveSize).getList();
+        List<Milestone> milestones = Search.findMilestones("milestone", groupMember, labs, onePageFiveSize);
         // Then
         assertThat(milestones.size()).isEqualTo(2);
         assertThat(milestones).onProperty("title").contains("public milestone");
@@ -895,7 +895,7 @@ public class SearchTests {
     @Test
     public void projectMember_findMilestone_from_group() {
         // When
-        List<Milestone> milestones = Search.findMilestones("milestone", projectMember, labs, onePageFiveSize).getList();
+        List<Milestone> milestones = Search.findMilestones("milestone", projectMember, labs, onePageFiveSize);
         // Then
         assertThat(milestones.size()).isEqualTo(2);
         assertThat(milestones).onProperty("title").contains("public milestone");
@@ -905,7 +905,7 @@ public class SearchTests {
     @Test
     public void projectAndGroupMember_findMilestone_from_group() {
         // When
-        List<Milestone> milestones = Search.findMilestones("milestone", groupAndProjectMember, labs, onePageFiveSize).getList();
+        List<Milestone> milestones = Search.findMilestones("milestone", groupAndProjectMember, labs, onePageFiveSize);
         // Then
         assertThat(milestones.size()).isEqualTo(3);
         assertThat(milestones).onProperty("title").contains("public milestone");
@@ -920,7 +920,7 @@ public class SearchTests {
     @Test
     public void anonymous_findIssueComments_from_all_repos() {
         // When
-        List<IssueComment> comments = Search.findIssueComments("comment", User.anonymous, onePageFiveSize).getList();
+        List<IssueComment> comments = Search.findIssueComments("comment", User.anonymous, onePageFiveSize);
         // Then
         assertThat(comments.size()).isEqualTo(1);
         assertThat(comments).onProperty("contents").contains("public comment");
@@ -929,7 +929,7 @@ public class SearchTests {
     @Test
     public void groupMember_findIssueComments_from_all_repos() {
         // When
-        List<IssueComment> comments = Search.findIssueComments("comment", groupMember, onePageFiveSize).getList();
+        List<IssueComment> comments = Search.findIssueComments("comment", groupMember, onePageFiveSize);
         // Then
         assertThat(comments.size()).isEqualTo(2);
         assertThat(comments).onProperty("contents").contains("public comment");
@@ -939,7 +939,7 @@ public class SearchTests {
     @Test
     public void projectMember_findIssueComments_from_all_repos() {
         // When
-        List<IssueComment> comments = Search.findIssueComments("comment", projectMember, onePageFiveSize).getList();
+        List<IssueComment> comments = Search.findIssueComments("comment", projectMember, onePageFiveSize);
         // Then
         assertThat(comments.size()).isEqualTo(2);
         assertThat(comments).onProperty("contents").contains("public comment");
@@ -949,7 +949,7 @@ public class SearchTests {
     @Test
     public void projectAndGroupMember_findIssueComments_from_all_repos() {
         // When
-        List<IssueComment> comments = Search.findIssueComments("comment", groupAndProjectMember, onePageFiveSize).getList();
+        List<IssueComment> comments = Search.findIssueComments("comment", groupAndProjectMember, onePageFiveSize);
         // Then
         assertThat(comments.size()).isEqualTo(3);
         assertThat(comments).onProperty("contents").contains("public comment");
@@ -960,7 +960,7 @@ public class SearchTests {
     @Test
     public void author_findIssueComments_from_all_repos() {
         // When
-        List<IssueComment> comments = Search.findIssueComments("comment", author, onePageFiveSize).getList();
+        List<IssueComment> comments = Search.findIssueComments("comment", author, onePageFiveSize);
         // Then
         assertThat(comments.size()).isEqualTo(2);
         assertThat(comments).onProperty("contents").contains("public comment");
@@ -970,7 +970,7 @@ public class SearchTests {
     @Test
     public void anonymous_findIssueComments_from_public_project() {
         // When
-        List<IssueComment> comments = Search.findIssueComments("comment", User.anonymous, publicProject, onePageFiveSize).getList();
+        List<IssueComment> comments = Search.findIssueComments("comment", User.anonymous, publicProject, onePageFiveSize);
         // Then
         assertThat(comments.size()).isEqualTo(1);
         assertThat(comments).onProperty("contents").contains("public comment");
@@ -979,7 +979,7 @@ public class SearchTests {
     @Test
     public void anonymous_findIssueComments_from_protected_project() {
         // When
-        List<IssueComment> comments = Search.findIssueComments("comment", User.anonymous, protectedProject, onePageFiveSize).getList();
+        List<IssueComment> comments = Search.findIssueComments("comment", User.anonymous, protectedProject, onePageFiveSize);
         // Then
         assertThat(comments.size()).isEqualTo(0);
     }
@@ -987,7 +987,7 @@ public class SearchTests {
     @Test
     public void anonymous_findIssueComments_from_private_project() {
         // When
-        List<IssueComment> comments = Search.findIssueComments("comment", User.anonymous, privateProject, onePageFiveSize).getList();
+        List<IssueComment> comments = Search.findIssueComments("comment", User.anonymous, privateProject, onePageFiveSize);
         // Then
         assertThat(comments.size()).isEqualTo(0);
     }
@@ -995,7 +995,7 @@ public class SearchTests {
     @Test
     public void groupMember_findIssueComments_from_public_project() {
         // When
-        List<IssueComment> comments = Search.findIssueComments("comment", groupMember, publicProject, onePageFiveSize).getList();
+        List<IssueComment> comments = Search.findIssueComments("comment", groupMember, publicProject, onePageFiveSize);
         // Then
         assertThat(comments.size()).isEqualTo(1);
         assertThat(comments).onProperty("contents").contains("public comment");
@@ -1004,7 +1004,7 @@ public class SearchTests {
     @Test
     public void groupMember_findIssueComments_from_protected_project() {
         // When
-        List<IssueComment> comments = Search.findIssueComments("comment", groupMember, protectedProject, onePageFiveSize).getList();
+        List<IssueComment> comments = Search.findIssueComments("comment", groupMember, protectedProject, onePageFiveSize);
         // Then
         assertThat(comments.size()).isEqualTo(1);
         assertThat(comments).onProperty("contents").contains("protected comment");
@@ -1013,7 +1013,7 @@ public class SearchTests {
     @Test
     public void groupMember_findIssueComments_from_private_project() {
         // When
-        List<IssueComment> comments = Search.findIssueComments("comment", groupMember, privateProject, onePageFiveSize).getList();
+        List<IssueComment> comments = Search.findIssueComments("comment", groupMember, privateProject, onePageFiveSize);
         // Then
         assertThat(comments.size()).isEqualTo(0);
     }
@@ -1021,7 +1021,7 @@ public class SearchTests {
     @Test
     public void projectMember_findIssueComments_from_public_project() {
         // When
-        List<IssueComment> comments = Search.findIssueComments("comment", projectMember, publicProject, onePageFiveSize).getList();
+        List<IssueComment> comments = Search.findIssueComments("comment", projectMember, publicProject, onePageFiveSize);
         // Then
         assertThat(comments.size()).isEqualTo(1);
         assertThat(comments).onProperty("contents").contains("public comment");
@@ -1030,7 +1030,7 @@ public class SearchTests {
     @Test
     public void projectMember_findIssueComments_from_protected_project() {
         // When
-        List<IssueComment> comments = Search.findIssueComments("comment", projectMember, protectedProject, onePageFiveSize).getList();
+        List<IssueComment> comments = Search.findIssueComments("comment", projectMember, protectedProject, onePageFiveSize);
         // Then
         assertThat(comments.size()).isEqualTo(0);
     }
@@ -1038,7 +1038,7 @@ public class SearchTests {
     @Test
     public void projectMember_findIssueComments_from_private_project() {
         // When
-        List<IssueComment> comments = Search.findIssueComments("comment", projectMember, privateProject, onePageFiveSize).getList();
+        List<IssueComment> comments = Search.findIssueComments("comment", projectMember, privateProject, onePageFiveSize);
         // Then
         assertThat(comments.size()).isEqualTo(1);
         assertThat(comments).onProperty("contents").contains("private comment");
@@ -1047,7 +1047,7 @@ public class SearchTests {
     @Test
     public void groupAndProjectMember_findIssueComments_from_public_project() {
         // When
-        List<IssueComment> comments = Search.findIssueComments("comment", groupAndProjectMember, publicProject, onePageFiveSize).getList();
+        List<IssueComment> comments = Search.findIssueComments("comment", groupAndProjectMember, publicProject, onePageFiveSize);
         // Then
         assertThat(comments.size()).isEqualTo(1);
         assertThat(comments).onProperty("contents").contains("public comment");
@@ -1056,7 +1056,7 @@ public class SearchTests {
     @Test
     public void groupAndProjectMember_findIssueComments_from_protected_project() {
         // When
-        List<IssueComment> comments = Search.findIssueComments("comment", groupAndProjectMember, protectedProject, onePageFiveSize).getList();
+        List<IssueComment> comments = Search.findIssueComments("comment", groupAndProjectMember, protectedProject, onePageFiveSize);
         // Then
         assertThat(comments.size()).isEqualTo(1);
         assertThat(comments).onProperty("contents").contains("protected comment");
@@ -1065,7 +1065,7 @@ public class SearchTests {
     @Test
     public void groupAndProjectMember_findIssueComments_from_private_project() {
         // When
-        List<IssueComment> comments = Search.findIssueComments("comment", groupAndProjectMember, privateProject, onePageFiveSize).getList();
+        List<IssueComment> comments = Search.findIssueComments("comment", groupAndProjectMember, privateProject, onePageFiveSize);
         // Then
         assertThat(comments.size()).isEqualTo(1);
         assertThat(comments).onProperty("contents").contains("private comment");
@@ -1075,7 +1075,7 @@ public class SearchTests {
     @Test
     public void author_findIssueComments_from_public_project() {
         // When
-        List<IssueComment> comments = Search.findIssueComments("comment", author, publicProject, onePageFiveSize).getList();
+        List<IssueComment> comments = Search.findIssueComments("comment", author, publicProject, onePageFiveSize);
         // Then
         assertThat(comments.size()).isEqualTo(1);
         assertThat(comments).onProperty("contents").contains("public comment");
@@ -1084,7 +1084,7 @@ public class SearchTests {
     @Test
     public void author_findIssueComments_from_protected_project() {
         // When
-        List<IssueComment> comments = Search.findIssueComments("comment", author, protectedProject, onePageFiveSize).getList();
+        List<IssueComment> comments = Search.findIssueComments("comment", author, protectedProject, onePageFiveSize);
         // Then
         assertThat(comments.size()).isEqualTo(0);
     }
@@ -1092,7 +1092,7 @@ public class SearchTests {
     @Test
     public void author_findIssueComments_from_private_project() {
         // When
-        List<IssueComment> comments = Search.findIssueComments("comment", author, privateProject, onePageFiveSize).getList();
+        List<IssueComment> comments = Search.findIssueComments("comment", author, privateProject, onePageFiveSize);
         // Then
         assertThat(comments.size()).isEqualTo(1);
         assertThat(comments).onProperty("contents").contains("private comment");
@@ -1101,7 +1101,7 @@ public class SearchTests {
     @Test
     public void anonymous_findIssueComments_from_group() {
         // When
-        List<IssueComment> comments = Search.findIssueComments("comment", User.anonymous, labs, onePageFiveSize).getList();
+        List<IssueComment> comments = Search.findIssueComments("comment", User.anonymous, labs, onePageFiveSize);
         // Then
         assertThat(comments.size()).isEqualTo(1);
         assertThat(comments).onProperty("contents").contains("public comment");
@@ -1110,7 +1110,7 @@ public class SearchTests {
     @Test
     public void groupMember_findIssueComments_from_group() {
         // When
-        List<IssueComment> comments = Search.findIssueComments("comment", groupMember, labs, onePageFiveSize).getList();
+        List<IssueComment> comments = Search.findIssueComments("comment", groupMember, labs, onePageFiveSize);
         // Then
         assertThat(comments.size()).isEqualTo(2);
         assertThat(comments).onProperty("contents").contains("public comment");
@@ -1120,7 +1120,7 @@ public class SearchTests {
     @Test
     public void projectMember_findIssueComments_from_group() {
         // When
-        List<IssueComment> comments = Search.findIssueComments("comment", projectMember, labs, onePageFiveSize).getList();
+        List<IssueComment> comments = Search.findIssueComments("comment", projectMember, labs, onePageFiveSize);
         // Then
         assertThat(comments.size()).isEqualTo(2);
         assertThat(comments).onProperty("contents").contains("public comment");
@@ -1130,7 +1130,7 @@ public class SearchTests {
     @Test
     public void groupAndProjectMember_findIssueComments_from_group() {
         // When
-        List<IssueComment> comments = Search.findIssueComments("comment", groupAndProjectMember, labs, onePageFiveSize).getList();
+        List<IssueComment> comments = Search.findIssueComments("comment", groupAndProjectMember, labs, onePageFiveSize);
         // Then
         assertThat(comments.size()).isEqualTo(3);
         assertThat(comments).onProperty("contents").contains("public comment");
@@ -1141,7 +1141,7 @@ public class SearchTests {
     @Test
     public void author_findIssueComments_from_group() {
         // When
-        List<IssueComment> comments = Search.findIssueComments("comment", author, labs, onePageFiveSize).getList();
+        List<IssueComment> comments = Search.findIssueComments("comment", author, labs, onePageFiveSize);
         // Then
         assertThat(comments.size()).isEqualTo(2);
         assertThat(comments).onProperty("contents").contains("public comment");
@@ -1155,7 +1155,7 @@ public class SearchTests {
     @Test
     public void anonymois_findPostComments_from_all_repos() {
         // When
-        List<PostingComment> comments = Search.findPostComments("comment", User.anonymous, onePageFiveSize).getList();
+        List<PostingComment> comments = Search.findPostComments("comment", User.anonymous, onePageFiveSize);
         // Then
         assertThat(comments.size()).isEqualTo(1);
         assertThat(comments).onProperty("contents").contains("public comment");
@@ -1164,7 +1164,7 @@ public class SearchTests {
     @Test
     public void groupMember_findPostComments_from_all_repos() {
         // When
-        List<PostingComment> comments = Search.findPostComments("comment", groupMember, onePageFiveSize).getList();
+        List<PostingComment> comments = Search.findPostComments("comment", groupMember, onePageFiveSize);
         // Then
         assertThat(comments.size()).isEqualTo(2);
         assertThat(comments).onProperty("contents").contains("public comment");
@@ -1174,7 +1174,7 @@ public class SearchTests {
     @Test
     public void projectMember_findPostComments_from_all_repos() {
         // When
-        List<PostingComment> comments = Search.findPostComments("comment", projectMember, onePageFiveSize).getList();
+        List<PostingComment> comments = Search.findPostComments("comment", projectMember, onePageFiveSize);
         // Then
         assertThat(comments.size()).isEqualTo(2);
         assertThat(comments).onProperty("contents").contains("public comment");
@@ -1184,7 +1184,7 @@ public class SearchTests {
     @Test
     public void projectAndGroupMember_findPostComments_from_all_repos() {
         // When
-        List<PostingComment> comments = Search.findPostComments("comment", groupAndProjectMember, onePageFiveSize).getList();
+        List<PostingComment> comments = Search.findPostComments("comment", groupAndProjectMember, onePageFiveSize);
         // Then
         assertThat(comments.size()).isEqualTo(3);
         assertThat(comments).onProperty("contents").contains("public comment");
@@ -1195,7 +1195,7 @@ public class SearchTests {
     @Test
     public void author_findPostComments_from_all_repos() {
         // When
-        List<PostingComment> comments = Search.findPostComments("comment", author, onePageFiveSize).getList();
+        List<PostingComment> comments = Search.findPostComments("comment", author, onePageFiveSize);
         // Then
         assertThat(comments.size()).isEqualTo(2);
         assertThat(comments).onProperty("contents").contains("public comment");
@@ -1205,7 +1205,7 @@ public class SearchTests {
     @Test
     public void anonymous_findPostComments_from_public_project() {
         // When
-        List<PostingComment> comments = Search.findPostComments("comment", User.anonymous, publicProject, onePageFiveSize).getList();
+        List<PostingComment> comments = Search.findPostComments("comment", User.anonymous, publicProject, onePageFiveSize);
         // Then
         assertThat(comments.size()).isEqualTo(1);
         assertThat(comments).onProperty("contents").contains("public comment");
@@ -1214,7 +1214,7 @@ public class SearchTests {
     @Test
     public void anonymous_findPostComments_from_protected_project() {
         // When
-        List<PostingComment> comments = Search.findPostComments("comment", User.anonymous, protectedProject, onePageFiveSize).getList();
+        List<PostingComment> comments = Search.findPostComments("comment", User.anonymous, protectedProject, onePageFiveSize);
         // Then
         assertThat(comments.size()).isEqualTo(0);
     }
@@ -1222,7 +1222,7 @@ public class SearchTests {
     @Test
     public void anonymous_findPostComments_from_private_project() {
         // When
-        List<PostingComment> comments = Search.findPostComments("comment", User.anonymous, privateProject, onePageFiveSize).getList();
+        List<PostingComment> comments = Search.findPostComments("comment", User.anonymous, privateProject, onePageFiveSize);
         // Then
         assertThat(comments.size()).isEqualTo(0);
     }
@@ -1230,7 +1230,7 @@ public class SearchTests {
     @Test
     public void groupMember_findPostComments_from_public_project() {
         // When
-        List<PostingComment> comments = Search.findPostComments("comment", groupMember, publicProject, onePageFiveSize).getList();
+        List<PostingComment> comments = Search.findPostComments("comment", groupMember, publicProject, onePageFiveSize);
         // Then
         assertThat(comments.size()).isEqualTo(1);
         assertThat(comments).onProperty("contents").contains("public comment");
@@ -1239,7 +1239,7 @@ public class SearchTests {
     @Test
     public void groupMember_findPostComments_from_protected_project() {
         // When
-        List<PostingComment> comments = Search.findPostComments("comment", groupMember, protectedProject, onePageFiveSize).getList();
+        List<PostingComment> comments = Search.findPostComments("comment", groupMember, protectedProject, onePageFiveSize);
         // Then
         assertThat(comments.size()).isEqualTo(1);
         assertThat(comments).onProperty("contents").contains("protected comment");
@@ -1248,7 +1248,7 @@ public class SearchTests {
     @Test
     public void groupMember_findPostComments_from_private_project() {
         // When
-        List<PostingComment> comments = Search.findPostComments("comment", groupMember, privateProject, onePageFiveSize).getList();
+        List<PostingComment> comments = Search.findPostComments("comment", groupMember, privateProject, onePageFiveSize);
         // Then
         assertThat(comments.size()).isEqualTo(0);
     }
@@ -1256,7 +1256,7 @@ public class SearchTests {
     @Test
     public void projectMember_findPostComments_from_public_project() {
         // When
-        List<PostingComment> comments = Search.findPostComments("comment", projectMember, publicProject, onePageFiveSize).getList();
+        List<PostingComment> comments = Search.findPostComments("comment", projectMember, publicProject, onePageFiveSize);
         // Then
         assertThat(comments.size()).isEqualTo(1);
         assertThat(comments).onProperty("contents").contains("public comment");
@@ -1265,7 +1265,7 @@ public class SearchTests {
     @Test
     public void projectMember_findPostComments_from_protected_project() {
         // When
-        List<PostingComment> comments = Search.findPostComments("comment", projectMember, protectedProject, onePageFiveSize).getList();
+        List<PostingComment> comments = Search.findPostComments("comment", projectMember, protectedProject, onePageFiveSize);
         // Then
         assertThat(comments.size()).isEqualTo(0);
     }
@@ -1273,7 +1273,7 @@ public class SearchTests {
     @Test
     public void projectMember_findPostComments_from_private_project() {
         // When
-        List<PostingComment> comments = Search.findPostComments("comment", projectMember, privateProject, onePageFiveSize).getList();
+        List<PostingComment> comments = Search.findPostComments("comment", projectMember, privateProject, onePageFiveSize);
         // Then
         assertThat(comments.size()).isEqualTo(1);
         assertThat(comments).onProperty("contents").contains("private comment");
@@ -1282,7 +1282,7 @@ public class SearchTests {
     @Test
     public void groupAndProjectMember_findPostComments_from_public_project() {
         // When
-        List<PostingComment> comments = Search.findPostComments("comment", groupAndProjectMember, publicProject, onePageFiveSize).getList();
+        List<PostingComment> comments = Search.findPostComments("comment", groupAndProjectMember, publicProject, onePageFiveSize);
         // Then
         assertThat(comments.size()).isEqualTo(1);
         assertThat(comments).onProperty("contents").contains("public comment");
@@ -1291,7 +1291,7 @@ public class SearchTests {
     @Test
     public void groupAndProjectMember_findPostComments_from_protected_project() {
         // When
-        List<PostingComment> comments = Search.findPostComments("comment", groupAndProjectMember, protectedProject, onePageFiveSize).getList();
+        List<PostingComment> comments = Search.findPostComments("comment", groupAndProjectMember, protectedProject, onePageFiveSize);
         // Then
         assertThat(comments.size()).isEqualTo(1);
         assertThat(comments).onProperty("contents").contains("protected comment");
@@ -1300,7 +1300,7 @@ public class SearchTests {
     @Test
     public void groupAndProjectMember_findPostComments_from_private_project() {
         // When
-        List<PostingComment> comments = Search.findPostComments("comment", groupAndProjectMember, privateProject, onePageFiveSize).getList();
+        List<PostingComment> comments = Search.findPostComments("comment", groupAndProjectMember, privateProject, onePageFiveSize);
         // Then
         assertThat(comments.size()).isEqualTo(1);
         assertThat(comments).onProperty("contents").contains("private comment");
@@ -1310,7 +1310,7 @@ public class SearchTests {
     @Test
     public void author_findPostComments_from_public_project() {
         // When
-        List<PostingComment> comments = Search.findPostComments("comment", author, publicProject, onePageFiveSize).getList();
+        List<PostingComment> comments = Search.findPostComments("comment", author, publicProject, onePageFiveSize);
         // Then
         assertThat(comments.size()).isEqualTo(1);
         assertThat(comments).onProperty("contents").contains("public comment");
@@ -1319,7 +1319,7 @@ public class SearchTests {
     @Test
     public void author_findPostComments_from_protected_project() {
         // When
-        List<PostingComment> comments = Search.findPostComments("comment", author, protectedProject, onePageFiveSize).getList();
+        List<PostingComment> comments = Search.findPostComments("comment", author, protectedProject, onePageFiveSize);
         // Then
         assertThat(comments.size()).isEqualTo(0);
     }
@@ -1327,7 +1327,7 @@ public class SearchTests {
     @Test
     public void author_findPostComments_from_private_project() {
         // When
-        List<PostingComment> comments = Search.findPostComments("comment", author, privateProject, onePageFiveSize).getList();
+        List<PostingComment> comments = Search.findPostComments("comment", author, privateProject, onePageFiveSize);
         // Then
         assertThat(comments.size()).isEqualTo(1);
         assertThat(comments).onProperty("contents").contains("private comment");
@@ -1336,7 +1336,7 @@ public class SearchTests {
     @Test
     public void anonymous_findPostComments_from_group() {
         // When
-        List<PostingComment> comments = Search.findPostComments("comment", User.anonymous, labs, onePageFiveSize).getList();
+        List<PostingComment> comments = Search.findPostComments("comment", User.anonymous, labs, onePageFiveSize);
         // Then
         assertThat(comments.size()).isEqualTo(1);
         assertThat(comments).onProperty("contents").contains("public comment");
@@ -1345,7 +1345,7 @@ public class SearchTests {
     @Test
     public void groupMember_findPostComments_from_group() {
         // When
-        List<PostingComment> comments = Search.findPostComments("comment", groupMember, labs, onePageFiveSize).getList();
+        List<PostingComment> comments = Search.findPostComments("comment", groupMember, labs, onePageFiveSize);
         // Then
         assertThat(comments.size()).isEqualTo(2);
         assertThat(comments).onProperty("contents").contains("public comment");
@@ -1355,7 +1355,7 @@ public class SearchTests {
     @Test
     public void projectMember_findPostComments_from_group() {
         // When
-        List<PostingComment> comments = Search.findPostComments("comment", projectMember, labs, onePageFiveSize).getList();
+        List<PostingComment> comments = Search.findPostComments("comment", projectMember, labs, onePageFiveSize);
         // Then
         assertThat(comments.size()).isEqualTo(2);
         assertThat(comments).onProperty("contents").contains("public comment");
@@ -1365,7 +1365,7 @@ public class SearchTests {
     @Test
     public void groupAndProjectMember_findPostComments_from_group() {
         // When
-        List<PostingComment> comments = Search.findPostComments("comment", groupAndProjectMember, labs, onePageFiveSize).getList();
+        List<PostingComment> comments = Search.findPostComments("comment", groupAndProjectMember, labs, onePageFiveSize);
         // Then
         assertThat(comments.size()).isEqualTo(3);
         assertThat(comments).onProperty("contents").contains("public comment");
@@ -1376,7 +1376,7 @@ public class SearchTests {
     @Test
     public void author_findPostComments_from_group() {
         // When
-        List<PostingComment> comments = Search.findPostComments("comment", author, labs, onePageFiveSize).getList();
+        List<PostingComment> comments = Search.findPostComments("comment", author, labs, onePageFiveSize);
         // Then
         assertThat(comments.size()).isEqualTo(2);
         assertThat(comments).onProperty("contents").contains("public comment");
@@ -1390,7 +1390,7 @@ public class SearchTests {
     @Test
     public void anonymous_findReviews_from_all_repos() {
         // When
-        List<ReviewComment> reviews = Search.findReviews("review", User.anonymous, onePageFiveSize).getList();
+        List<ReviewComment> reviews = Search.findReviews("review", User.anonymous, onePageFiveSize);
         // Then
         assertThat(reviews.size()).isEqualTo(1);
         assertThat(reviews).onProperty("contents").contains("public review");
@@ -1399,7 +1399,7 @@ public class SearchTests {
     @Test
     public void groupMember_findReviews_from_all_repos() {
         // When
-        List<ReviewComment> reviews = Search.findReviews("review", groupMember, onePageFiveSize).getList();
+        List<ReviewComment> reviews = Search.findReviews("review", groupMember, onePageFiveSize);
         // Then
         assertThat(reviews.size()).isEqualTo(2);
         assertThat(reviews).onProperty("contents").contains("public review");
@@ -1409,7 +1409,7 @@ public class SearchTests {
     @Test
     public void projectMember_findReviews_from_all_repos() {
         // When
-        List<ReviewComment> reviews = Search.findReviews("review", projectMember, onePageFiveSize).getList();
+        List<ReviewComment> reviews = Search.findReviews("review", projectMember, onePageFiveSize);
         // Then
         assertThat(reviews.size()).isEqualTo(2);
         assertThat(reviews).onProperty("contents").contains("public review");
@@ -1419,7 +1419,7 @@ public class SearchTests {
     @Test
     public void projectAndGroupMember_findReviews_from_all_repos() {
         // When
-        List<ReviewComment> reviews = Search.findReviews("review", groupAndProjectMember, onePageFiveSize).getList();
+        List<ReviewComment> reviews = Search.findReviews("review", groupAndProjectMember, onePageFiveSize);
         // Then
         assertThat(reviews.size()).isEqualTo(3);
         assertThat(reviews).onProperty("contents").contains("public review");
@@ -1430,7 +1430,7 @@ public class SearchTests {
     @Test
     public void author_findReviews_from_all_repos() {
         // When
-        List<ReviewComment> reviews = Search.findReviews("review", author, onePageFiveSize).getList();
+        List<ReviewComment> reviews = Search.findReviews("review", author, onePageFiveSize);
         // Then
         assertThat(reviews.size()).isEqualTo(2);
         assertThat(reviews).onProperty("contents").contains("public review");
@@ -1440,7 +1440,7 @@ public class SearchTests {
     @Test
     public void anonymous_findReviews_from_public_project() {
         // When
-        List<ReviewComment> reviews = Search.findReviews("review", User.anonymous, publicProject, onePageFiveSize).getList();
+        List<ReviewComment> reviews = Search.findReviews("review", User.anonymous, publicProject, onePageFiveSize);
         // Then
         assertThat(reviews.size()).isEqualTo(1);
         assertThat(reviews).onProperty("contents").contains("public review");
@@ -1449,7 +1449,7 @@ public class SearchTests {
     @Test
     public void anonymous_findReviews_from_protected_project() {
         // When
-        List<ReviewComment> reviews = Search.findReviews("review", User.anonymous, protectedProject, onePageFiveSize).getList();
+        List<ReviewComment> reviews = Search.findReviews("review", User.anonymous, protectedProject, onePageFiveSize);
         // Then
         assertThat(reviews.size()).isEqualTo(0);
     }
@@ -1457,7 +1457,7 @@ public class SearchTests {
     @Test
     public void anonymous_findReviews_from_private_project() {
         // When
-        List<ReviewComment> reviews = Search.findReviews("review", User.anonymous, privateProject, onePageFiveSize).getList();
+        List<ReviewComment> reviews = Search.findReviews("review", User.anonymous, privateProject, onePageFiveSize);
         // Then
         assertThat(reviews.size()).isEqualTo(0);
     }
@@ -1465,7 +1465,7 @@ public class SearchTests {
     @Test
     public void groupMember_findReviews_from_public_project() {
         // When
-        List<ReviewComment> reviews = Search.findReviews("review", groupMember, publicProject, onePageFiveSize).getList();
+        List<ReviewComment> reviews = Search.findReviews("review", groupMember, publicProject, onePageFiveSize);
         // Then
         assertThat(reviews.size()).isEqualTo(1);
         assertThat(reviews).onProperty("contents").contains("public review");
@@ -1474,7 +1474,7 @@ public class SearchTests {
     @Test
     public void groupMember_findReviews_from_protected_project() {
         // When
-        List<ReviewComment> reviews = Search.findReviews("review", groupMember, protectedProject, onePageFiveSize).getList();
+        List<ReviewComment> reviews = Search.findReviews("review", groupMember, protectedProject, onePageFiveSize);
         // Then
         assertThat(reviews.size()).isEqualTo(1);
         assertThat(reviews).onProperty("contents").contains("protected review");
@@ -1483,7 +1483,7 @@ public class SearchTests {
     @Test
     public void groupMember_findReviews_from_private_project() {
         // When
-        List<ReviewComment> reviews = Search.findReviews("review", groupMember, privateProject, onePageFiveSize).getList();
+        List<ReviewComment> reviews = Search.findReviews("review", groupMember, privateProject, onePageFiveSize);
         // Then
         assertThat(reviews.size()).isEqualTo(0);
     }
@@ -1491,7 +1491,7 @@ public class SearchTests {
     @Test
     public void projectMember_findReviews_from_public_project() {
         // When
-        List<ReviewComment> reviews = Search.findReviews("review", projectMember, publicProject, onePageFiveSize).getList();
+        List<ReviewComment> reviews = Search.findReviews("review", projectMember, publicProject, onePageFiveSize);
         // Then
         assertThat(reviews.size()).isEqualTo(1);
         assertThat(reviews).onProperty("contents").contains("public review");
@@ -1500,7 +1500,7 @@ public class SearchTests {
     @Test
     public void projectMember_findReviews_from_protected_project() {
         // When
-        List<ReviewComment> reviews = Search.findReviews("review", projectMember, protectedProject, onePageFiveSize).getList();
+        List<ReviewComment> reviews = Search.findReviews("review", projectMember, protectedProject, onePageFiveSize);
         // Then
         assertThat(reviews.size()).isEqualTo(0);
     }
@@ -1508,7 +1508,7 @@ public class SearchTests {
     @Test
     public void projectMember_findReviews_from_private_project() {
         // When
-        List<ReviewComment> reviews = Search.findReviews("review", projectMember, privateProject, onePageFiveSize).getList();
+        List<ReviewComment> reviews = Search.findReviews("review", projectMember, privateProject, onePageFiveSize);
         // Then
         assertThat(reviews.size()).isEqualTo(1);
         assertThat(reviews).onProperty("contents").contains("private review");
@@ -1517,7 +1517,7 @@ public class SearchTests {
     @Test
     public void groupAndProjectMember_findReviews_from_public_project() {
         // When
-        List<ReviewComment> reviews = Search.findReviews("review", groupAndProjectMember, publicProject, onePageFiveSize).getList();
+        List<ReviewComment> reviews = Search.findReviews("review", groupAndProjectMember, publicProject, onePageFiveSize);
         // Then
         assertThat(reviews.size()).isEqualTo(1);
         assertThat(reviews).onProperty("contents").contains("public review");
@@ -1526,7 +1526,7 @@ public class SearchTests {
     @Test
     public void groupAndProjectMember_findReviews_from_protected_project() {
         // When
-        List<ReviewComment> reviews = Search.findReviews("review", groupAndProjectMember, protectedProject, onePageFiveSize).getList();
+        List<ReviewComment> reviews = Search.findReviews("review", groupAndProjectMember, protectedProject, onePageFiveSize);
         // Then
         assertThat(reviews.size()).isEqualTo(1);
         assertThat(reviews).onProperty("contents").contains("protected review");
@@ -1535,7 +1535,7 @@ public class SearchTests {
     @Test
     public void groupAndProjectMember_findReviews_from_private_project() {
         // When
-        List<ReviewComment> reviews = Search.findReviews("review", groupAndProjectMember, privateProject, onePageFiveSize).getList();
+        List<ReviewComment> reviews = Search.findReviews("review", groupAndProjectMember, privateProject, onePageFiveSize);
         // Then
         assertThat(reviews.size()).isEqualTo(1);
         assertThat(reviews).onProperty("contents").contains("private review");
@@ -1545,7 +1545,7 @@ public class SearchTests {
     @Test
     public void author_findReviews_from_public_project() {
         // When
-        List<ReviewComment> reviews = Search.findReviews("review", author, publicProject, onePageFiveSize).getList();
+        List<ReviewComment> reviews = Search.findReviews("review", author, publicProject, onePageFiveSize);
         // Then
         assertThat(reviews.size()).isEqualTo(1);
         assertThat(reviews).onProperty("contents").contains("public review");
@@ -1554,7 +1554,7 @@ public class SearchTests {
     @Test
     public void author_findReviews_from_protected_project() {
         // When
-        List<ReviewComment> reviews = Search.findReviews("review", author, protectedProject, onePageFiveSize).getList();
+        List<ReviewComment> reviews = Search.findReviews("review", author, protectedProject, onePageFiveSize);
         // Then
         assertThat(reviews.size()).isEqualTo(0);
     }
@@ -1562,7 +1562,7 @@ public class SearchTests {
     @Test
     public void author_findReviews_from_private_project() {
         // When
-        List<ReviewComment> reviews = Search.findReviews("review", author, privateProject, onePageFiveSize).getList();
+        List<ReviewComment> reviews = Search.findReviews("review", author, privateProject, onePageFiveSize);
         // Then
         assertThat(reviews.size()).isEqualTo(1);
         assertThat(reviews).onProperty("contents").contains("private review");
@@ -1571,7 +1571,7 @@ public class SearchTests {
     @Test
     public void anonymous_findReviews_from_group() {
         // When
-        List<ReviewComment> reviews = Search.findReviews("review", User.anonymous, labs, onePageFiveSize).getList();
+        List<ReviewComment> reviews = Search.findReviews("review", User.anonymous, labs, onePageFiveSize);
         // Then
         assertThat(reviews.size()).isEqualTo(1);
         assertThat(reviews).onProperty("contents").contains("public review");
@@ -1580,7 +1580,7 @@ public class SearchTests {
     @Test
     public void groupMember_findReviews_from_group() {
         // When
-        List<ReviewComment> reviews = Search.findReviews("review", groupMember, labs, onePageFiveSize).getList();
+        List<ReviewComment> reviews = Search.findReviews("review", groupMember, labs, onePageFiveSize);
         // Then
         assertThat(reviews.size()).isEqualTo(2);
         assertThat(reviews).onProperty("contents").contains("public review");
@@ -1590,7 +1590,7 @@ public class SearchTests {
     @Test
     public void projectMember_findReviews_from_group() {
         // When
-        List<ReviewComment> reviews = Search.findReviews("review", projectMember, labs, onePageFiveSize).getList();
+        List<ReviewComment> reviews = Search.findReviews("review", projectMember, labs, onePageFiveSize);
         // Then
         assertThat(reviews.size()).isEqualTo(2);
         assertThat(reviews).onProperty("contents").contains("public review");
@@ -1600,7 +1600,7 @@ public class SearchTests {
     @Test
     public void groupAndProjectMember_findReviews_from_group() {
         // When
-        List<ReviewComment> reviews = Search.findReviews("review", groupAndProjectMember, labs, onePageFiveSize).getList();
+        List<ReviewComment> reviews = Search.findReviews("review", groupAndProjectMember, labs, onePageFiveSize);
         // Then
         assertThat(reviews.size()).isEqualTo(3);
         assertThat(reviews).onProperty("contents").contains("public review");
@@ -1611,7 +1611,7 @@ public class SearchTests {
     @Test
     public void author_findReviews_from_group() {
         // When
-        List<ReviewComment> reviews = Search.findReviews("review", author, labs, onePageFiveSize).getList();
+        List<ReviewComment> reviews = Search.findReviews("review", author, labs, onePageFiveSize);
         // Then
         assertThat(reviews.size()).isEqualTo(2);
         assertThat(reviews).onProperty("contents").contains("public review");

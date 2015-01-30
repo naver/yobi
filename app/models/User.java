@@ -45,6 +45,9 @@ import play.db.ebean.Model;
 import play.db.ebean.Transactional;
 import scala.reflect.internal.Trees;
 import play.i18n.Messages;
+import search.DataSynchronizer;
+import search.Indexable;
+import search.SearchEngine;
 import utils.JodaDateUtil;
 import utils.ReservedWordsValidator;
 
@@ -52,7 +55,7 @@ import static com.avaje.ebean.Expr.eq;
 
 @Table(name = "n4user")
 @Entity
-public class User extends Model implements ResourceConvertible {
+public class User extends Model implements ResourceConvertible, Indexable {
     private static final long serialVersionUID = 1L;
 
     public static final Model.Finder<Long, User> find = new Finder<>(Long.class, User.class);
@@ -571,6 +574,7 @@ public class User extends Model implements ResourceConvertible {
             assignee.delete();
         }
         super.delete();
+        SearchEngine.delete(this);
     }
 
     public void changeState(UserState state) {
@@ -725,7 +729,7 @@ public class User extends Model implements ResourceConvertible {
 
     public void visits(Project project) {
         this.recentlyVisitedProjects = RecentlyVisitedProjects.addNewVisitation(this, project);
-        this.update();
+        super.update();
     }
 
     public List<ProjectVisitation> getVisitedProjects(int size) {
@@ -789,5 +793,59 @@ public class User extends Model implements ResourceConvertible {
       result = result * 37 + (this.id != null ? this.id.hashCode() : 0);
       result = result * 37 + (this.loginId != null ? this.loginId.hashCode() : 0);
       return result;
+    }
+
+    @Override
+    public String indexId() {
+        return this.id.toString();
+    }
+
+    @Override
+    public Map<String, Object> source() {
+        Map<String, Object> doc = new HashMap<>();
+        if (this.loginId != null) {
+            doc.put("loginId", this.loginId);
+        }
+        if (this.name != null) {
+            doc.put("name", this.name);
+        }
+        if (this.state != null) {
+            doc.put("state", this.state);
+        }
+        if (this.organizationUsers != null) {
+            doc.put("groups", groups(organizationUsers));
+        }
+        if (this.projectUser != null) {
+            doc.put("projects", projects(projectUser));
+        }
+        return doc;
+    }
+
+    @Override
+    public void save() {
+        super.save();
+        SearchEngine.save(this);
+    }
+
+    @Override
+    public void update() {
+        super.update();
+        SearchEngine.update(this);
+    }
+
+    private List<Long> projects(List<ProjectUser> projectUser) {
+        List<Long> ids = new ArrayList<>();
+        for (ProjectUser pu : projectUser) {
+            ids.add(pu.project.id);
+        }
+        return ids;
+    }
+
+    private List<Long> groups(List<OrganizationUser> organizationUsers) {
+        List<Long> ids = new ArrayList<>();
+        for (OrganizationUser ou : organizationUsers) {
+            ids.add(ou.organization.id);
+        }
+        return ids;
     }
 }

@@ -28,6 +28,7 @@ import javax.persistence.ManyToOne;
 
 import models.enumeration.RoleType;
 import play.db.ebean.Model;
+import search.SearchEngine;
 
 @Entity
 public class ProjectUser extends Model {
@@ -193,5 +194,23 @@ public class ProjectUser extends Model {
 
     public static boolean isGuest(Project project, User user) {
         return roleOf(user, project).equals(RoleType.GUEST.getLowerCasedName());
+    }
+
+    @Override
+    public void save() {
+        super.save();
+        SearchEngine.update(this.user);
+    }
+
+    @Override
+    public void update() {
+        super.update();
+        SearchEngine.update(this.user);
+    }
+
+    @Override
+    public void delete() {
+        super.delete();
+        SearchEngine.update(this.user);
     }
 }

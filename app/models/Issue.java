@@ -38,8 +38,12 @@ import org.apache.commons.lang3.time.DateUtils;
 import play.data.Form;
 import play.data.format.Formats;
 import play.i18n.Messages;
+import search.DataSynchronizer;
+import search.Indexable;
 import utils.JodaDateUtil;
 
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import javax.persistence.*;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -51,7 +55,7 @@ import java.util.regex.Pattern;
 
 @Entity
 @Table(uniqueConstraints = @UniqueConstraint(columnNames = {"project_id", "number"}))
-public class Issue extends AbstractPosting implements LabelOwner {
+public class Issue extends AbstractPosting implements LabelOwner, Indexable {
     /**
      * @author Yobi TEAM
      */
@@ -546,5 +550,50 @@ public class Issue extends AbstractPosting implements LabelOwner {
     }
 
 
+    @Override
+    public String indexId() {
+        return this.id.toString();
+    }
 
+    @Override
+    @Nonnull
+    public Map<String, Object> source() {
+        Map<String, Object> source = new HashMap<>();
+        if (this.title != null) {
+            source.put("title", this.title);
+        }
+        if (this.body != null) {
+            source.put("body", this.body);
+        }
+        if (this.createdDate != null) {
+            source.put("created", this.createdDate);
+        }
+        if (this.labels != null) {
+            source.put("labels", issueLabelNames(this.labels));
+        }
+        if (this.project != null) {
+            source.put("projectId", this.project.id);
+        }
+        if (this.authorId != null) {
+            source.put("authorId", this.authorId);
+        }
+        if (this.assignee != null) {
+            source.put("assigneeUserId", this.assignee.user.id);
+        }
+        return source;
+    }
+
+    @Nonnull
+    private List<String> issueLabelNames(@Nullable Set<IssueLabel> labels) {
+        List<String> labelNames = new ArrayList<>();
+        if (labels == null) {
+            return labelNames;
+        }
+
+        for (IssueLabel label : labels) {
+            labelNames.add(label.name);
+        }
+
+        return labelNames;
+    }
 }

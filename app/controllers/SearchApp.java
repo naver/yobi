@@ -29,7 +29,7 @@ import org.apache.commons.lang3.StringUtils;
 import play.mvc.Controller;
 import play.mvc.Result;
 import utils.ErrorViews;
-import views.html.search.*;
+import views.html.search.result;
 
 @AnonymousCheck
 public class SearchApp extends Controller {
@@ -58,50 +58,7 @@ public class SearchApp extends Controller {
             return badRequest(ErrorViews.BadRequest.render());
         }
 
-        SearchResult searchResult = getSearchResult(keyword, user, searchType);
-        switch (searchResult.getSearchType()) {
-            case ISSUE:
-                searchResult.setIssues(Search.findIssues(keyword, user, pageParam));
-                break;
-            case USER:
-                searchResult.setUsers(Search.findUsers(keyword, pageParam));
-                break;
-            case PROJECT:
-                searchResult.setProjects(Search.findProjects(keyword, user, pageParam));
-                break;
-            case POST:
-                searchResult.setPosts(Search.findPosts(keyword, user, pageParam));
-                break;
-            case MILESTONE:
-                searchResult.setMilestones(Search.findMilestones(keyword, user, pageParam));
-                break;
-            case ISSUE_COMMENT:
-                searchResult.setIssueComments(Search.findIssueComments(keyword, user, pageParam));
-                break;
-            case POST_COMMENT:
-                searchResult.setPostComments(Search.findPostComments(keyword, user, pageParam));
-                break;
-            case REVIEW:
-                searchResult.setReviews(Search.findReviews(keyword, user, pageParam));
-                break;
-        }
-        return ok(result.render("title.search", null, null, searchResult));
-    }
-
-    private static SearchResult getSearchResult(String keyword, User user, SearchType searchType) {
-        SearchResult searchResult = new SearchResult();
-        searchResult.setKeyword(keyword);
-        searchResult.setSearchType(searchType);
-        searchResult.setProjectsCount(Search.countProjects(keyword, user));
-        searchResult.setUsersCount(Search.countUsers(keyword));
-        searchResult.setIssuesCount(Search.countIssues(keyword, user));
-        searchResult.setPostsCount(Search.countPosts(keyword, user));
-        searchResult.setMilestonesCount(Search.countMilestones(keyword, user));
-        searchResult.setIssueCommentsCount(Search.countIssueComments(keyword, user));
-        searchResult.setPostCommentsCount(Search.countPostComments(keyword, user));
-        searchResult.setReviewsCount(Search.countReviews(keyword, user));
-        searchResult.updateSearchType();
-        return searchResult;
+        return ok(result.render("title.search", null, null, Search.searchInAll(keyword, user, searchType, pageParam)));
     }
 
     /**
@@ -129,52 +86,8 @@ public class SearchApp extends Controller {
             return badRequest(ErrorViews.BadRequest.render());
         }
 
-        SearchResult searchResult = getSearchResult(keyword, user, organization, searchType);
-
-        switch (searchResult.getSearchType()) {
-            case ISSUE:
-                searchResult.setIssues(Search.findIssues(keyword, user, organization, pageParam));
-                break;
-            case USER:
-                searchResult.setUsers(Search.findUsers(keyword, organization, pageParam));
-                break;
-            case PROJECT:
-                searchResult.setProjects(Search.findProjects(keyword, user, organization, pageParam));
-                break;
-            case POST:
-                searchResult.setPosts(Search.findPosts(keyword, user, organization, pageParam));
-                break;
-            case MILESTONE:
-                searchResult.setMilestones(Search.findMilestones(keyword, user, organization, pageParam));
-                break;
-            case ISSUE_COMMENT:
-                searchResult.setIssueComments(Search.findIssueComments(keyword, user, organization, pageParam));
-                break;
-            case POST_COMMENT:
-                searchResult.setPostComments(Search.findPostComments(keyword, user, organization, pageParam));
-                break;
-            case REVIEW:
-                searchResult.setReviews(Search.findReviews(keyword, user, organization, pageParam));
-                break;            
-        }
-
-        return ok(result.render("title.search", organization, null, searchResult));
-    }
-
-    private static SearchResult getSearchResult(String keyword, User user, Organization organization, SearchType searchType) {
-        SearchResult searchResult = new SearchResult();
-        searchResult.setSearchType(searchType);
-        searchResult.setKeyword(keyword);
-        searchResult.setProjectsCount(Search.countProjects(keyword, user, organization));
-        searchResult.setUsersCount(Search.countUsers(keyword, organization));
-        searchResult.setIssuesCount(Search.countIssues(keyword, user, organization));
-        searchResult.setPostsCount(Search.countPosts(keyword, user, organization));
-        searchResult.setMilestonesCount(Search.countMilestones(keyword, user, organization));
-        searchResult.setIssueCommentsCount(Search.countIssueComments(keyword, user, organization));
-        searchResult.setPostCommentsCount(Search.countPostComments(keyword, user, organization));
-        searchResult.setReviewsCount(Search.countReviews(keyword, user, organization));
-        searchResult.updateSearchType();
-        return searchResult;
+        return ok(result.render("title.search", organization, null,
+                Search.searchInGroup(keyword, user, organization, searchType, pageParam)));
     }
 
     /**
@@ -204,48 +117,8 @@ public class SearchApp extends Controller {
             return badRequest(ErrorViews.BadRequest.render());
         }
 
-        SearchResult searchResult = getSearchResult(keyword, user, project, searchType);
-
-        switch (searchResult.getSearchType()) {
-            case ISSUE:
-                searchResult.setIssues(Search.findIssues(keyword, user, project, pageParam));
-                break;
-            case USER:
-                searchResult.setUsers(Search.findUsers(keyword, project, pageParam));
-                break;
-            case POST:
-                searchResult.setPosts(Search.findPosts(keyword, user, project, pageParam));
-                break;
-            case MILESTONE:
-                searchResult.setMilestones(Search.findMilestones(keyword, user, project, pageParam));
-                break;
-            case ISSUE_COMMENT:
-                searchResult.setIssueComments(Search.findIssueComments(keyword, user, project, pageParam));
-                break;
-            case POST_COMMENT:
-                searchResult.setPostComments(Search.findPostComments(keyword, user, project, pageParam));
-                break;
-            case REVIEW:
-                searchResult.setReviews(Search.findReviews(keyword, user, project, pageParam));
-                break;
-        }
-
-        return ok(result.render("title.search", null, project, searchResult));
-    }
-
-    private static SearchResult getSearchResult(String keyword, User user, Project project, SearchType searchType) {
-        SearchResult searchResult = new SearchResult();
-        searchResult.setSearchType(searchType);
-        searchResult.setKeyword(keyword);
-        searchResult.setUsersCount(Search.countUsers(keyword, project));
-        searchResult.setIssuesCount(Search.countIssues(keyword, user, project));
-        searchResult.setPostsCount(Search.countPosts(keyword, user, project));
-        searchResult.setMilestonesCount(Search.countMilestones(keyword, user, project));
-        searchResult.setIssueCommentsCount(Search.countIssueComments(keyword, user, project));
-        searchResult.setPostCommentsCount(Search.countPostComments(keyword, user, project));
-        searchResult.setReviewsCount(Search.countReviews(keyword, user, project));
-        searchResult.updateSearchType();
-        return searchResult;
+        return ok(result.render("title.search", null, project,
+                Search.searchInProject(keyword, user, project, searchType, pageParam)));
     }
 
     private static PageParam getPage() {

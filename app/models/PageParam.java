@@ -55,4 +55,8 @@ public class PageParam {
         this.size = size;
     }
 
+    public int getFirstRow() {
+        return page * size;
+    }
+
 }

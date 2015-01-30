@@ -25,16 +25,21 @@ import models.resource.Resource;
 import models.resource.ResourceConvertible;
 import play.data.validation.Constraints;
 import play.db.ebean.Model;
+import search.DataSynchronizer;
+import search.Indexable;
 
+import javax.annotation.Nonnull;
 import javax.persistence.*;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author Keesun Baik
  */
 @Entity
-public class ReviewComment extends Model implements ResourceConvertible {
+public class ReviewComment extends Model implements ResourceConvertible, Indexable {
     private static final long serialVersionUID = 1L;
     public static final Finder<Long, ReviewComment> find = new Finder<>(Long.class, ReviewComment.class);
 
@@ -133,4 +138,32 @@ public class ReviewComment extends Model implements ResourceConvertible {
 
 
     }
+
+    @Override
+    public String indexId() {
+        return id.toString();
+    }
+
+    @Nonnull
+    @Override
+    public Map<String, Object> source() {
+        Map<String, Object> source = new HashMap<>();
+        if (this.contents != null) {
+            source.put("contents", this.contents);
+        }
+        if (this.createdDate != null) {
+            source.put("createdDate", this.createdDate);
+        }
+        if (this.thread != null && this.thread.project != null) {
+            source.put("projectId", this.thread.project.id);
+        }
+        if (this.author != null && this.author.id != null) {
+            source.put("authorId", this.author.id);
+        }
+        if (this.thread != null && this.thread.author != null) {
+            source.put("threadAuthorId", this.thread.author.id);
+        }
+        return source;
+    }
+
 }

@@ -33,23 +33,26 @@ public class SearchResult {
     private String keyword;
     private SearchType searchType;
 
-    private int usersCount;
-    private int projectsCount;
-    private int issuesCount;
-    private int postsCount;
-    private int milestonesCount;
-    private int issueCommentsCount;
-    private int postCommentsCount;
-    private int reviewsCount;
+    private long usersCount;
+    private long projectsCount;
+    private long issuesCount;
+    private long postsCount;
+    private long milestonesCount;
+    private long issueCommentsCount;
+    private long postCommentsCount;
+    private long reviewsCount;
 
-    private Page<User> users;
-    private Page<Project> projects;
-    private Page<Issue> issues;
-    private Page<Posting> posts;
-    private Page<Milestone> milestones;
-    private Page<IssueComment> issueComments;
-    private Page<PostingComment> postComments;
-    private Page<ReviewComment> reviews;
+    private List<User> users;
+    private List<Project> projects;
+    private List<Issue> issues;
+    private List<Posting> posts;
+    private List<Milestone> milestones;
+    private List<IssueComment> issueComments;
+    private List<PostingComment> postComments;
+    private List<ReviewComment> reviews;
+
+    private long totalHit;
+    private long totalPageCount;
 
     public List<String> makeSnippets(String contents, int threshold) {
         String lowerCaseContents = contents.toLowerCase();
@@ -154,6 +157,14 @@ public class SearchResult {
         setSearchType(SearchType.ISSUE);
     }
 
+    public void updateTotalPageCount(int pageSize) {
+        if (this.totalHit <= pageSize) {
+            setTotalPageCount(1l);
+        } else {
+            setTotalPageCount(this.totalHit / pageSize + 1);
+        }
+    }
+
     private class BeginAndEnd {
         int beginIndex;
         int endIndex;
@@ -180,7 +191,6 @@ public class SearchResult {
         }
     }
 
-
     public String getKeyword() {
         return keyword;
     }
@@ -189,133 +199,141 @@ public class SearchResult {
         this.keyword = keyword;
     }
 
-    public int getUsersCount() {
+    public long getUsersCount() {
         return usersCount;
     }
 
-    public void setUsersCount(int usersCount) {
+    public void setUsersCount(long usersCount) {
         this.usersCount = usersCount;
     }
 
-    public int getProjectsCount() {
+    public long getProjectsCount() {
         return projectsCount;
     }
 
-    public void setProjectsCount(int projectsCount) {
+    public void setProjectsCount(long projectsCount) {
         this.projectsCount = projectsCount;
     }
 
-    public int getIssuesCount() {
+    public long getIssuesCount() {
         return issuesCount;
     }
 
-    public void setIssuesCount(int issuesCount) {
+    public void setIssuesCount(long issuesCount) {
         this.issuesCount = issuesCount;
     }
 
-    public int getPostsCount() {
+    public long getPostsCount() {
         return postsCount;
     }
 
-    public void setPostsCount(int postsCount) {
+    public void setPostsCount(long postsCount) {
         this.postsCount = postsCount;
     }
 
-    public int getMilestonesCount() {
+    public long getMilestonesCount() {
         return milestonesCount;
     }
 
-    public void setMilestonesCount(int milestonesCount) {
+    public void setMilestonesCount(long milestonesCount) {
         this.milestonesCount = milestonesCount;
     }
 
-    public int getIssueCommentsCount() {
+    public long getIssueCommentsCount() {
         return issueCommentsCount;
     }
 
-    public void setIssueCommentsCount(int issueCommentsCount) {
+    public void setIssueCommentsCount(long issueCommentsCount) {
         this.issueCommentsCount = issueCommentsCount;
     }
 
-    public int getPostCommentsCount() {
+    public long getPostCommentsCount() {
         return postCommentsCount;
     }
 
-    public void setPostCommentsCount(int postCommentsCount) {
+    public void setPostCommentsCount(long postCommentsCount) {
         this.postCommentsCount = postCommentsCount;
     }
 
-    public int getReviewsCount() {
+    public long getReviewsCount() {
         return reviewsCount;
     }
 
-    public void setReviewsCount(int reviewsCount) {
+    public void setReviewsCount(long reviewsCount) {
         this.reviewsCount = reviewsCount;
     }
 
 
-    public Page<User> getUsers() {
+    public List<User> getUsers() {
         return users;
     }
 
-    public void setUsers(Page<User> users) {
+    public void setUsers(List<User> users) {
         this.users = users;
+        this.totalHit = this.usersCount;
     }
 
-    public Page<Project> getProjects() {
+    public List<Project> getProjects() {
         return projects;
     }
 
-    public void setProjects(Page<Project> projects) {
+    public void setProjects(List<Project> projects) {
         this.projects = projects;
+        this.totalHit = this.projectsCount;
     }
 
-    public Page<Issue> getIssues() {
+    public List<Issue> getIssues() {
         return issues;
     }
 
-    public void setIssues(Page<Issue> issues) {
+    public void setIssues(List<Issue> issues) {
         this.issues = issues;
+        this.totalHit = this.issuesCount;
     }
 
-    public Page<Posting> getPosts() {
+    public List<Posting> getPosts() {
         return posts;
     }
 
-    public void setPosts(Page<Posting> posts) {
+    public void setPosts(List<Posting> posts) {
         this.posts = posts;
+        this.totalHit = this.postsCount;
     }
 
-    public Page<Milestone> getMilestones() {
+    public List<Milestone> getMilestones() {
         return milestones;
     }
 
-    public void setMilestones(Page<Milestone> milestones) {
+    public void setMilestones(List<Milestone> milestones) {
         this.milestones = milestones;
+        this.totalHit = this.milestonesCount;
     }
 
-    public Page<IssueComment> getIssueComments() {
+    public List<IssueComment> getIssueComments() {
         return issueComments;
     }
 
-    public void setIssueComments(Page<IssueComment> issueComments) {
+    public void setIssueComments(List<IssueComment> issueComments) {
         this.issueComments = issueComments;
+        this.totalHit = this.issueCommentsCount;
     }
 
-    public Page<PostingComment> getPostComments() {
+    public List<PostingComment> getPostComments() {
         return postComments;
     }
 
-    public void setPostComments(Page<PostingComment> postComments) {
+    public void setPostComments(List<PostingComment> postComments) {
         this.postComments = postComments;
+        this.totalHit = this.postCommentsCount;
     }
 
-    public Page<ReviewComment> getReviews() {
+    public List<ReviewComment> getReviews() {
         return reviews;
     }
 
-    public void setReviews(Page<ReviewComment> reviews) {
+    public void setReviews(List<ReviewComment> reviews) {
         this.reviews = reviews;
+        this.totalHit = this.reviewsCount;
     }
 
     public SearchType getSearchType() {
@@ -326,4 +344,19 @@ public class SearchResult {
         this.searchType = searchType;
     }
 
+    public long getTotalPageCount() {
+        return totalPageCount;
+    }
+
+    public void setTotalPageCount(long totalPageCount) {
+        this.totalPageCount = totalPageCount;
+    }
+
+    public long getTotalHit() {
+        return totalHit;
+    }
+
+    public void setTotalHit(long totalHit) {
+        this.totalHit = totalHit;
+    }
 }

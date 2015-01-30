@@ -30,15 +30,18 @@ import play.data.format.*;
 import play.data.validation.*;
 import play.db.ebean.*;
 import play.i18n.Messages;
+import search.DataSynchronizer;
+import search.Indexable;
 import utils.JodaDateUtil;
 
+import javax.annotation.Nonnull;
 import javax.persistence.*;
 import java.text.*;
 import java.util.*;
 
 @Entity
 @Table(uniqueConstraints = @UniqueConstraint(columnNames = {"project_id", "title"}))
-public class Milestone extends Model implements ResourceConvertible {
+public class Milestone extends Model implements ResourceConvertible, Indexable {
 
     private static final long serialVersionUID = 1L;
     public static final Finder<Long, Milestone> find = new Finder<>(Long.class, Milestone.class);
@@ -304,4 +307,29 @@ public class Milestone extends Model implements ResourceConvertible {
                 .eq("state", State.OPEN)
                 .findRowCount();
     }
+
+    @Override
+    public String indexId() {
+        return id.toString();
+    }
+
+    @Nonnull
+    @Override
+    public Map<String, Object> source() {
+        Map<String, Object> source = new HashMap<>();
+        if (this.title != null) {
+            source.put("title", this.title);
+        }
+        if (this.contents != null) {
+            source.put("contents", this.contents);
+        }
+        if (this.dueDate != null) {
+            source.put("dueDate", this.dueDate);
+        }
+        if (this.project != null) {
+            source.put("projectId", this.project.id);
+        }
+        return source;
+    }
+
 }

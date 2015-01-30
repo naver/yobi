@@ -6,17 +6,22 @@ package models;
 
 import models.enumeration.ResourceType;
 import models.resource.Resource;
+import search.DataSynchronizer;
+import search.Indexable;
 import utils.JodaDateUtil;
 
+import javax.annotation.Nonnull;
 import javax.persistence.*;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import static com.avaje.ebean.Expr.eq;
 
 @Entity
 @Table(uniqueConstraints = @UniqueConstraint(columnNames = {"project_id", "number"}))
-public class Posting extends AbstractPosting {
+public class Posting extends AbstractPosting implements Indexable {
     private static final long serialVersionUID = 5287703642071155249L;
 
     public static final Finder<Long, Posting> finder = new Finder<>(Long.class, Posting.class);
@@ -117,4 +122,32 @@ public class Posting extends AbstractPosting {
                 .add(eq("readme", true))
                 .findUnique();
     }
+
+    @Override
+    public String indexId() {
+        return this.id.toString();
+    }
+
+    @Nonnull
+    @Override
+    public Map<String, Object> source() {
+        Map<String, Object> source = new HashMap<>();
+        if (this.title != null) {
+            source.put("title", this.title);
+        }
+        if (this.body != null) {
+            source.put("body", this.body);
+        }
+        if (this.createdDate != null) {
+            source.put("created", this.createdDate);
+        }
+        if (this.project != null) {
+            source.put("projectId", this.project.id);
+        }
+        if (this.authorId != number) {
+            source.put("authorId", this.authorId);
+        }
+        return source;
+    }
+
 }

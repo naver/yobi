@@ -39,17 +39,22 @@ import play.data.validation.Constraints;
 import play.db.ebean.Model;
 import play.db.ebean.Transactional;
 import playRepository.*;
+import search.DataSynchronizer;
+import search.Indexable;
+import search.SearchEngine;
 import utils.FileUtil;
 import utils.JodaDateUtil;
 import validation.ExConstraints;
 
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import javax.persistence.*;
 import javax.servlet.ServletException;
 import java.io.IOException;
 import java.util.*;
 
 @Entity
-public class Project extends Model implements LabelOwner {
+public class Project extends Model implements LabelOwner, Indexable {
     private static final long serialVersionUID = 1L;
     public static final play.db.ebean.Model.Finder <Long, Project> find = new Finder<>(Long.class, Project.class);
 
@@ -435,10 +440,16 @@ public class Project extends Model implements LabelOwner {
         label.projects.add(this);
         label.update();
 
+        getLabels().add(label);
+        this.update();
+
         return true;
     }
 
     public void detachLabel(Label label) {
+        getLabels().remove(label);
+        this.update();
+
         label.projects.remove(this);
         if (label.projects.size() == 0) {
             label.delete();
@@ -570,7 +581,6 @@ public class Project extends Model implements LabelOwner {
         RepositoryService.getRepository(this).create();
         this.update();
     }
-
     public enum State {
         PUBLIC, PRIVATE, ALL
     }
@@ -583,6 +593,8 @@ public class Project extends Model implements LabelOwner {
      */
     @Override
     public void delete() {
+        SearchEngine.delete(this);
+
         deleteProjectVisitations();
         deleteProjectTransfer();
         deleteFork();
@@ -772,5 +784,57 @@ public class Project extends Model implements LabelOwner {
         } else {
             return RepositoryService.VCS_GIT;
         }
+    }
+
+    @Override
+    public String indexId() {
+        return this.id.toString();
+    }
+
+    @Override
+    public Map<String, Object> source() {
+        Map<String, Object> source = new HashMap<>();
+        if (this.name != null) {
+            source.put("name", this.name);
+        }
+        if (this.overview != null) {
+            source.put("overview", this.overview);
+        }
+        if (this.organization != null) {
+            source.put("organizationId", this.organization.id);
+        }
+        if (this.labels != null && this.labels.size() > 0) {
+            source.put("labels", labelNames(this.labels));
+        }
+        return source;
+    }
+
+    @Nonnull
+    private List<String> labelNames(@Nullable Set<Label> labels) {
+        List<String> labelNames = new ArrayList<>();
+
+        if (labels == null) {
+            return labelNames;
+        }
+
+        for (Label label : labels) {
+            labelNames.add(label.name);
+        }
+
+        return labelNames;
+    }
+
+    @Override
+    public void save() {
+        super.save();
+
+        SearchEngine.save(this);
+    }
+
+    @Override
+    public void update() {
+        super.update();
+
+        SearchEngine.update(this);
     }
 }

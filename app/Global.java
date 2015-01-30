@@ -40,6 +40,7 @@ import play.libs.F.Promise;
 
 import play.mvc.Result;
 import play.mvc.Results;
+import search.SearchEngine;
 import utils.*;
 import views.html.welcome.restart;
 import views.html.welcome.secret;
@@ -66,6 +67,7 @@ public class Global extends GlobalSettings {
     private boolean isRestartRequired = false;
 
     private MailboxService mailboxService = new MailboxService();
+    private SearchEngine searchEngine = SearchEngine.getObject();
 
     @Override
     public void onStart(Application app) {
@@ -81,6 +83,7 @@ public class Global extends GlobalSettings {
         YobiUpdate.onStart();
         AccessControl.onStart();
         mailboxService.start();
+        searchEngine.start();
     }
 
     private boolean equalsDefaultSecret() {
@@ -214,6 +217,7 @@ public class Global extends GlobalSettings {
     }
 
     public void onStop(Application app) {
+        searchEngine.stop();
         mailboxService.stop();
     }
 

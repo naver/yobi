@@ -63,7 +63,7 @@ public class YobiUpdate {
             new Runnable() {
                 public void run() {
                     try {
-                        refreshVersionToUpdate();
+//                        refreshVersionToUpdate();
                     } catch (Exception e) {
                         play.Logger.warn("Failed to fetch the latest Yobi version to update", e);
                     }
