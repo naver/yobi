@@ -39,11 +39,11 @@ public class Markdown {
 
     private static final String XSS_JS_FILE = "public/javascripts/lib/xss.js";
     private static final String MARKED_JS_FILE = "public/javascripts/lib/marked.js";
-    private static final String HIGHLIGHT_JS_FILE = "public/javascripts//lib/highlight/highlight.pack.js";
+    private static final String HIGHLIGHT_JS_FILE = "public/javascripts/lib/highlight/highlight.pack.js";
     private static ScriptEngine engine = buildEngine();
 
     private static ScriptEngine buildEngine() {
-        ScriptEngineManager manager = new ScriptEngineManager();
+        ScriptEngineManager manager = new ScriptEngineManager(null);
         InputStream is = null;
         Reader reader = null;
         ScriptEngine _engine = manager.getEngineByName("JavaScript");
