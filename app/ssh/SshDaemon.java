@@ -27,37 +27,65 @@ import org.apache.sshd.server.keyprovider.PEMGeneratorHostKeyProvider;
 
 import utils.Config;
 import utils.Constants;
+import utils.Diagnostic;
+import utils.SimpleDiagnostic;
 
 public class SshDaemon {
     private static final SshServer sshd = SshServer.setUpDefaultServer();
 
     public void start() {
-        // Configure SshDaemon
-        sshd = SshServer.setUpDefaultServer();
-        sshd.setPort(Config.getSshport());
-        sshd.setKeyPairProvider(new PEMGeneratorHostKeyProvider(Constants.HOST_KEY, Constants.ALG_RSA, Constants.SIZE_RSA));
-        sshd.setSessionFactory(new SshServerSessionFactory());
-        sshd.setPublickeyAuthenticator(new SshPublicKeyAuth());
-        sshd.setCommandFactory(new SshCommandFactory());
-        sshd.setShellFactory(new SshShellFactory());
+        boolean isOutOfRange = false;
 
-        // Start SshDaemon
-        try {
-            sshd.start();
-        } catch (IOException e) {
-            play.Logger.error("SSHD isn't start", e);
+        // GetPortNumber and check available
+        int sshPort = Config.getSshPort();
+
+        if (!(0 <= sshPort && sshPort <= 65535)) {
+            isOutOfRange = true;
+        }
+
+        if (!isOutOfRange) {
+            // Configure SshDaemon
+            sshd.setPort(sshPort);
+            sshd.setKeyPairProvider(new PEMGeneratorHostKeyProvider(Constants.HOST_KEY, Constants.ALG_RSA, Constants.SIZE_RSA));
+            sshd.setSessionFactory(new SshServerSessionFactory());
+            sshd.setPublickeyAuthenticator(new SshPublicKeyAuth());
+            sshd.setCommandFactory(new SshCommandFactory());
+            sshd.setShellFactory(new SshShellFactory());
+
+            // Start SshDaemon
+            try {
+                sshd.start();
+            } catch (IOException e) {
+                // Port conflict. this port is already used other program
+                sshd.close(true);
+            }
+        }
+        else {
             sshd.close(true);
         }
+
+        final boolean finalIsOutOfRange = isOutOfRange;
+        Diagnostic.register(new SimpleDiagnostic() {
+            @Override
+            public String checkOne() {
+                if (finalIsOutOfRange) {
+                    return "Ssh Daemon is not running\n- port out of range. port must be in 0 ~ 65535";
+                } else if (sshd.isClosed()) {
+                    return "Ssh Daemon is not running\n- port conflict or other problems";
+                } else {
+                    return null;
+                }
+            }
+        });
     }
 
     public void stop() {
         try {
-            sshd.stop(true);
+            sshd.stop();
         } catch (InterruptedException e) {
-            play.Logger.error("SSHD is stop anormaly", e);
+            e.printStackTrace();
         }
         sshd.close(true);
-        sshd = null;
     }
 
     public static boolean isRunning() {
