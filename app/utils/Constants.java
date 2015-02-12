@@ -38,6 +38,7 @@ public class Constants {
 
     // About ssh
     public static final String SSH_USERNAME = "yobi";
+    public static final int DEFAULT_SSH = 22000;
     public static final int WELLKNOWN_SSH = 22;
     public static final String HOST_KEY = "yobihostkey.pem";
 

@@ -148,6 +148,15 @@ imap.folder = inbox
 %prod.application.log=INFO
 %prod.application.mode=prod
 
+# Ssh Protocol Service
+# ~~~~~~~~~~~~
+# Default sshd port is [22000].
+# Change 'ssh.port' to use anther sshd port.
+# If anther program already uses same port with 'ssh.port' then sshd is not work.
+# ssh.port is available in 0 ~ 65535.
+# Please avoid to use not number character or outofrange number
+# ssh.port=22000
+
 #if you want to use sign-up confirm, uncomment below
 #signup.require.confirm = true
 

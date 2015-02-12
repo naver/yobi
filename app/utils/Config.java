@@ -70,12 +70,12 @@ public class Config {
             Integer port = play.Configuration.root().getInt("application.port");
 
             if (port != null && !port.equals(80)) {
-               return hostname + ":" + port.toString();
+                return hostname + ":" + port.toString();
             } else {
-               return hostname;
+                return hostname;
             }
         } else {
-           return defaultValue;
+            return defaultValue;
         }
     }
 
@@ -192,6 +192,15 @@ public class Config {
 
     public static String getEmailFromSmtp() {
         return getEmail("smtp");
+    }
+
+    public static int getSshPort() {
+        Integer sshPort = play.Configuration.root().getInt("ssh.port");
+
+        if (sshPort == null) {
+            sshPort = Constants.DEFAULT_SSH;
+        }
+        return sshPort;
     }
 
     /**

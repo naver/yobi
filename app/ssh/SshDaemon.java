@@ -25,6 +25,7 @@ import java.io.IOException;
 import org.apache.sshd.SshServer;
 import org.apache.sshd.server.keyprovider.PEMGeneratorHostKeyProvider;
 
+import utils.Config;
 import utils.Constants;
 
 public class SshDaemon {
@@ -32,7 +33,8 @@ public class SshDaemon {
 
     public void start() {
         // Configure SshDaemon
-        sshd.setPort(Constants.WELLKNOWN_SSH);
+        sshd = SshServer.setUpDefaultServer();
+        sshd.setPort(Config.getSshport());
         sshd.setKeyPairProvider(new PEMGeneratorHostKeyProvider(Constants.HOST_KEY, Constants.ALG_RSA, Constants.SIZE_RSA));
         sshd.setSessionFactory(new SshServerSessionFactory());
         sshd.setPublickeyAuthenticator(new SshPublicKeyAuth());
