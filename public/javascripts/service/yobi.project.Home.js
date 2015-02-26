@@ -55,10 +55,18 @@
             htElement.welRepoURL = $("#repositoryURL");
 
             // clone url
-            htElement.welBtnClone   = $('[data-toggle="cloneURL"]');
+            htElement.welBtnClone = $('[data-toggle="cloneURL"]');
 
-            htElement.welInputCloneURL =$('#cloneURL');
-            htElement.welBtnCopy   = $('#cloneURLBtn');
+            htElement.welInputCloneURL = $('#cloneURL');
+            htElement.welBtnCopy = $('#cloneURLBtn');
+
+            // clone ssh
+            htElement.welInputCloneSshURL = $('#cloneSSH');
+            htElement.welBtnSshCopy = $('#cloneSSHBtn');
+
+            // url Select
+            htElement.welBtnSelectHttp = $('#urlBtnSelectHttp');
+            htElement.welBtnSelectSsh = $('#urlBtnSelectSsh');
 
             // project label
             htElement.welLabelBoard = htOptions.welLabelBoard;
@@ -135,6 +143,7 @@
 
             htElement.welBtnPlusCategory.click(_onClickPlusCategory);
 
+            // http url event
             htElement.welBtnCopy.zclip({
                 "path": htVar.sURLZeroClipboard,
                 "copy": htElement.welInputCloneURL.val(),
@@ -145,6 +154,29 @@
 
             htElement.welInputCloneURL.on('click',function(){
                 $(this).select();
+            });
+
+            // ssh url event
+            htElement.welBtnSshCopy.zclip({
+                "path": htVar.sURLZeroClipboard,
+                "copy": htElement.welInputCloneSshURL.val(),
+                "afterCopy": function(){
+                    yobi.Common.notify(Messages("code.copyUrl.copied"), 1000);
+                }
+            });
+
+            htElement.welInputCloneSshURL.on('click',function(){
+                $(this).select();
+            });
+
+            // url Select
+            htElement.welBtnSelectHttp.on('click', function() {
+                htElement.welInputCloneURL.parent().css("z-index", "101");
+                htElement.welInputCloneSshURL.parent().css("z-index", "100");
+            });
+            htElement.welBtnSelectSsh.on('click', function() {
+                htElement.welInputCloneURL.parent().css("z-index", "100");
+                htElement.welInputCloneSshURL.parent().css("z-index", "101");
             });
 
             $('.project-page-wrap')

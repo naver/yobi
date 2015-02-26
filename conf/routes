@@ -67,6 +67,8 @@ DELETE         /user/email/delete/:emailId                                      
 PUT            /user/email/setAsMain/:emailId                                         controllers.UserApp.setAsMainEmail(emailId:Long)
 POST           /user/email/sendValidationEmail/:emailId                               controllers.UserApp.sendValidationEmail(emailId:Long)
 GET            /user/email/confirm/:emailId/:token                                    controllers.UserApp.confirmEmail(emailId: Long, token: String)
+POST           /user/SshKey                                                           controllers.UserApp.addSshKey()
+DELETE         /user/SshKey/:deleteSshKey                                             controllers.UserApp.deleteSshKey(deleteSshKey:String)
 
 # Site
 GET            /sites/mail                                                            controllers.SiteApp.writeMail(errorMessage:String ?= "", sended:Boolean ?= false)

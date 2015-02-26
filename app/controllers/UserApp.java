@@ -19,8 +19,11 @@
 
 package controllers;
 
+import java.util.regex.Pattern;
+
 import com.avaje.ebean.ExpressionList;
 import com.avaje.ebean.annotation.Transactional;
+
 import controllers.annotation.AnonymousCheck;
 import models.*;
 import models.enumeration.Operation;
@@ -32,7 +35,9 @@ import org.apache.shiro.crypto.RandomNumberGenerator;
 import org.apache.shiro.crypto.SecureRandomNumberGenerator;
 import org.apache.shiro.crypto.hash.Sha256Hash;
 import org.apache.shiro.util.ByteSource;
+
 import com.fasterxml.jackson.databind.node.ObjectNode;
+
 import play.Configuration;
 import play.Logger;
 import play.Play;
@@ -575,6 +580,8 @@ public class UserApp extends Controller {
                 return ok(edit_notifications.render(userForm, user));
             case EMAILS:
                 return ok(edit_emails.render(userForm, user));
+            case SSH:
+                return ok(edit_ssh.render(userForm, user));
             default:
             case PROFILE:
                 return ok(edit.render(userForm, user));
@@ -585,7 +592,8 @@ public class UserApp extends Controller {
         PROFILE("profile"),
         PASSWORD("password"),
         NOTIFICATIONS("notifications"),
-        EMAILS("emails");
+        EMAILS("emails"),
+        SSH("ssh");
 
         private String tabId;
 
@@ -694,6 +702,80 @@ public class UserApp extends Controller {
             throw new IllegalArgumentException("Bad password or passwordSalt!");
         }
         return new Sha256Hash(plainTextPassword, ByteSource.Util.bytes(passwordSalt), HASH_ITERATIONS).toBase64();
+    }
+
+    public static boolean validationSshKey(String inputSshKey){
+        String[] parts = inputSshKey.split(" ", 3);
+
+        if(parts.length > 1){
+            String keyAlgorithm = parts[0];
+            String pubKey = parts[1];
+            String regex;
+
+            switch(keyAlgorithm){
+                case"ssh-rsa":
+                    regex = "AAAAB3NzaC1yc2E[0-9A-Za-z+/]{143,361}+[=]{0,2}";
+                    break;
+                case"ssh-dss":
+                    regex = "AAAAB3NzaC1kc3M([0-9A-Za-z+/]{563}+[=]{2}|[0-9A-Za-z+/]{564}+[=]{1}|[0-9A-Za-z+/]{565})";
+                    break;
+                default:
+                    return false;
+            }
+            return Pattern.compile(regex).matcher(pubKey).matches();
+        }
+        return false;
+    }
+
+    @Transactional
+    public static Result addSshKey() {
+        Form<UserSshKey> keyForm = form(UserSshKey.class).bindFromRequest();
+        String fullKey = keyForm.data().get("publicKey");
+        String keyComment = keyForm.data().get("comment");
+
+        if(keyForm.hasErrors()) {
+            flash(Constants.WARNING, keyForm.error("publicKey").message());
+            return redirect(routes.UserApp.editUserInfoForm());
+        }
+
+        if(currentUser() == null || currentUser().isAnonymous()) {
+            return forbidden(ErrorViews.Forbidden.render(Messages.get("error.forbidden")));
+        }
+
+        if (fullKey != null) {
+            if(validationSshKey(fullKey)){
+                UserSshKey sshKey = new UserSshKey(fullKey, keyComment);
+                String sshKeyB64 = sshKey.makePublicKeyB64();
+                if(UserSshKey.findByKey(sshKeyB64) != null) {
+                    flash(Constants.WARNING, Messages.get("user.sshKey.duplicate"));
+                    return redirect(routes.UserApp.editUserInfoForm());
+                }
+                sshKey.user = currentUser();
+                UserSshKey.register(sshKey);
+            } else {
+                flash(Constants.WARNING, Messages.get("user.sshKey.unsupported"));
+            }
+        } else {
+            flash(Constants.WARNING, Messages.get("user.sshKey.wrongInput"));
+        }
+        return redirect(routes.UserApp.editUserInfoForm());
+    }
+
+    @Transactional
+    public static Result deleteSshKey(String key) {
+        User currentUser = currentUser();
+        UserSshKey userKey = UserSshKey.find.byId(key);
+
+        if(currentUser == null || currentUser.isAnonymous() || userKey == null) {
+            return forbidden(ErrorViews.Forbidden.render(Messages.get("error.forbidden")));
+        }
+
+        if(!AccessControl.isAllowed(currentUser, userKey.user.asResource(), Operation.DELETE)) {
+            return forbidden(ErrorViews.Forbidden.render(Messages.get("error.forbidden")));
+        }
+
+        userKey.delete();
+        return redirect(routes.UserApp.editUserInfoForm());
     }
 
     @Transactional

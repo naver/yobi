@@ -3,6 +3,7 @@ project/project
 project/target
 target
 tmp
+*.pem
 .history
 .classpath
 .project

@@ -35,4 +35,18 @@ public class Constants {
     public static final String NEW_LINE_DELIMETER = "\n";
 
     public static final int DEFAULT_PAGE = 1;
+
+    // About ssh
+    public static final String SSH_USERNAME = "yobi";
+    public static final int WELLKNOWN_SSH = 22;
+    public static final String HOST_KEY = "yobihostkey.pem";
+
+    public static final String ALG_RSA = "RSA";
+    public static final int SIZE_RSA = 2048;
+    public static final String ALG_DSA = "DSA";
+    public static final int SIZE_DSA = 0;
+
+    public static final int NOT_ERROR_EXIT = 0;
+    public static final int WIDE_ERROR_EXIT = 1;
+    public static final int COMMAND_ERROR_EXIT = 127;
 }
