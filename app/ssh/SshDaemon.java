@@ -37,6 +37,7 @@ public class SshDaemon {
         sshd.setSessionFactory(new SshServerSessionFactory());
         sshd.setPublickeyAuthenticator(new SshPublicKeyAuth());
         sshd.setCommandFactory(new SshCommandFactory());
+        sshd.setShellFactory(new SshShellFactory());
 
         // Start SshDaemon
         try {
