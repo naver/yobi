@@ -26,7 +26,7 @@ libraryDependencies ++= Seq(
   // javahl
   "sonia.svnkit" % "svnkit-javahl16" % "1.8.5-scm2",
   "net.sourceforge.jexcelapi" % "jxl" % "2.6.10",
-// shiro
+  // shiro
   "org.apache.shiro" % "shiro-core" % "1.2.1",
   // commons-codec
   "commons-codec" % "commons-codec" % "1.2",
@@ -41,7 +41,14 @@ libraryDependencies ++= Seq(
   "org.jsoup" % "jsoup" % "1.7.2",
   "com.googlecode.juniversalchardet" % "juniversalchardet" % "1.0.3",
   "org.mockito" % "mockito-all" % "1.9.0" % "test",
-  "com.github.zafarkhaja" % "java-semver" % "0.7.2"
+  "com.github.zafarkhaja" % "java-semver" % "0.7.2",
+  // mina-sshd
+  "org.apache.mina" % "mina-core" % "2.0.7",
+  "org.apache.sshd" % "sshd-core" % "0.12.0",
+  // bouncycastle
+  "org.bouncycastle" % "bcprov-jdk15on" % "1.49",
+  "org.bouncycastle" % "bcmail-jdk15on" % "1.49",
+  "org.bouncycastle" % "bcpkix-jdk15on" % "1.49"
 )
 
 val projectSettings = Seq(

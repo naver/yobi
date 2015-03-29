@@ -26,8 +26,10 @@ import controllers.UserApp;
 import controllers.routes;
 import mailbox.MailboxService;
 import models.*;
+
 import org.apache.commons.lang3.StringUtils;
 import org.apache.http.impl.cookie.DateUtils;
+
 import play.Application;
 import play.Configuration;
 import play.GlobalSettings;
@@ -40,6 +42,7 @@ import play.mvc.Http;
 import play.mvc.Http.RequestHeader;
 import play.mvc.Result;
 import play.mvc.Results;
+import ssh.SshDaemon;
 import utils.*;
 import views.html.welcome.restart;
 import views.html.welcome.secret;
@@ -62,7 +65,6 @@ import java.util.Date;
 import static play.data.Form.form;
 import static play.mvc.Results.badRequest;
 
-
 public class Global extends GlobalSettings {
     private static final String[] INITIAL_ENTITY_NAME = {"users", "roles", "siteAdmins"};
     private final String DEFAULT_SECRET = "VA2v:_I=h9>?FYOH:@ZhW]01P<mWZAKlQ>kk>Bo`mdCiA>pDw64FcBuZdDh<47Ew";
@@ -70,6 +72,8 @@ public class Global extends GlobalSettings {
     private boolean isSecretInvalid = false;
     private boolean isRestartRequired = false;
     private MailboxService mailboxService = new MailboxService();
+    private SshDaemon sshdaemon = new SshDaemon();
+
     private boolean hasFailedToUpdateSecretKey = false;
 
     private ConfigFile configFile = new ConfigFile("config", "application.conf");
@@ -143,11 +147,13 @@ public class Global extends GlobalSettings {
         NotificationEvent.onStart();
         Attachment.onStart();
         AccessControl.onStart();
+        sshdaemon.start();
 
         if (!isSecretInvalid) {
             YobiUpdate.onStart();
             mailboxService.start();
         }
+        mailboxService.start();
     }
 
     private boolean equalsDefaultSecret() {
@@ -289,6 +295,7 @@ public class Global extends GlobalSettings {
     }
 
     public void onStop(Application app) {
+        sshdaemon.stop();
         mailboxService.stop();
     }
 

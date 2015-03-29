@@ -1,0 +1,107 @@
+@**
+* Yobi, Project Hosting SW
+*
+* Copyright 2015 NAVER Corp.
+* http://yobi.io
+*
+* @author Kiseong Park
+*
+* Licensed under the Apache License, Version 2.0 (the "License");
+* you may not use this file except in compliance with the License.
+* You may obtain a copy of the License at
+*
+*   http://www.apache.org/licenses/LICENSE-2.0
+*
+* Unless required by applicable law or agreed to in writing, software
+* distributed under the License is distributed on an "AS IS" BASIS,
+* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+* See the License for the specific language governing permissions and
+* limitations under the License.
+**@
+@(userForm: play.data.Form[User], user:User)
+
+@import helper._
+@import utils.TemplateHelper._
+
+@siteLayout(user.loginId, utils.MenuType.USER) {
+<div class="site-breadcrumb-outer">
+  <div class="site-breadcrumb-inner">
+    <h3>@Messages("userinfo.accountSetting")</h3>
+  </div>
+</div>
+<div class="page-wrap-outer">
+  <div class="page-wrap">
+    @partial_edit_tabmenu("ssh")
+    <div class="pull-left" style="width: 50%;">
+      <div style="width: 92%;">
+        <form action="@routes.UserApp.addSshKey" method="post">
+          <dl>
+            <dt>@Messages("user.sshKey.keyTitle")</dt>
+            <dd>
+              <input type="text" name="comment" class="text uname" style="width: 100%; padding:4px 0;"/>
+            </dd>
+            <dt>@Messages("user.sshKey.key")</dt>
+            <dd>
+              <textarea name="publicKey" style="height: 100px; width: 100%; padding: 0;"></textarea>
+            </dd>
+            <dd>
+              <span>@Messages("sshKeys.description")</span>
+              <button type="submit" class="ybtn ybtn-success pull-right" >@Messages("button.add")</button>
+            </dd>
+          </dl>
+        </form>
+      </div>
+      <button class="ybtn ybtn-inverse ybtn-mini" onclick="togleMenu()">도움말</button>
+      <div id="helpArea" style="width: 92%; display: none; box-sizing:border-box; padding: 10px 15px; margin: 0px; background-color: #F3F3F3;">
+        <h5>키는 어떻게 등록 하나요?</h5>
+        <p>다음 링크를 참조하여 공개키를 생성합니다.</p>
+        <a href="http://git-scm.com/book/ko/v1/Git-%EC%84%9C%EB%B2%84-SSH-%EA%B3%B5%EA%B0%9C%ED%82%A4-%EB%A7%8C%EB%93%A4%EA%B8%B0" target="_blank">[SSH 공개키 만들기]</a>
+        <p>생성된 .pub 파일을 상단 <b>키</b> 란에 입력 후 키를 추가해 줍니다.</p>
+      </div>
+    </div>
+    <table class="pull-left" style="border-left:1px solid #ddd; width:50%; box-sizing: border-box;">
+      @for(key <- user.sshKeys){
+      <tr>
+        <td>
+          <ul style="list-style:none; padding-left:40px;">
+            <li>
+              <strong class="ml10">@key.comment</strong>
+            </li>
+            <li>
+              <span class="label-head ml10">@key.fingerPrint</span>
+            </li>
+            <li>
+              <span class="ml10">
+                @Messages("user.sshKey.addedOn") @agoOrDateString(key.registerDate) ― @if(key.isUsed){ @Messages("user.sshKey.lastUsedOn") @agoOrDateString(key.lastUsedDate)} else {@Messages("user.sshKey.neverUsed")}
+              </span>
+            </li>
+          </ul>
+        </td>
+        <td style="text-align:right; vertical-align: middle;">
+          <button type="button" data-request-method="delete" data-request-uri="@routes.UserApp.deleteSshKey(key.publicKey)" class="ybtn ybtn-small ybtn-danger">
+            @Messages("button.delete")
+          </button>
+        </td>
+      </tr>
+      <tr>
+        <td colspan="2">
+          <hr />
+        </td>
+      </tr>
+      }
+    </table>
+  </div>
+</div>
+<script type="text/javascript">
+    $(function(){
+        $yobi.loadModule("user.Setting");
+    });
+    function togleMenu(){
+        if(document.getElementById("helpArea").style.display == 'none'){
+            document.getElementById("helpArea").style.display = 'block';
+        } else {
+            document.getElementById("helpArea").style.display = 'none';
+        }
+    }
+</script>
+}

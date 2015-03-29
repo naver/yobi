@@ -171,6 +171,12 @@ public class User extends Model implements ResourceConvertible {
     public List<Mention> mentions;
 
     /**
+     * for ssh key
+     */
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
+    public List<UserSshKey> sshKeys;
+
+    /**
      * The user's preferred language code which can be recognized by {@link play.api.i18n.Lang#get},
      * such as "ko", "en-US" or "ja". This field is used as a language for notification mail.
      */

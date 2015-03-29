@@ -25,27 +25,39 @@ import controllers.annotation.AnonymousCheck;
 import controllers.annotation.IsAllowed;
 import models.Project;
 import models.enumeration.Operation;
+
 import org.apache.commons.io.FilenameUtils;
 import org.apache.tika.Tika;
 import org.apache.tika.mime.MediaType;
+
 import com.fasterxml.jackson.databind.node.ObjectNode;
+
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.tmatesoft.svn.core.SVNException;
+
+import play.Configuration;
 import play.mvc.*;
 import playRepository.PlayRepository;
 import playRepository.RepositoryService;
+import ssh.SshDaemon;
+import utils.Config;
 import utils.ErrorViews;
 import utils.FileUtil;
 import utils.HttpUtil;
+import utils.Constants;
+
 import views.html.code.nohead;
 import views.html.code.nohead_svn;
 import views.html.code.view;
 
 import javax.servlet.ServletException;
+
 import java.io.IOException;
 import java.net.URLEncoder;
 import java.util.Arrays;
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 @AnonymousCheck
 public class CodeApp extends Controller {
@@ -180,6 +192,18 @@ public class CodeApp extends Controller {
         } else {
             return null;
         }
+    }
+
+    public static String getURLSsh(Project project) {
+        String hostname = Config.getHostport().replaceFirst("(:\\d*)", "");
+        int port = SshDaemon.getCurrentPort();
+        StringBuilder urlBuilder = new StringBuilder("ssh://").append(Constants.SSH_USERNAME).append("@").append(hostname);
+        if (port != Constants.WELLKNOWN_SSH) {
+            urlBuilder.append(':').append(port);
+        }
+        urlBuilder.append('/').append(project.owner).append('/').append(project.name);
+
+        return urlBuilder.toString();
     }
 
     public static String getURLWithLoginId(Project project) {

@@ -27,6 +27,7 @@
 @import utils.Markdown
 @import models.enumeration._
 @import scala.collection.immutable._
+@import ssh.SshDaemon
 
 @isActiveTab(tab:String) = @{
     if (tab == tabId) {"active"}
@@ -53,12 +54,30 @@
                 </div>
             </div>
             @if(project.menuSetting.code) {
-                <div class="project-clone-wrap span3">
-                    <input type="text" class="project-clone-url" id="cloneURL" readonly="readonly" value="@if(project.isGit){@CodeApp.getURLWithLoginId(project)} else {@CodeApp.getURL(project)}">
-                    <button class="ybtn project-clone-button" id="cloneURLBtn">@Messages("code.copyUrl")</button>
+                <div class="project-clone-wrap span3" style="position:absolute; right:0;">
+                    <div style="position:relative; z-index:101;">
+                        <input type="text" class="project-clone-url" id="cloneURL" readonly="readonly" value="@if(project.isGit){@CodeApp.getURLWithLoginId(project)} else {@CodeApp.getURL(project)}">
+                        <button class="ybtn project-clone-button" id="cloneURLBtn">@Messages("code.copyUrl")</button>
+                    </div>
+                    @if(SshDaemon.isRunning()) {
+                    <div style="position:relative; z-index:100;">
+                        <input type="text" class="project-clone-url" id="cloneSSH" readonly="readonly" value="@if(project.isGit){@CodeApp.getURLSsh(project)} else {@CodeApp.getURL(project)}">
+                        <button class="ybtn project-clone-button" id="cloneSSHBtn">@Messages("code.copyUrl")</button>
+                    </div>
+                    }
                 </div>
+                @if(SshDaemon.isRunning()) {
+                <div style="width:100%; position:relative; top:-20px;">
+                    <span class="pull-right">
+                        <button class="ybtn ybtn-mini pull-right" style="width:43px;" id="urlBtnSelectSsh">SSH</button>
+                        <button class="ybtn ybtn-mini pull-right" style="width:43px;" id="urlBtnSelectHttp">HTTP</button>
+                    </span>
+                    <span class="pull-right mr5">@Messages("project.urlType")</span>
+                </div>
+                }
             }
         </div>
+
         <div class="row-fluid">
             <div class="span9">
                  <ul class="nav nav-tabs">
