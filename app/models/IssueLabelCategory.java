@@ -4,7 +4,7 @@
  * Copyright 2014 NAVER Corp.
  * http://yobi.io
  *
- * @Author Yi EungJun
+ * @author Yi EungJun
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,10 +21,10 @@
 package models;
 
 import models.enumeration.ResourceType;
-import play.db.ebean.Model;
 import models.resource.Resource;
 import models.resource.ResourceConvertible;
 import play.data.validation.Constraints.Required;
+import play.db.ebean.Model;
 
 import javax.persistence.*;
 import javax.validation.constraints.Size;

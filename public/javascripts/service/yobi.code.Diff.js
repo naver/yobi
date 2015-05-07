@@ -4,7 +4,7 @@
  * Copyright 2013 NAVER Corp.
  * http://yobi.io
  *
- * @Author Yi EungJun
+ * @author Yi EungJun
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -111,12 +111,6 @@
             htElement.waBtnToggleReviewWrap.on("click", function(){
                 htElement.welContainer.toggleClass("diffs-only");
 
-                if (htElement.welContainer.hasClass("diffs-only")) {
-                    $.cookie("diffs-only", true, {"expire": 365});
-                } else {
-                    $.removeCookie("diffs-only");
-                }
-
                 var positionTop =  10;
                 if(htElement.welReviewContainer.offset().top - positionTop < $(document).scrollTop()){
                     htElement.welReviewContainer
@@ -142,7 +136,8 @@
 
             if(htElement.welBtnAccept.length > 0 && htElement.welBtnAccept.data("requestAs")){
                 htElement.welBtnAccept.data("requestAs").on("beforeRequest", function(){
-                    yobi.ui.Spinner.show({"bUseDimmer": true});
+                    htElement.welBtnAccept.attr('disabled','disabled');
+                    NProgress.start();
                 });
             }
 

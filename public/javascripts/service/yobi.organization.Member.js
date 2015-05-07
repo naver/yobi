@@ -4,7 +4,7 @@
  * Copyright 2013 NAVER Corp.
  * http://yobi.io
  *
- * @Author Changsung Kim
+ * @author Changsung Kim
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -45,6 +45,7 @@
 
             htVar.oTypeahead = new yobi.ui.Typeahead("#loginId", {
                 "htData" : {
+                    "minLength" : 1,
                     "updater" : _updater,
                     "source" : _source,
                     "render" : _render

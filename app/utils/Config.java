@@ -4,7 +4,7 @@
  * Copyright 2012 NAVER Corp.
  * http://yobi.io
  *
- * @Author Yi EungJun
+ * @author Yi EungJun
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,12 +27,34 @@ import play.Configuration;
 import play.mvc.Http;
 
 import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
 import java.net.*;
+import java.nio.charset.Charset;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Enumeration;
 
 public class Config {
     public static final String DEFAULT_SCHEME = "http";
+
+    public static void onStart() {
+        Diagnostic.register(new SimpleDiagnostic() {
+            @Override
+            public String checkOne() {
+                Configuration config = Configuration.root();
+
+                if (config.getInt("application.port") != null
+                        && config.getInt("application.hostname") == null) {
+                    return "application.port may be ignored because " +
+                            "application.hostname is not configured.";
+                } else {
+                    return null;
+                }
+            }
+        });
+    }
 
     public static String getSiteName() {
         return ObjectUtils.defaultIfNull(
@@ -41,10 +63,6 @@ public class Config {
 
     public static String getHostport(String defaultValue) {
         play.Configuration config = play.Configuration.root();
-
-        if (config == null) {
-            return defaultValue;
-        }
 
         String hostname = play.Configuration.root().getString("application.hostname");
 
@@ -57,10 +75,6 @@ public class Config {
                return hostname;
             }
         } else {
-           if (play.Configuration.root().getInt("application.port") != null) {
-               play.Logger.warn("application.port is ignored because application.hostname is not" +
-                       " configured.");
-           }
            return defaultValue;
         }
     }
@@ -96,11 +110,9 @@ public class Config {
     public static String getHostname() {
         play.Configuration config = play.Configuration.root();
 
-        if (config != null) {
-            String hostname = play.Configuration.root().getString("application.hostname");
-            if (hostname != null && !hostname.isEmpty()) {
-                return hostname;
-            }
+        String hostname = play.Configuration.root().getString("application.hostname");
+        if (hostname != null && !hostname.isEmpty()) {
+            return hostname;
         }
 
         try {
@@ -128,10 +140,6 @@ public class Config {
 
     public static String getScheme(String defaultValue) {
         play.Configuration config = play.Configuration.root();
-
-        if (config == null) {
-            return defaultValue;
-        }
 
         String scheme = config.getString("application.scheme");
 
@@ -173,28 +181,17 @@ public class Config {
             return email;
         }
 
-        email = (new SiteAdmin()).admin.email;
+        models.User admin = (new SiteAdmin()).admin;
 
-        if (email != null) {
-            return email;
+        if (admin != null && admin.email != null) {
+            return admin.email;
         }
 
         return "yobi@yobi.io";
     }
 
     public static String getEmailFromSmtp() {
-        Configuration config = Configuration.root();
-        String user = config.getString("smtp.user");
-
-        if (user == null) {
-            return null;
-        }
-
-        if (user.contains("@")) {
-            return user;
-        } else {
-            return user + "@" + config.getString("smtp.domain");
-        }
+        return getEmail("smtp");
     }
 
     /**
@@ -261,8 +258,37 @@ public class Config {
      * @return  the current version
      */
     public static String getCurrentVersion() {
-        File versionFile = Paths.get("conf", "version.conf").toFile();
+        return yobi.BuildInfo.version();
+    }
 
-        return ConfigFactory.parseFile(versionFile).resolve().getString("app.version");
+    public static String getEmailFromImap() {
+        return Configuration.root().getString("imap.address", getEmail("imap"));
+    }
+
+    private static String getEmail(String prefix) {
+        Configuration config = Configuration.root();
+        String user = config.getString(prefix + ".user");
+
+        if (user == null) {
+            return null;
+        }
+
+        if (user.contains("@")) {
+            return user;
+        } else {
+            return user + "@" + config.getString(prefix + ".domain", getHostname());
+        }
+    }
+
+    public static Charset getCharset() {
+        return Charset.forName("UTF-8");
+    }
+
+    public static String getYobiHome() {
+        return System.getProperty("yobi.home");
+    }
+
+    public static String getYobiHome(String defaultValue) {
+        return System.getProperty("yobi.home", defaultValue);
     }
 }

@@ -4,7 +4,7 @@
  * Copyright 2013 NAVER Corp.
  * http://yobi.io
  *
- * @Author Wansoon Park
+ * @author Wansoon Park
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,6 +25,8 @@ import models.*;
 import models.enumeration.EventType;
 import models.enumeration.State;
 
+import java.util.List;
+
 public abstract class PullRequestActor extends UntypedActor {
 
     protected void processPullRequestMerging(PullRequestEventMessage message, PullRequest pullRequest) {
@@ -37,6 +39,9 @@ public abstract class PullRequestActor extends UntypedActor {
             if (mergeResult.hasDiffCommits()) {
                 mergeResult.saveCommits();
                 if (!mergeResult.getNewCommits().isEmpty()) {
+                    if (!message.isNewPullRequest()) {
+                        NotificationEvent.afterPullRequestCommitChanged(message.getSender(), pullRequest);
+                    }
                     PullRequestEvent.addCommitEvents(message.getSender(), pullRequest,
                             mergeResult.getNewCommits(),
                             getCommitEventOldValue(oldMergeCommitId, pullRequest.mergedCommitIdTo));

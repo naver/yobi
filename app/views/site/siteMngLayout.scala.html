@@ -4,7 +4,7 @@
 * Copyright 2013 NAVER Corp.
 * http://yobi.io
 *
-* @Author JiHan Kim
+* @author JiHan Kim
 *
 * Licensed under the Apache License, Version 2.0 (the "License");
 * you may not use this file except in compliance with the License.
@@ -23,7 +23,7 @@
 @isActiveMenu(calls: Call*) = @{
     var menuState = ""
     for(call <- calls) {
-        if(call.toString().equals(request().path())) {
+        if(call.toString().equals(requestHeader.path)) {
             menuState = "active"
         }
     }
@@ -63,6 +63,9 @@
                         <a href="@routes.SiteApp.update()">@Messages("site.sidebar.update")
                         @if(YobiUpdate.versionToUpdate != null) { <span class="notification-badge">1</span> }
                         </a>
+                    </li>
+                    <li class="@isActiveMenu(routes.SiteApp.diagnose())">
+                        <a href="@routes.SiteApp.diagnose()">@Messages("site.sidebar.diagnostics")</a>
                     </li>
                 </ul>
             </div>

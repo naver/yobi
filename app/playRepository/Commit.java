@@ -4,7 +4,7 @@
  * Copyright 2012 NAVER Corp.
  * http://yobi.io
  *
- * @Author Yi EungJun
+ * @author Yi EungJun
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -82,6 +82,10 @@ public abstract class Commit {
     public static Project getProjectFromResourceId(String resourceId) {
         String[] pair = resourceId.split(":");
         return Project.find.byId(Long.valueOf(pair[0]));
+    }
+
+    public static Resource getAsResource(Project project, String commitId) {
+        return getAsResource(project.id + ":" + commitId);
     }
 
     public static Resource getAsResource(final String resourceId) {

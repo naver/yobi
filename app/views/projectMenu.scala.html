@@ -4,7 +4,7 @@
 * Copyright 2013 NAVER Corp.
 * http://yobi.io
 *
-* @Author Jihan Kim
+* @author Jihan Kim
 *
 * Licensed under the Apache License, Version 2.0 (the "License");
 * you may not use this file except in compliance with the License.
@@ -35,6 +35,10 @@
     } else {
         routes.PullRequestApp.pullRequests(project.owner, project.name)
     }
+}
+
+@reviewCount = @{
+    CommentThread.countReviewsBy(project.id, null)
 }
 <div class="project-menu-outer">
     <div class="project-menu-inner">
@@ -76,7 +80,8 @@
             @if(project.menuSetting.review) {
                 <li class="@isActiveMenu(MenuType.PROJECT_REVIEW)">
                     <a href="@routes.ReviewThreadApp.reviewThreads(project.owner, project.name)">
-                    @Messages("menu.review")
+                        @Messages("menu.review")
+                        @if(reviewCount > 0){<span class="project-menu-count">@reviewCount</span>}
                     </a>
                 </li>
             }
@@ -131,8 +136,9 @@ $(document).ready(function(){
         @if(project.menuSetting.pullRequest && project.vcs.equals("GIT")){
            ,"F": "@getPullRequestURL(project)"
         }
-        @if(ProjectUser.roleOf(session.get("loginId"), project).equals("manager")){
-           ,"Q": "@routes.ProjectApp.settingForm(project.owner, project.name)"
+        @requestHeader.session.get("loginId") match {
+            case Some(role) if role.equals("manager") => { "Q": "@routes.ProjectApp.settingForm(project.owner, project.name)" }
+            case _ => { }
         }
     };
 

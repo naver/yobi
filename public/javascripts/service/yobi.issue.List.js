@@ -4,7 +4,7 @@
  * Copyright 2013 NAVER Corp.
  * http://yobi.io
  *
- * @Author Jihan Kim
+ * @author Jihan Kim
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -193,6 +193,13 @@
          * @private
          */
         function _initPjax(){
+            var isFirefox = navigator.userAgent.toLowerCase().indexOf('firefox') > -1;
+            var isSafari = navigator.userAgent.indexOf('Safari') != -1 && navigator.userAgent.indexOf('Chrome') == -1;
+            // Workaround for pjax bug result from bfcache
+            // https://developer.mozilla.org/en-US/docs/Using_Firefox_1.5_caching
+            if(isFirefox || isSafari){
+                return;
+            }
             var htPjaxOptions = {
                 "fragment": "div[pjax-container]",
                 "timeout" : 3000
@@ -220,11 +227,11 @@
         }
 
         function _onBeforeLoadIssueList(){
-            yobi.ui.Spinner.show();
+            NProgress.start();
         }
 
         function _onLoadIssueList(){
-            yobi.ui.Spinner.hide();
+            NProgress.done();
 
             _initElement(htInitialOptions);
             _initPagination();

@@ -4,7 +4,7 @@
  * Copyright 2012 NAVER Corp.
  * http://yobi.io
  *
- * @Author Yi EungJun
+ * @author Yi EungJun
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,41 +20,21 @@
  */
 package utils;
 
-import java.io.*;
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.security.Principal;
-import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Enumeration;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
-
-import javax.servlet.AsyncContext;
-import javax.servlet.DispatcherType;
-import javax.servlet.RequestDispatcher;
-import javax.servlet.ServletContext;
-import javax.servlet.ServletException;
-import javax.servlet.ServletInputStream;
-import javax.servlet.ServletRequest;
-import javax.servlet.ServletResponse;
-import javax.servlet.http.Cookie;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-import javax.servlet.http.HttpSession;
-import javax.servlet.http.Part;
-
 import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
 import play.Play;
 import play.i18n.Lang;
 import play.mvc.Http;
 import play.mvc.Http.RawBuffer;
 import play.mvc.Http.Request;
+
+import javax.servlet.*;
+import javax.servlet.http.*;
+import java.io.*;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.security.Principal;
+import java.text.SimpleDateFormat;
+import java.util.*;
 
 public class PlayServletRequest implements HttpServletRequest {
 
@@ -115,6 +95,16 @@ public class PlayServletRequest implements HttpServletRequest {
         return Integer.parseInt(contentLength);
     }
 
+    public long getContentLengthLong() {
+        String contentLength = request.getHeader(Http.HeaderNames.CONTENT_LENGTH);
+
+        if (contentLength == null) {
+            return -1;
+        }
+
+        return Long.parseLong(contentLength);
+    }
+
     @Override
     public String getContentType() {
         return request.getHeader(Http.HeaderNames.CONTENT_TYPE);
@@ -172,6 +162,18 @@ public class PlayServletRequest implements HttpServletRequest {
             protected void finalize() throws Throwable {
                 close();
                 super.finalize();
+            }
+
+            public void setReadListener(javax.servlet.ReadListener readListener) {
+                throw new UnsupportedOperationException();
+            }
+
+            public boolean isReady() {
+                throw new UnsupportedOperationException();
+            }
+
+            public boolean isFinished() {
+                throw new UnsupportedOperationException();
             }
         };
     }
@@ -494,15 +496,7 @@ public class PlayServletRequest implements HttpServletRequest {
 
     @Override
     public HttpSession getSession(boolean create) {
-        if (httpSession != null) {
-            return httpSession;
-        }
-
-        if (create) {
-            return new PlayServletSession(new PlayServletContext());
-        } else {
-            return null;
-        }
+        return httpSession;
     }
 
     @Override
@@ -553,6 +547,16 @@ public class PlayServletRequest implements HttpServletRequest {
 
     @Override
     public void logout() throws ServletException {
+        throw new UnsupportedOperationException();
+    }
+
+    public <T extends javax.servlet.http.HttpUpgradeHandler> T upgrade(java.lang.Class<T> httpUpgradeHandlerClass)
+	    throws java.io.IOException,
+		   ServletException {
+        throw new UnsupportedOperationException();
+    }
+
+    public String changeSessionId() {
         throw new UnsupportedOperationException();
     }
 

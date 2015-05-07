@@ -4,7 +4,7 @@
  * Copyright 2013 NAVER Corp.
  * http://yobi.io
  *
- * @Author Jihan Kim
+ * @author Jihan Kim
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -157,7 +157,7 @@
 
         function _requestFolderList(){
             if(htVar.aPathQueue.length === 0){
-                yobi.ui.Spinner.hide();
+                NProgress.done();
                 htVar.aWelList.forEach(function(welList){
                     welList.css("display", "block");
                 });
@@ -184,11 +184,11 @@
             var nNewDepth = nParentDepth + 1;
             _setIndentByDepth(nNewDepth);
 
-            yobi.ui.Spinner.show();
+            NProgress.start();
             $.ajax(sURL, {
                 "success": function(oRes){
                     if(_isListExistsByPath(sTargetPath)){
-                        yobi.ui.Spinner.hide();
+                        NProgress.done();
                         return;
                     }
 
@@ -212,10 +212,10 @@
                         });
                     }
 
-                    yobi.ui.Spinner.hide();
+                    NProgress.done();
                 },
                 "error"  : function(){
-                    yobi.ui.Spinner.hide();
+                    NProgress.done();
                 }
             });
         }
@@ -374,9 +374,7 @@
 
                 htElement.welCodeVal
                     .removeClass('hidden')
-                    .addClass('markdown-wrap codebrowser-markdown')
-                    .html(yobi.Markdown.renderMarkdown(htElement.welCodeVal.text()));
-
+                    .addClass('markdown-wrap codebrowser-markdown');
             } else {
 
                 if(!htVar.oEditor){
@@ -517,7 +515,9 @@
                 aCrumbs.push('<a href="' + sLink + '">' + sName + '</a>');
             });
 
-            htElement.welBreadCrumbs.html(aCrumbs.join(""));
+            var breadcrumb = $yobi.xssClean(aCrumbs.join(""));
+
+            htElement.welBreadCrumbs.html(breadcrumb);
         }
 
         _init(htOptions || {});

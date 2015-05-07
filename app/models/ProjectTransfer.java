@@ -4,7 +4,7 @@
  * Copyright 2013 NAVER Corp.
  * http://yobi.io
  *
- * @Author Keeun Baik
+ * @author Keeun Baik
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,7 +38,7 @@ public class ProjectTransfer extends Model implements ResourceConvertible {
 
     private static final long serialVersionUID = 1L;
 
-    public static Finder<Long, ProjectTransfer> find = new Finder<>(Long.class, ProjectTransfer.class);
+    public static final Finder<Long, ProjectTransfer> find = new Finder<>(Long.class, ProjectTransfer.class);
 
     @Id
     public Long id;

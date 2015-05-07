@@ -4,7 +4,7 @@
 * Copyright 2012 NAVER Corp.
 * http://yobi.io
 *
-* @Author Yi EungJun
+* @author Yi EungJun
 *
 * Licensed under the Apache License, Version 2.0 (the "License");
 * you may not use this file except in compliance with the License.
@@ -36,17 +36,6 @@ List[playRepository.FileDiff],path:String)
 <div class="page-wrap-outer">
     <div class="project-page-wrap">
         <div id="code-browse-wrap" class="code-browse-wrap">
-            <select id="branches" data-toggle="select2" data-format="branch" data-dropdown-css-class="branches" class="pull-right">
-                @defining(RepositoryService.getRepository(project).getBranchNames()) { branches =>
-                    @for(branchName <- branches){
-                        <option value="@routes.CodeHistoryApp.history(project.owner, project.name, URLEncoder.encode(branchName, "UTF-8"), null)"
-                                @if(selectedBranch){ @if(branchItemName(branchName) == branchItemName(selectedBranch)){ selected } }>
-                                @branchName
-                        </option>
-                    }
-                }
-            </select>
-
             <ul class="nav nav-tabs" style="margin-bottom:20px;">
                 <li>
                     <a href="@routes.CodeApp.codeBrowser(project.owner, project.name)">@Messages("code.files")</a>
@@ -151,7 +140,7 @@ List[playRepository.FileDiff],path:String)
                                     <p class="content">@thread.getFirstReviewComment().getContents()</p>
                                     <span class="date" title="@utils.JodaDateUtil.getDateString(thread.createdDate)">
                                         <span class="comments">
-                                        @if( thread.hasChildComments ){<i class="yobicon-comments"></i> @thread.reviewComments.size()}
+                                        @if( thread.hasChildComments ){<i class="yobicon-comments"></i> @thread.reviewComments.size}
                                         </span>
                                         <span class="avatar-wrap smaller margin-right-5">
                                             <img src="@User.findByLoginId(thread.author.loginId).avatarUrl" alt="@thread.author.name" />
@@ -170,7 +159,7 @@ List[playRepository.FileDiff],path:String)
                                     <p class="content">@thread.getFirstReviewComment().getContents()</p>
                                     <span class="date" title="@utils.JodaDateUtil.getDateString(thread.createdDate)">
                                         <span class="comments">
-                                        @if( thread.hasChildComments ){<i class="yobicon-comments"></i> @thread.reviewComments.size()}
+                                        @if( thread.hasChildComments ){<i class="yobicon-comments"></i> @thread.reviewComments.size}
                                         </span>
                                         <span class="avatar-wrap smaller margin-right-5">
                                             <img src="@User.findByLoginId(thread.author.loginId).avatarUrl" alt="@thread.author.name" />

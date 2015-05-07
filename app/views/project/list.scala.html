@@ -4,7 +4,7 @@
 * Copyright 2012 NAVER Corp.
 * http://yobi.io
 *
-* @Author Hwi Ahn
+* @author Hwi Ahn
 *
 * Licensed under the Apache License, Version 2.0 (the "License");
 * you may not use this file except in compliance with the License.
@@ -79,17 +79,15 @@
                     <div class="members">
                         <ul class="unstyled">
                         @for(member <- User.findUsersByProject(project.id)){
-                            @if(member.loginId != project.owner){
                             <li>
                                 <a href="@routes.UserApp.userInfo(member.loginId)" class="avatar-wrap">
                                     <img src="@member.avatarUrl" alt="@member.name">
                                 </a>
                             </li>
-                            }
                         }
                         </ul>
                         <p>
-                            @Html(Messages("project.onmember", User.findUsersByProject(project.id).length))
+                            @Html(Messages("project.onmember", User.findUsersByProject(project.id).size))
                             <i class="yobicon-eye yobicon-middle"></i> @Html(Messages("project.onwatching", project.getWatchingCount))
                         </p>
                     </div>

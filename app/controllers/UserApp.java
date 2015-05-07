@@ -32,7 +32,7 @@ import org.apache.shiro.crypto.RandomNumberGenerator;
 import org.apache.shiro.crypto.SecureRandomNumberGenerator;
 import org.apache.shiro.crypto.hash.Sha256Hash;
 import org.apache.shiro.util.ByteSource;
-import org.codehaus.jackson.node.ObjectNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import play.Configuration;
 import play.Logger;
 import play.Play;
@@ -431,7 +431,7 @@ public class UserApp extends Controller {
 
         if (daysAgo == UNDEFINED) {
             Cookie cookie = request().cookie(DAYS_AGO_COOKIE);
-            if (cookie != null) {
+            if (cookie != null && StringUtils.isNotEmpty(cookie.value())) {
                 daysAgo = Integer.parseInt(cookie.value());
             } else {
                 daysAgo = DAYS_AGO;
@@ -924,6 +924,14 @@ public class UserApp extends Controller {
             json.put("isSuccess", false);
             json.put("reason", "FORBIDDEN");
             return forbidden(json);
+        }
+    }
+
+    public static boolean isSiteAdminLoggedInSession(){
+        if(SiteAdmin.SITEADMIN_DEFAULT_LOGINID.equals(session().get(SESSION_LOGINID))){
+            return true;
+        } else {
+            return false;
         }
     }
 }

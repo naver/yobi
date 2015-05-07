@@ -4,7 +4,7 @@
  * Copyright 2013 NAVER Corp.
  * http://yobi.io
  *
- * @Author Keesun Baik
+ * @author Keesun Baik
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,8 +22,6 @@ package models;
 
 import javax.persistence.DiscriminatorValue;
 import javax.persistence.Entity;
-
-import play.db.ebean.Model.Finder;
 
 /**
  * @author Keesun Baik

@@ -4,7 +4,7 @@
  * Copyright 2012 NAVER Corp.
  * http://yobi.io
  *
- * @Author Yi EungJun
+ * @author Yi EungJun
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,11 +20,28 @@
  */
 package models;
 
-import java.io.BufferedInputStream;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
+import controllers.AttachmentApp;
+import models.enumeration.ResourceType;
+import models.resource.GlobalResource;
+import models.resource.Resource;
+import models.resource.ResourceConvertible;
+import org.apache.commons.io.FileUtils;
+import org.apache.tika.config.TikaConfig;
+import org.apache.tika.mime.MimeTypeException;
+import play.data.validation.Constraints;
+import play.db.ebean.Model;
+import play.libs.Akka;
+import scala.concurrent.duration.Duration;
+import utils.AttachmentCache;
+import utils.Config;
+import utils.FileUtil;
+import utils.JodaDateUtil;
+
+import javax.annotation.Nullable;
+import javax.persistence.*;
+import java.io.*;
 import java.nio.file.Files;
+import java.nio.file.NotDirectoryException;
 import java.nio.file.Paths;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -33,30 +50,6 @@ import java.util.Date;
 import java.util.Formatter;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
-
-import javax.persistence.*;
-
-import controllers.AttachmentApp;
-import models.resource.GlobalResource;
-import models.resource.Resource;
-import models.resource.ResourceConvertible;
-
-import org.apache.commons.io.FileUtils;
-import org.apache.commons.io.FilenameUtils;
-import org.apache.tika.Tika;
-
-import models.enumeration.ResourceType;
-
-import org.apache.tika.metadata.Metadata;
-import org.apache.tika.mime.MediaType;
-import play.data.validation.*;
-
-import play.db.ebean.Model;
-import play.libs.Akka;
-import scala.concurrent.duration.Duration;
-import scalax.file.NotDirectoryException;
-import utils.FileUtil;
-import utils.JodaDateUtil;
 
 @Entity
 public class Attachment extends Model implements ResourceConvertible {
@@ -117,9 +110,16 @@ public class Attachment extends Model implements ResourceConvertible {
      */
     public static List<Attachment> findByContainer(
             ResourceType containerType, String containerId) {
-        return find.where()
+        List<Attachment> cachedData = AttachmentCache.get(containerType, containerId);
+        if (cachedData != null) {
+            return cachedData;
+        }
+
+        List<Attachment> list = find.where()
                 .eq("containerType", containerType)
                 .eq("containerId", containerId).findList();
+        AttachmentCache.set(containerType.name() + containerId, list);
+        return list;
     }
 
     /**
@@ -129,7 +129,14 @@ public class Attachment extends Model implements ResourceConvertible {
      * @return attachments of the container
      */
     public static List<Attachment> findByContainer(Resource container) {
-        return findByContainer(container.getType(), container.getId());
+        List<Attachment> cachedData = AttachmentCache.get(container);
+        if (cachedData != null) {
+            return cachedData;
+        }
+
+        List<Attachment> list = findByContainer(container.getType(), container.getId());
+        AttachmentCache.set(container, list);
+        return list;
     }
 
     /**
@@ -208,32 +215,25 @@ public class Attachment extends Model implements ResourceConvertible {
      * @throws NoSuchAlgorithmException
      * @throws IOException
      */
-    private static String moveFileIntoUploadDirectory(File file)
+    private static File moveFileIntoUploadDirectory(File file)
             throws NoSuchAlgorithmException, IOException {
         // Compute sha1 checksum.
-        MessageDigest algorithm = MessageDigest.getInstance("SHA1");
+        InputStream is = new FileInputStream(file);
         byte buf[] = new byte[10240];
-        FileInputStream fis = new FileInputStream(file);
-        for (int size = 0; size >= 0; size = fis.read(buf)) {
-            algorithm.update(buf, 0, size);
+        MessageDigest algorithm = MessageDigest.getInstance("SHA1");
+        for (int readSize = 0; readSize >= 0; readSize = is.read(buf)) {
+            algorithm.update(buf, 0, readSize);
         }
-        Formatter formatter = new Formatter();
-        for (byte b : algorithm.digest()) {
-            formatter.format("%02x", b);
-        }
-        String hash = formatter.toString();
-        formatter.close();
-        fis.close();
+        is.close();
+        String hash = toHex(algorithm.digest());
 
+        return moveFileIntoUploadDirectory(file, hash);
+    }
+
+    private static File moveFileIntoUploadDirectory(File file, String hash)
+            throws NoSuchAlgorithmException, IOException {
         // Store the file.
-        // Before do that, create upload directory if it doesn't exist.
-        File uploads = new File(uploadDirectory);
-        uploads.mkdirs();
-        if (!uploads.isDirectory()) {
-            throw new NotDirectoryException(
-                    "'" + file.getAbsolutePath() + "' is not a directory.");
-        }
-        File attachedFile = new File(uploadDirectory, hash);
+        File attachedFile = new File(createUploadDirectory(), hash);
         boolean isMoved = file.renameTo(attachedFile);
 
         if(!isMoved){
@@ -241,9 +241,7 @@ public class Attachment extends Model implements ResourceConvertible {
             file.delete();
         }
 
-        // Close all resources.
-
-        return hash;
+        return attachedFile;
     }
 
     /**
@@ -269,36 +267,8 @@ public class Attachment extends Model implements ResourceConvertible {
      */
     @Transient
     public boolean store(File file, String name, Resource container) throws IOException, NoSuchAlgorithmException {
-        // Store the file as its SHA1 hash in filesystem, and record its
-        // metadata - containerType, containerId, size and hash - in Database.
-        this.containerType = container.getType();
-        this.containerId = container.getId();
-        this.createdDate = JodaDateUtil.now();
-
-        if (name == null) {
-            this.name = file.getName();
-        } else {
-            this.name = name;
-        }
-
-        if (this.mimeType == null) {
-            this.mimeType = FileUtil.detectMediaType(file, name).toString();
-        }
-
-        // the size must be set before it is moved.
-        this.size = file.length();
-        this.hash = Attachment.moveFileIntoUploadDirectory(file);
-
-        // Add the attachment into the Database only if there is no same record.
-        Attachment sameAttach = Attachment.findBy(this);
-        if (sameAttach == null) {
-            super.save();
-            return true;
-        } else {
-            this.id = sameAttach.id;
-            return false;
-        }
-   }
+        return save(moveFileIntoUploadDirectory(file), name, container);
+    }
 
     /**
      * Gets a file which mathces the hash from the Upload Directory.
@@ -308,7 +278,11 @@ public class Attachment extends Model implements ResourceConvertible {
      * @return the file
      */
     public File getFile() {
-        return new File(uploadDirectory, this.hash);
+        return new File(getUploadDirectory(), this.hash);
+    }
+
+    public static File getUploadDirectory() {
+        return new File(utils.Config.getYobiHome(), uploadDirectory);
     }
 
     /**
@@ -331,11 +305,12 @@ public class Attachment extends Model implements ResourceConvertible {
      * @return true if the file exists
      */
     public static boolean fileExists(String hash) {
-        return new File(uploadDirectory, hash).isFile();
+        return new File(getUploadDirectory(), hash).isFile();
     }
 
     /**
-     * Deletes this file.
+     * Deletes this file and remove cache that contains it.
+     * However, the cache can not be removed if Ebean.delete() is directly used or called by cascading.
      *
      * This method is used when an user delete an attachment or its container.
      */
@@ -357,6 +332,18 @@ public class Attachment extends Model implements ResourceConvertible {
                 play.Logger.error("Failed to delete: " + this, e);
             }
         }
+
+        AttachmentCache.remove(this);
+    }
+
+    /**
+     * Update this file and remove cache that contains it.
+     * However, the cache can not be removed if Ebean.update() is directly used or called by cascading.
+     */
+    @Override
+    public void update() {
+        super.update();
+        AttachmentCache.remove(this);
     }
 
 
@@ -480,7 +467,7 @@ public class Attachment extends Model implements ResourceConvertible {
                             attachment.delete();
                             deletedFileCount++;
                         }
-                        if( attachmentList.size() != deletedFileCount) {
+                        if (attachmentList.size() != deletedFileCount) {
                             play.Logger.error(
                                     String.format("Failed to delete user temporary files.\nExpected: %d  Actual: %d",
                                             attachmentList.size(), deletedFileCount)
@@ -510,4 +497,98 @@ public class Attachment extends Model implements ResourceConvertible {
                 ", createdDate=" + createdDate +
                 '}';
     }
+
+    public boolean store(InputStream inputStream, @Nullable String fileName,
+                         Resource container) throws
+            IOException, NoSuchAlgorithmException {
+        byte buf[] = new byte[10240];
+
+        // Compute hash and store the stream as a temp file
+        MessageDigest algorithm = MessageDigest.getInstance("SHA1");
+        String tempFileHash;
+        File tmpFile = File.createTempFile("yobi", null);
+        FileOutputStream fos = new FileOutputStream(tmpFile);
+        try {
+            int readSize;
+            while ((readSize = inputStream.read(buf)) != -1) {
+                algorithm.update(buf, 0, readSize);
+                fos.write(buf, 0, readSize);
+            }
+            tempFileHash = toHex(algorithm.digest());
+            fos.flush();
+        } finally {
+            fos.close();
+        }
+
+        // Save this attachment with metadata
+        return save(moveFileIntoUploadDirectory(tmpFile, tempFileHash), fileName, container);
+    }
+
+    /**
+     * Save this attachment with metadata from the given arguments.
+     *
+     * @param file       the file to be attached whose name is hash of the contents
+     * @param fileName   the name of this attachment
+     * @param container  the container to which the file attached
+     * @return
+     * @throws IOException
+     */
+    private boolean save(File file, String fileName, Resource container) throws
+            IOException {
+        // Store the file as its SHA1 hash in filesystem, and record its
+        // metadata - containerType, containerId, createdDate, name, size, hash and
+        // mimeType - in Database.
+        this.containerType = container.getType();
+        this.containerId = container.getId();
+        this.createdDate = JodaDateUtil.now();
+        this.hash = file.getName();
+        this.size = file.length();
+        if (this.mimeType == null) {
+            this.mimeType = FileUtil.detectMediaType(file, name).toString();
+        }
+        if (fileName == null) {
+            this.name = String.valueOf(new Date().getTime());
+            try {
+                this.name += "." + TikaConfig.getDefaultConfig()
+                        .getMimeRepository().forName(this.mimeType).getExtension();
+            } catch (MimeTypeException e) {
+            }
+        } else {
+            this.name = fileName;
+        }
+
+        AttachmentCache.remove(this);
+
+        // Add the attachment into the Database only if there is no same record.
+        Attachment sameAttach = Attachment.findBy(this);
+        if (sameAttach == null) {
+            super.save();
+            return true;
+        } else {
+            this.id = sameAttach.id;
+            return false;
+        }
+    }
+
+    private static String toHex(byte[] bytes) {
+        Formatter formatter = new Formatter();
+        for (byte b : bytes) {
+            formatter.format("%02x", b);
+        }
+        String hex = formatter.toString();
+        formatter.close();
+        return hex;
+    }
+
+    // Create the upload directory if it doesn't exist.
+    private static File createUploadDirectory() throws NotDirectoryException {
+        File uploads = getUploadDirectory();
+        uploads.mkdirs();
+        if (!uploads.isDirectory()) {
+            throw new NotDirectoryException(
+                    "'" + uploads.getAbsolutePath() + "' is not a directory.");
+        }
+        return uploads;
+    }
+
 }

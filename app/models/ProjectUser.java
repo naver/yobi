@@ -4,7 +4,7 @@
  * Copyright 2012 NAVER Corp.
  * http://yobi.io
  *
- * @Author Hwi Ahn
+ * @author Hwi Ahn
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,16 +20,15 @@
  */
 package models;
 
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
+import models.enumeration.RoleType;
+import play.db.ebean.Model;
 
 import javax.persistence.Entity;
 import javax.persistence.Id;
 import javax.persistence.ManyToOne;
-
-import models.enumeration.RoleType;
-import play.db.ebean.Model;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 
 @Entity
 public class ProjectUser extends Model {
@@ -93,7 +92,7 @@ public class ProjectUser extends Model {
     }
 
     public static List<ProjectUser> findMemberListByProject(Long projectId) {
-        return find.fetch("user", "loginId").fetch("role", "name").where()
+        return find.fetch("user").fetch("role", "name").where()
                 .eq("project.id", projectId).ne("role.id", RoleType.SITEMANAGER.roleType())
                 .orderBy("user.name ASC")
                 .findList();

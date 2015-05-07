@@ -4,7 +4,7 @@
  * Copyright 2012 NAVER Corp.
  * http://yobi.io
  *
- * @Author Yi EungJun
+ * @author Yi EungJun
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,16 +20,14 @@
  */
 package models;
 
-import java.util.Set;
+import play.data.validation.Constraints.Required;
+import play.db.ebean.Model;
 
-import javax.persistence.CascadeType;
 import javax.persistence.Entity;
 import javax.persistence.Id;
 import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
-
-import play.data.validation.Constraints.Required;
-import play.db.ebean.Model;
+import java.util.Set;
 
 @Entity
 public class Assignee extends Model {

@@ -4,7 +4,7 @@
  * Copyright 2014 NAVER Corp.
  * http://yobi.io
  *
- * @Author Yi EungJun
+ * @author Yi EungJun
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,18 +23,15 @@ package models;
 
 import com.github.zafarkhaja.semver.Version;
 import com.github.zafarkhaja.semver.util.UnexpectedElementTypeException;
-import com.typesafe.config.*;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.errors.GitAPIException;
-import org.eclipse.jgit.api.errors.InvalidRemoteException;
 import org.eclipse.jgit.lib.Ref;
 import play.Configuration;
-import play.Logger;
 import play.libs.Akka;
 import scala.concurrent.duration.Duration;
 import utils.Config;
 
-import java.util.*;
+import java.util.Collection;
 import java.util.concurrent.TimeUnit;
 
 public class YobiUpdate {

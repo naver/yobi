@@ -4,7 +4,7 @@
  * Copyright 2013 NAVER Corp.
  * http://yobi.io
  *
- * @Author Yi EungJun
+ * @author Yi EungJun
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,11 +23,11 @@ package models;
 import models.enumeration.ResourceType;
 import models.resource.Resource;
 import models.resource.ResourceConvertible;
-
 import org.joda.time.Duration;
 import play.data.format.Formats;
 import play.data.validation.Constraints;
-import play.db.ebean.*;
+import play.db.ebean.Model;
+import play.db.ebean.Transactional;
 import utils.JodaDateUtil;
 
 import javax.persistence.*;
@@ -83,6 +83,14 @@ abstract public class AbstractPosting extends Model implements ResourceConvertib
     public AbstractPosting() {
         this.createdDate = JodaDateUtil.now();
         this.updatedDate = JodaDateUtil.now();
+    }
+
+    public AbstractPosting(Project project, User author, String title, String body) {
+        this();
+        setAuthor(author);
+        this.project = project;
+        this.title = title;
+        this.body = body;
     }
 
     /**
@@ -244,7 +252,7 @@ abstract public class AbstractPosting extends Model implements ResourceConvertib
 
     protected void updateMention() {
         if (this.body != null) {
-            Mention.add(this.asResource(), NotificationEvent.getMentionedUsers(this.body));
+            Mention.update(this.asResource(), NotificationEvent.getMentionedUsers(this.body));
         }
     }
 

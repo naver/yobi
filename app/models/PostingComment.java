@@ -4,7 +4,7 @@
  * Copyright 2013 NAVER Corp.
  * http://yobi.io
  *
- * @Author Yi EungJun
+ * @author Yi EungJun
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,15 +23,21 @@ package models;
 import models.enumeration.ResourceType;
 import models.resource.Resource;
 
-import javax.persistence.*;
+import javax.persistence.Entity;
+import javax.persistence.ManyToOne;
 
 @Entity
 public class PostingComment extends Comment {
     private static final long serialVersionUID = 1L;
-    public static Finder<Long, PostingComment> find = new Finder<>(Long.class, PostingComment.class);
+    public static final Finder<Long, PostingComment> find = new Finder<>(Long.class, PostingComment.class);
 
     @ManyToOne
     public Posting posting;
+
+    public PostingComment(Posting posting, User author, String contents) {
+        super(author, contents);
+        this.posting = posting;
+    }
 
     /**
      * @see Comment#getParent()
@@ -64,6 +70,11 @@ public class PostingComment extends Comment {
             @Override
             public Long getAuthorId() {
                 return authorId;
+            }
+
+            @Override
+            public Resource getContainer() {
+                return posting.asResource();
             }
         };
     }

@@ -4,7 +4,7 @@
  * Copyright 2013 NAVER Corp.
  * http://yobi.io
  *
- * @Author Yi EungJun
+ * @author Yi EungJun
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,6 +26,7 @@ import models.enumeration.ResourceType;
 import play.db.ebean.Model;
 import playRepository.Commit;
 import playRepository.RepositoryService;
+import utils.Config;
 
 import java.util.EnumSet;
 
@@ -173,6 +174,47 @@ public abstract class Resource {
     public boolean isAuthoredBy(User user) { return getAuthorId() != null && getAuthorId().equals(user.id); }
     public void delete() { throw new UnsupportedOperationException(); }
 
+    public String getDetail() {
+        Project project = getProject();
+        String path = getPath();
+
+        if (project != null && path != null) {
+            return project + "/" + path;
+        } else {
+            return null;
+        }
+    }
+
+    @Override
+    public boolean equals(Object object) {
+        if (this == object) return true;
+        if (object == null || getClass() != object.getClass()) return false;
+
+        Resource that = (Resource) object;
+
+        if (!getId().equals(that.getId())) return false;
+        if (!getType().equals(that.getType())) return false;
+
+        return true;
+    }
+
+    @Override
+    public int hashCode() {
+        int result = 0;
+        result = 31 * result + (getId() != null ? getId().hashCode() : 0);
+        result = 31 * result + (getType() != null ? getType().hashCode() : 0);
+        return result;
+    }
+
+    @Override
+    public String toString() {
+        return getPath();
+    }
+
+    private String getPath() {
+        return getType().resource() + "/" + getId();
+    }
+
     /**
      * @see {@link actions.IsAllowedAction}
      */
@@ -199,4 +241,36 @@ public abstract class Resource {
         }
     }
 
+    /**
+     * Finds a resource by the given resource path.
+     *
+     * The format of resource path is as follows:
+     *
+     *     resource-type "/" resource-id
+     *
+     * @param path
+     * @return
+     */
+    public static Resource findByPath(String path) {
+        String[] segments = path.split("/");
+
+        if (segments.length < 2) {
+            return null;
+        }
+
+        ResourceType resourceType;
+
+        try {
+            resourceType = ResourceType.getValue(segments[0]);
+        } catch (IllegalArgumentException e) {
+            return null;
+        }
+
+        return Resource.get(resourceType, segments[1]);
+    }
+
+    public String getMessageId() {
+        return String.format("<%s@%s>",
+                this, Config.getHostname());
+    }
 }

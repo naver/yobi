@@ -4,7 +4,7 @@
  * Copyright 2013 NAVER Corp.
  * http://yobi.io
  *
- * @Author JiHan Kim
+ * @author JiHan Kim
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -121,7 +121,8 @@
 
             if(htElement.welBtnAccept.length > 0 && htElement.welBtnAccept.data("requestAs")){
                 htElement.welBtnAccept.data("requestAs").on("beforeRequest", function(){
-                    yobi.ui.Spinner.show({"bUseDimmer": true});
+                    htElement.welBtnAccept.attr('disabled','disabled');
+                    NProgress.start();
                 });
             }
         }

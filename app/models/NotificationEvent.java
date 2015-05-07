@@ -4,7 +4,7 @@
  * Copyright 2013 NAVER Corp.
  * http://yobi.io
  *
- * @Author Yi EungJun
+ * @author Yi EungJun
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@
  */
 package models;
 
+import com.avaje.ebean.RawSqlBuilder;
 import controllers.UserApp;
 import controllers.routes;
 import models.enumeration.*;
@@ -39,6 +40,7 @@ import play.i18n.Messages;
 import play.libs.Akka;
 import playRepository.*;
 import scala.concurrent.duration.Duration;
+import utils.AccessControl;
 import utils.EventConstants;
 import utils.RouteUtil;
 
@@ -48,7 +50,10 @@ import javax.servlet.ServletException;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
-import java.util.*;
+import java.util.Date;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -62,7 +67,7 @@ public class NotificationEvent extends Model {
     @Id
     public Long id;
 
-    public static Finder<Long, NotificationEvent> find = new Finder<>(Long.class, NotificationEvent.class);
+    public static final Finder<Long, NotificationEvent> find = new Finder<>(Long.class, NotificationEvent.class);
 
     public String title;
 
@@ -90,6 +95,21 @@ public class NotificationEvent extends Model {
 
     @OneToOne(mappedBy="notificationEvent", cascade = CascadeType.ALL)
     public NotificationMail notificationMail;
+
+    /**
+     * Returns receivers.
+     *
+     * This is much faster than field access to {@link #receivers}.
+     *
+     * @return receivers
+     */
+    public Set<User> findReceivers() {
+        String sql = "select n4user.id from n4user where id in (select n4user_id " +
+                     "from notification_event_n4user where " +
+                     "notification_event_id = '" + id + "')";
+
+        return User.find.setRawSql(RawSqlBuilder.parse(sql).create()).findSet();
+    }
 
     public String getOldValue() {
         return oldValue;
@@ -121,6 +141,7 @@ public class NotificationEvent extends Model {
             case NEW_PULL_REQUEST:
             case NEW_COMMIT:
             case ISSUE_BODY_CHANGED:
+            case COMMENT_UPDATED:
                 return newValue;
             case NEW_REVIEW_COMMENT:
                 try {
@@ -188,7 +209,7 @@ public class NotificationEvent extends Model {
      *     > @@ -1,5 +1,5 @@
      *     >   int bar(void)
      *     >   {
-     *     > -     printf("good");
+     *     > -     printf("bad");
      *     > +     printf("good");
      *
      *     Looks good to me
@@ -245,38 +266,42 @@ public class NotificationEvent extends Model {
             diff.setInterestLine(codeRange.endLine);
             diff.setInterestSide(codeRange.endSide);
 
-            message.append("```diff\n");
-
             // FIXME: Performance Issue: The hunks of this diffs were
             // already computed but it was not necessary because they will
             // and should be recomputed here.
-            for (Hunk hunk : diff.getHunks()) {
-                message.append(
-                        String.format("> @@ -%d, %d +%d, %d @@\n",
-                                hunk.beginA + 1, (hunk.endA - hunk.beginA),
-                                hunk.beginB + 1, (hunk.endB - hunk.beginB)));
-                for (DiffLine line : hunk.lines) {
-                    message.append("> ");
-                    switch (line.kind) {
-                        case CONTEXT:
-                            message.append(" ");
-                            break;
-                        case ADD:
-                            message.append("+");
-                            break;
-                        case REMOVE:
-                            message.append("-");
-                            break;
-                    }
-                    message.append(line.content + "\n");
-                    if (codeRange.endsWith(line)) {
-                        message.append("```\n");
-                        message.append("\n" + reviewComment.getContents() + "\n\n");
-                        message.append("```diff\n");
+            FileDiff.Hunks hunks = diff.getHunks();
+            if (hunks != null) {
+                message.append("```diff\n");
+                for (Hunk hunk : hunks) {
+                    message.append(
+                            String.format("> @@ -%d, %d +%d, %d @@\n",
+                                    hunk.beginA + 1, (hunk.endA - hunk.beginA),
+                                    hunk.beginB + 1, (hunk.endB - hunk.beginB)));
+                    for (DiffLine line : hunk.lines) {
+                        message.append("> ");
+                        switch (line.kind) {
+                            case CONTEXT:
+                                message.append(" ");
+                                break;
+                            case ADD:
+                                message.append("+");
+                                break;
+                            case REMOVE:
+                                message.append("-");
+                                break;
+                        }
+                        message.append(line.content + "\n");
+                        if (codeRange.endsWith(line)) {
+                            message.append("```\n");
+                            message.append("\n" + reviewComment.getContents() + "\n\n");
+                            message.append("```diff\n");
+                        }
                     }
                 }
+                message.append("```\n");
+            } else {
+                message.append(reviewComment.getContents());
             }
-            message.append("```\n");
 
             return message.toString();
         }
@@ -378,6 +403,10 @@ public class NotificationEvent extends Model {
                     return false;
                 }
 
+                if (!AccessControl.isAllowed(receiver, event.getResource(), Operation.READ)) {
+                    return false;
+                }
+
                 if (!Watch.isWatching(receiver, resource)) {
                     return true;
                 }
@@ -451,6 +480,34 @@ public class NotificationEvent extends Model {
         return notiEvent;
     }
 
+    public static NotificationEvent afterPullRequestCommitChanged(User sender, PullRequest pullRequest) {
+        NotificationEvent notiEvent = createFrom(sender, pullRequest);
+        notiEvent.title = formatReplyTitle(pullRequest);
+        notiEvent.receivers = getReceivers(sender, pullRequest);
+        notiEvent.eventType = PULL_REQUEST_COMMIT_CHANGED;
+        notiEvent.oldValue = null;
+        notiEvent.newValue = newPullRequestCommitChangedMessage(pullRequest);
+        NotificationEvent.add(notiEvent);
+        return notiEvent;
+    }
+
+    private static String newPullRequestCommitChangedMessage(PullRequest pullRequest) {
+        List<PullRequestCommit> commits = PullRequestCommit.find.where().eq("pullRequest", pullRequest).orderBy().desc("authorDate").findList();
+        StringBuilder builder = new StringBuilder();
+        builder.append("### ");
+        builder.append(Messages.get("notification.pullrequest.current.commits"));
+        builder.append("\n");
+        for (PullRequestCommit commit : commits) {
+            if (commit.state == PullRequestCommit.State.CURRENT) {
+                builder.append(commit.getCommitShortId());
+                builder.append(" ");
+                builder.append(commit.getCommitShortMessage());
+                builder.append("\n");
+            }
+        }
+        return builder.toString();
+    }
+
     /**
      * @see {@link actors.PullRequestActor#processPullRequestMerging(models.PullRequestEventMessage, models.PullRequest)}
      */
@@ -469,6 +526,10 @@ public class NotificationEvent extends Model {
      */
     public static void afterNewComment(User sender, PullRequest pullRequest,
                                        ReviewComment newComment, String urlToView) {
+        NotificationEvent.add(forNewComment(sender, pullRequest, newComment));
+    }
+
+    public static NotificationEvent forNewComment(User sender, PullRequest pullRequest, ReviewComment newComment) {
         NotificationEvent notiEvent = createFrom(sender, newComment);
         notiEvent.title = formatReplyTitle(pullRequest);
         Set<User> receivers = getMentionedUsers(newComment.getContents());
@@ -478,8 +539,7 @@ public class NotificationEvent extends Model {
         notiEvent.eventType = NEW_REVIEW_COMMENT;
         notiEvent.oldValue = null;
         notiEvent.newValue = newComment.getContents();
-
-        NotificationEvent.add(notiEvent);
+        return notiEvent;
     }
 
     public static NotificationEvent afterNewPullRequest(PullRequest pullRequest) {
@@ -491,21 +551,32 @@ public class NotificationEvent extends Model {
     }
 
     public static void afterNewComment(Comment comment) {
+        NotificationEvent.add(forNewComment(comment, UserApp.currentUser()));
+    }
+
+    public static NotificationEvent forComment(Comment comment, User author, EventType eventType) {
         AbstractPosting post = comment.getParent();
 
-        NotificationEvent notiEvent = createFromCurrentUser(comment);
+        NotificationEvent notiEvent = createFrom(author, comment);
         notiEvent.title = formatReplyTitle(post);
-        Set<User> receivers = getReceivers(post);
+        notiEvent.eventType = eventType;
+        Set<User> receivers = getReceivers(post, author);
         receivers.addAll(getMentionedUsers(comment.contents));
-        receivers.remove(UserApp.currentUser());
+        receivers.remove(author);
         notiEvent.receivers = receivers;
-        notiEvent.eventType = NEW_COMMENT;
         notiEvent.oldValue = null;
         notiEvent.newValue = comment.contents;
         notiEvent.resourceType = comment.asResource().getType();
         notiEvent.resourceId = comment.asResource().getId();
+        return notiEvent;
+    }
 
-        NotificationEvent.add(notiEvent);
+    public static NotificationEvent forUpdatedComment(Comment comment, User author) {
+        return forComment(comment, author, COMMENT_UPDATED);
+    }
+
+    public static NotificationEvent forNewComment(Comment comment, User author) {
+        return forComment(comment, author, NEW_COMMENT);
     }
 
     public static void afterNewCommentWithState(Comment comment, State state) {
@@ -574,8 +645,6 @@ public class NotificationEvent extends Model {
         return notiEvent;
     }
 
-
-
     public static NotificationEvent afterAssigneeChanged(User oldAssignee, Issue issue) {
         NotificationEvent notiEvent = createFromCurrentUser(issue);
 
@@ -600,20 +669,23 @@ public class NotificationEvent extends Model {
     }
 
     public static void afterNewIssue(Issue issue) {
-        NotificationEvent notiEvent = createFromCurrentUser(issue);
+        NotificationEvent.add(forNewIssue(issue, UserApp.currentUser()));
+    }
+
+    public static NotificationEvent forNewIssue(Issue issue, User author) {
+        NotificationEvent notiEvent = createFrom(author, issue);
         notiEvent.title = formatNewTitle(issue);
-        notiEvent.receivers = getReceivers(issue);
+        notiEvent.receivers = getReceivers(issue, author);
         notiEvent.eventType = NEW_ISSUE;
         notiEvent.oldValue = null;
         notiEvent.newValue = issue.body;
-
-        NotificationEvent.add(notiEvent);
+        return notiEvent;
     }
 
     public static NotificationEvent afterIssueBodyChanged(String oldBody, Issue issue) {
         NotificationEvent notiEvent = createFromCurrentUser(issue);
         notiEvent.title = formatReplyTitle(issue);
-        notiEvent.receivers = getReceivers(issue);
+        notiEvent.receivers = getReceiversForIssueBodyChanged(oldBody, issue);
         notiEvent.eventType = EventType.ISSUE_BODY_CHANGED;
         notiEvent.oldValue = oldBody;
         notiEvent.newValue = issue.body;
@@ -623,40 +695,63 @@ public class NotificationEvent extends Model {
         return notiEvent;
     }
 
+    private static Set<User> getReceiversForIssueBodyChanged(String oldBody, Issue issue) {
+        Set<User> receivers = issue.getWatchers();
+        receivers.addAll(getNewMentionedUsers(oldBody, issue.body));
+        receivers.remove(UserApp.currentUser());
+        return receivers;
+    }
+
     public static void afterNewPost(Posting post) {
-        NotificationEvent notiEvent = createFromCurrentUser(post);
+        NotificationEvent.add(forNewPosting(post, UserApp.currentUser()));
+    }
+
+    public static NotificationEvent forNewPosting(Posting post, User author) {
+        NotificationEvent notiEvent = createFrom(author, post);
         notiEvent.title = formatNewTitle(post);
         notiEvent.receivers = getReceivers(post);
         notiEvent.eventType = NEW_POSTING;
         notiEvent.oldValue = null;
         notiEvent.newValue = post.body;
-
-        NotificationEvent.add(notiEvent);
+        return notiEvent;
     }
 
     public static void afterNewCommitComment(Project project, ReviewComment comment,
                                              String commitId) throws
             IOException, SVNException, ServletException {
+        NotificationEvent.add(
+                forNewCommitComment(project, comment, commitId, UserApp.currentUser()));
+    }
+
+    public static NotificationEvent forNewCommitComment(
+            Project project, ReviewComment comment, String commitId, User author)
+            throws IOException, SVNException, ServletException {
         Commit commit = RepositoryService.getRepository(project).getCommit(commitId);
         Set<User> watchers = commit.getWatchers(project);
         watchers.addAll(getMentionedUsers(comment.getContents()));
-        watchers.remove(UserApp.currentUser());
+        watchers.remove(author);
 
-        NotificationEvent notiEvent = createFromCurrentUser(comment);
+        NotificationEvent notiEvent = createFrom(author, comment);
         notiEvent.title = formatReplyTitle(project, commit);
         notiEvent.receivers = watchers;
         notiEvent.eventType = NEW_REVIEW_COMMENT;
         notiEvent.oldValue = null;
         notiEvent.newValue = comment.getContents();
-
-        NotificationEvent.add(notiEvent);
+        return notiEvent;
     }
 
-    public static void afterNewSVNCommitComment(Project project, CommitComment codeComment) throws IOException, SVNException, ServletException {
+    public static void afterNewSVNCommitComment(Project project, CommitComment codeComment)
+            throws IOException, SVNException, ServletException {
+        NotificationEvent.add(forNewSVNCommitComment(project, codeComment, UserApp.currentUser()));
+    }
+
+    private static NotificationEvent forNewSVNCommitComment(
+            Project project, CommitComment codeComment, User author)
+            throws IOException, SVNException, ServletException {
         Commit commit = RepositoryService.getRepository(project).getCommit(codeComment.commitId);
         Set<User> watchers = commit.getWatchers(project);
         watchers.addAll(getMentionedUsers(codeComment.contents));
-        watchers.remove(UserApp.currentUser());
+        watchers.remove(author);
 
         NotificationEvent notiEvent = createFromCurrentUser(codeComment);
         notiEvent.title = formatReplyTitle(project, commit);
@@ -664,8 +759,7 @@ public class NotificationEvent extends Model {
         notiEvent.eventType = NEW_COMMENT;
         notiEvent.oldValue = null;
         notiEvent.newValue = codeComment.contents;
-
-        NotificationEvent.add(notiEvent);
+        return notiEvent;
     }
 
     public static void afterMemberRequest(Project project, User user, RequestState state) {
@@ -814,9 +908,13 @@ public class NotificationEvent extends Model {
     }
 
     private static Set<User> getReceivers(AbstractPosting abstractPosting) {
+        return getReceivers(abstractPosting, UserApp.currentUser());
+    }
+
+    private static Set<User> getReceivers(AbstractPosting abstractPosting, User except) {
         Set<User> receivers = abstractPosting.getWatchers();
         receivers.addAll(getMentionedUsers(abstractPosting.body));
-        receivers.remove(UserApp.currentUser());
+        receivers.remove(except);
         return receivers;
     }
 
@@ -935,6 +1033,12 @@ public class NotificationEvent extends Model {
         return Messages.get("notification.member.request.accept.title", organization.name, user.loginId);
     }
 
+    /**
+     * Get mentioned users in {@code body}.
+     *
+     * @param body
+     * @return
+     */
     public static Set<User> getMentionedUsers(String body) {
         Matcher matcher = Pattern.compile("@" + User.LOGIN_ID_PATTERN_ALLOW_FORWARD_SLASH).matcher(body);
         Set<User> users = new HashSet<>();
@@ -946,6 +1050,25 @@ public class NotificationEvent extends Model {
         }
         users.remove(User.anonymous);
         return users;
+    }
+
+    /**
+     * Get new mentioned users.
+     *
+     * It gets mentioned users from {@code oldBody} and {@code newBody},
+     * subtracts old from new and returns it.
+     *
+     * @param oldBody
+     * @param newBody
+     * @return
+     */
+    public static Set<User> getNewMentionedUsers(String oldBody, String newBody) {
+        Set<User> oldBodyMentionedUsers = getMentionedUsers(oldBody);
+        Set<User> newBodyMentionedUsers = getMentionedUsers(newBody);
+
+        newBodyMentionedUsers.removeAll(oldBodyMentionedUsers);
+
+        return newBodyMentionedUsers;
     }
 
     private static Set<User> findOrganizationMembers(String mentionWord) {
@@ -1001,9 +1124,43 @@ public class NotificationEvent extends Model {
         scheduleDeleteOldNotifications();
     }
 
+    /**
+     * Finds NotificationEvents that are supposed to be shown to the {@code user}.
+     * Paginates it with {@code from} and {@code size}.
+     *
+     * @param user
+     * @param from
+     * @param size
+     * @return
+     */
     public static List<NotificationEvent> findByReceiver(User user, int from, int size) {
-        return find.where().eq("receivers.id", user.id)
-                .order().desc("created")
-                .setFirstRow(from).setMaxRows(size).findList();
+        String sql = "select t1.id, t1.title, t1.sender_id, t1.created, t1.resource_type, t1.resource_id, t1.event_type, " +
+                "t1.old_value, t1.new_value " +
+                "from n4user t0 " +
+                "left outer join notification_event_n4user t1z_ on t1z_.n4user_id = t0.id " +
+                "left outer join notification_event t1 on t1.id = t1z_.notification_event_id " +
+                "left outer join notification_mail t2 on t2.notification_event_id = t1.id " +
+                "where t0.id = " + user.id + " and t1.id IS NOT NULL " +
+                "order by t1.created DESC";
+
+        return find.setRawSql(RawSqlBuilder.parse(sql).create())
+                .setFirstRow(from)
+                .setMaxRows(size)
+                .findList();
+    }
+
+    public static int getNotificationsCount(User user) {
+        String sql = "select t1.id " +
+                "from n4user t0 " +
+                "left outer join notification_event_n4user t1z_ on t1z_.n4user_id = t0.id " +
+                "left outer join notification_event t1 on t1.id = t1z_.notification_event_id " +
+                "left outer join notification_mail t2 on t2.notification_event_id = t1.id " +
+                "where t0.id = " + user.id + " and t1.id IS NOT NULL ";
+
+        return find.setRawSql(RawSqlBuilder.parse(sql).create()).findList().size();
+    }
+
+    public static void afterCommentUpdated(Comment comment) {
+        NotificationEvent.add(forUpdatedComment(comment, UserApp.currentUser()));
     }
 }

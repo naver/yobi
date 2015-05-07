@@ -4,7 +4,7 @@
  * Copyright 2014 NAVER Corp.
  * http://yobi.io
  *
- * @Author Jihan Kim
+ * @author Jihan Kim
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -67,7 +67,7 @@ $(function(){
         }
 
         elements.commentForm.data("onsubmit", true);
-        yobi.ui.Spinner.show();
+        NProgress.start();
         return true;
     }
 
@@ -98,7 +98,7 @@ $(function(){
      */
     function onKeydownWindow(evt){
         if (isEscapeKeyPressed(evt) && isOnSubmit()){
-            yobi.ui.Spinner.hide();
+            NProgress.done();
             elements.commentForm.data("onsubmit", false);
         }
     }

@@ -24,7 +24,7 @@ import models.Project;
 import models.PullRequest;
 import models.User;
 import org.apache.commons.io.FileUtils;
-import org.codehaus.jackson.node.ObjectNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.eclipse.jgit.api.CommitCommand;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.errors.GitAPIException;
@@ -204,8 +204,8 @@ public class GitRepositoryTest {
         Project original = createProject(userName, projectName);
         Project fork = createProject("keesun", projectName);
 
-        support.Files.rm_rf(new File(GitRepository.getGitDirectory(original)));
-        support.Files.rm_rf(new File(GitRepository.getGitDirectory(fork)));
+        support.Files.rm_rf(GitRepository.getGitDirectory(original));
+        support.Files.rm_rf(GitRepository.getGitDirectory(fork));
 
         GitRepository fromRepo = new GitRepository(userName, projectName);
         fromRepo.create();
@@ -215,7 +215,7 @@ public class GitRepositoryTest {
         GitRepository.cloneRepository(gitUrl, fork);
 
         // Then
-        File file = new File(GitRepository.getGitDirectory(fork));
+        File file = GitRepository.getGitDirectory(fork);
         assertThat(file.exists()).isTrue();
     }
 
@@ -259,12 +259,12 @@ public class GitRepositoryTest {
 
                     // Then
                     assertThat(notExistBranch).isNull();
-                    assertThat(root.get("type").getTextValue()).isEqualTo("folder");
-                    assertThat(root.get("data").get("hello").get("type").getTextValue()).isEqualTo("file");
-                    assertThat(root.get("data").get("dir").get("type").getTextValue()).isEqualTo("folder");
-                    assertThat(dir.get("type").getTextValue()).isEqualTo("folder");
-                    assertThat(dir.get("data").get("world").get("type").getTextValue()).isEqualTo("file");
-                    assertThat(file.get("type").getTextValue()).isEqualTo("file");
+                    assertThat(root.get("type").textValue()).isEqualTo("folder");
+                    assertThat(root.get("data").get("hello").get("type").textValue()).isEqualTo("file");
+                    assertThat(root.get("data").get("dir").get("type").textValue()).isEqualTo("folder");
+                    assertThat(dir.get("type").textValue()).isEqualTo("folder");
+                    assertThat(dir.get("data").get("world").get("type").textValue()).isEqualTo("file");
+                    assertThat(file.get("type").textValue()).isEqualTo("file");
                     assertThat(branch.toString()).isEqualTo(root.toString());
                     assertThat(lightWeightTag.toString()).isEqualTo(root.toString());
                     assertThat(annotatedTag.toString()).isEqualTo(root.toString());

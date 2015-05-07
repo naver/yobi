@@ -4,7 +4,7 @@
 * Copyright 2013 NAVER Corp.
 * http://yobi.io
 *
-* @Author Keesun Baik, Wansoon Park
+* @author Keesun Baik, Wansoon Park
 *
 * Licensed under the Apache License, Version 2.0 (the "License");
 * you may not use this file except in compliance with the License.
@@ -33,10 +33,10 @@
                 @if(isAllowed(UserApp.currentUser(), project.asResource(), Operation.UPDATE)) {
                 <h5>@Messages("code.nohead.svn.clone", utils.Config.getSiteName)</h5>
                 <pre><code>svn co @CodeApp.getURL(project) --username @UserApp.currentUser().loginId
-    cd @project.name/
-    echo "# @project.name" > README.md
-    svn add README.md
-    svn commit -m "first commit"</code></pre>
+cd @project.name/
+echo "# @project.name" > README.md
+svn add README.md
+svn commit -m "first commit"</code></pre>
     }
             </div>
         </div>

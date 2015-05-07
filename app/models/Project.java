@@ -4,7 +4,7 @@
  * Copyright 2012 NAVER Corp.
  * http://yobi.io
  *
- * @Author Hwi Ahn
+ * @author Hwi Ahn
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,7 +23,6 @@ package models;
 import com.avaje.ebean.Ebean;
 import com.avaje.ebean.ExpressionList;
 import com.avaje.ebean.Page;
-import controllers.UserApp;
 import models.enumeration.ProjectScope;
 import models.enumeration.RequestState;
 import models.enumeration.ResourceType;
@@ -47,7 +46,10 @@ import validation.ExConstraints;
 import javax.persistence.*;
 import javax.servlet.ServletException;
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
+import java.util.Set;
 
 @Entity
 public class Project extends Model implements LabelOwner {
@@ -225,7 +227,7 @@ public class Project extends Model implements LabelOwner {
     public Date lastUpdateDate() {
         try {
             PlayRepository repository = RepositoryService.getRepository(this);
-            List<String> branches = repository.getBranchNames();
+            List<String> branches = repository.getRefNames();
             if (!branches.isEmpty() && repository instanceof GitRepository) {
                 GitRepository gitRepo = new GitRepository(owner, name);
                 List<Commit> history = gitRepo.getHistory(0, 2, "HEAD", null);
@@ -427,14 +429,14 @@ public class Project extends Model implements LabelOwner {
     }
 
     public Boolean attachLabel(Label label) {
-        if (labels.contains(label)) {
+        if (label.projects.contains(this)) {
             // Return false if the label has been already attached.
             return false;
         }
 
-        // Attach new label.
-        labels.add(label);
-        update();
+        // Attach new label. I don't know why labels.add(label) does not work.
+        label.projects.add(this);
+        label.update();
 
         return true;
     }
@@ -468,31 +470,7 @@ public class Project extends Model implements LabelOwner {
      * If the project has a group and is protected or public, it returns all project and group members.
      */
     public List<User> getAssignableUsers() {
-        Set<User> users = new HashSet<>();
-
-        // member of this project.
-        List<ProjectUser> pus = members();
-        for(ProjectUser pu : pus) {
-            users.add(pu.user);
-        }
-
-        // member of the group
-        if(hasGroup()) {
-            List<OrganizationUser> ous = (isPublic() || isProtected()) ? this.organization.users : this.organization.getAdmins();
-            for(OrganizationUser ou : ous) {
-                users.add(ou.user);
-            }
-        }
-
-        // sorting
-        List<User> result = new ArrayList<>(users);
-        Collections.sort(result, User.USER_NAME_COMPARATOR);
-
-        if (UserApp.currentUser().isSiteManager()) {
-            result.add(UserApp.currentUser());
-        }
-
-        return result;
+        return User.findUsersByProjectAndOrganization(this);
     }
 
     public List<User> getAssignableUsersAndAssignee(Issue issue) {
@@ -503,6 +481,10 @@ public class Project extends Model implements LabelOwner {
         }
 
         return users;
+    }
+
+    public boolean isProjectOrOrganizationUser(User user) {
+        return User.findUsersByProjectAndOrganization(this).contains(user);
     }
 
     public boolean isAssignableUser(User user) {
@@ -590,6 +572,10 @@ public class Project extends Model implements LabelOwner {
         this.vcs = nextVCS();
         RepositoryService.getRepository(this).create();
         this.update();
+    }
+
+    public boolean isCodeAvailable() {
+        return menuSetting == null || menuSetting.code;
     }
 
     public enum State {

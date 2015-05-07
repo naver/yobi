@@ -4,7 +4,7 @@
  * Copyright 2013 NAVER Corp.
  * http://yobi.io
  *
- * @Author Keesun Baik
+ * @author Keesun Baik
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,15 +20,16 @@
  */
 package models;
 
-import models.support.ReviewSearchCondition;
-import play.data.format.Formats;
-import play.data.validation.Constraints;
 import models.enumeration.ResourceType;
 import models.resource.Resource;
 import models.resource.ResourceConvertible;
+import models.support.ReviewSearchCondition;
+import play.data.format.Formats;
+import play.data.validation.Constraints;
 import play.db.ebean.Model;
+
+import javax.annotation.Nullable;
 import javax.persistence.*;
-import java.lang.reflect.ParameterizedType;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -168,7 +169,10 @@ public class CommentThread extends Model implements ResourceConvertible {
      * @return
      */
 
-    public static int countReviewsBy(Long projectId, ReviewSearchCondition cond) {
+    public static int countReviewsBy(Long projectId, @Nullable ReviewSearchCondition cond) {
+        if(cond == null){
+            cond = new ReviewSearchCondition();
+        }
         return cond.asExpressionList(Project.find.byId(projectId)).findRowCount();
     }
 

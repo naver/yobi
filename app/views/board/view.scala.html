@@ -4,7 +4,7 @@
 * Copyright 2012 NAVER Corp.
 * http://yobi.io
 *
-* @Author Ahn Hyeok Jun
+* @author Ahn Hyeok Jun
 *
 * Licensed under the Apache License, Version 2.0 (the "License");
 * you may not use this file except in compliance with the License.
@@ -18,15 +18,22 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 **@
-@(post:Posting, commentForm:Form[PostingComment],  project:Project)
+@(post:Posting, commentForm: play.data.Form[PostingComment],  project:Project)
 
 @import utils.JodaDateUtil
 @import utils.TemplateHelper._
 @import utils.AccessControl._
 @import models.enumeration._
+@import play.libs.Json.toJson
+@import utils.Markdown
 @implicitField = @{ helper.FieldConstructor(simpleForm) }
 
-@urlToPostings = @{ urlToList(request.getHeader("Referer"), routes.BoardApp.posts(project.owner, project.name).toString()) }
+@urlToPostings = @{
+    requestHeader.headers.get("Referer") match {
+        case Some(url) => { urlToList(url, routes.BoardApp.posts(project.owner, project.name).toString) }
+        case _ => routes.BoardApp.posts(project.owner, project.name).toString
+    }
+}
 
 @projectLayout(post.title, project, utils.MenuType.BOARD){
 @projectMenu(project, utils.MenuType.BOARD, "main-menu-only")
@@ -59,11 +66,8 @@
             }
           </a>
         </div>
-            <div class="markdown-loader">
-                <i class="yobicon-loading2"></i> @Messages("common.loading")
-            </div>
-    		<div class="content markdown-wrap markdown-before" markdown="true">@post.body</div>
-        <div class="attachments" id="attachments" data-resource-type="@ResourceType.BOARD_POST" data-resource-id="@post.id"></div>
+    		<div class="content markdown-wrap">@Html(Markdown.render(post.body, post.asResource().getProject()))</div>
+            <div class="attachments" id="attachments" data-attachments="@toJson(AttachmentApp.getFileList(ResourceType.BOARD_POST.toString(), post.id.toString()))"></div>
     	</div>
     	<div class="board-footer board-actrow">
     	    <div class="pull-left">
@@ -115,7 +119,6 @@
 		<button type="button" class="ybtn" data-dismiss="modal">@Messages("button.no")</button>
 	</div>
 </div>
-
 @common.markdown(project)
 @common.commentDeleteModal()
 

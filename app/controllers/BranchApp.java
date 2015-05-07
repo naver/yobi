@@ -4,7 +4,7 @@
  * Copyright 2013 NAVER Corp.
  * http://yobi.io
  *
- * @Author Keesun Baik
+ * @author Keesun Baik
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,9 +33,11 @@ import play.mvc.Controller;
 import play.mvc.Result;
 import playRepository.GitBranch;
 import playRepository.GitRepository;
+import utils.HttpUtil;
 import views.html.code.branches;
 
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
 import java.util.List;
 
 /**
@@ -65,9 +67,10 @@ public class BranchApp extends Controller {
     }
 
     @IsAllowed(Operation.DELETE)
-    public static Result deleteBranch(String loginId, String projectName, String branchName) throws GitAPIException {
+    public static Result deleteBranch(String loginId, String projectName, String branchName) throws GitAPIException, UnsupportedEncodingException {
         Project project = Project.findByOwnerAndProjectName(loginId, projectName);
         Repository repository = GitRepository.buildGitRepository(project);
+        branchName = HttpUtil.decodePathSegment(branchName);
         GitRepository.deleteBranch(repository, branchName);
         return redirect(routes.BranchApp.branches(loginId, projectName));
     }
@@ -76,6 +79,7 @@ public class BranchApp extends Controller {
     public static Result setAsDefault(String loginId, String projectName, String branchName) throws IOException, GitAPIException {
         Project project = Project.findByOwnerAndProjectName(loginId, projectName);
         GitRepository gitRepository = new GitRepository(project);
+        branchName = HttpUtil.decodePathSegment(branchName);
         gitRepository.setDefaultBranch(branchName);
 
         return utils.HttpUtil.isRequestedWithXHR(request()) ? ok() : redirect(routes.BranchApp.branches(loginId, projectName));

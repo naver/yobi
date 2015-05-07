@@ -4,7 +4,7 @@
 * Copyright 2013 NAVER Corp.
 * http://yobi.io
 *
-* @Author Keesun Baik, Wansoon Park
+* @author Keesun Baik, Wansoon Park
 *
 * Licensed under the Apache License, Version 2.0 (the "License");
 * you may not use this file except in compliance with the License.
@@ -28,7 +28,7 @@
 
 @getCodeURL(project: Project) = @{
     if(ProjectUser.isMember(project.id, UserApp.currentUser().id)){
-        CodeApp.getURL(project.owner, project.name).replace("://", "://" + session.get("loginId") + "@")
+        CodeApp.getURL(project.owner, project.name).replace("://", "://" + UserApp.currentUser.loginId + "@")
     } else {
         CodeApp.getURL(project.owner, project.name)
     }

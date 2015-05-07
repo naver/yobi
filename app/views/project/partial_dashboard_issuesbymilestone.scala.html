@@ -4,7 +4,7 @@
 * Copyright 2013 NAVER Corp.
 * http://yobi.io
 *
-* @Author Jihan Kim
+* @author Jihan Kim
 *
 * Licensed under the Apache License, Version 2.0 (the "License");
 * you may not use this file except in compliance with the License.
@@ -31,7 +31,7 @@
         </div>
     } else {
         @for(milestone <- milestones){
-            @defining(countOpenIssuesBy(project, Map("milestoneId"->milestone.id.toString))) { milestoneIssues =>
+            @defining(Issue.countOpenIssuesByMilestone(project, milestone)) { milestoneIssues =>
                 @if(milestoneIssues > 0){
                     <div class="row-fluid">
                         <div class="span6">
@@ -52,7 +52,7 @@
             }
         }
 
-        @defining(countOpenIssuesBy(project, Map("milestoneId"->Milestone.NULL_MILESTONE_ID.toString))) { notAssignedIssues =>
+        @defining(Issue.countOpenIssuesByMilestone(project, null)) { notAssignedIssues =>
             <div class="row-fluid">
                 <div class="span6">
                     <a href="@makeIssuesLink(project, scala.collection.immutable.Map("milestoneId"->Milestone.NULL_MILESTONE_ID.toString))">

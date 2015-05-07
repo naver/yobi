@@ -29,7 +29,7 @@ application.secret="VA2v:_I=h9>?FYOH:@ZhW]01P<mWZAKlQ>kk>Bo`mdCiA>pDw64FcBuZdDh<
 
 # The application languages
 # ~~~~~
-application.langs="en, ko, ja"
+application.langs="en-US, ko-KR, ja-JP"
 
 # Global object class
 # ~~~~~
@@ -45,10 +45,18 @@ application.langs="en, ko, ja"
 # H2 Configuration
  db.default.driver=org.h2.Driver
 # db.default.url="jdbc:h2:mem:yobi;MODE=PostgreSQL;DB_CLOSE_DELAY=-1"
- db.default.url="jdbc:h2:file:yobi;MODE=PostgreSQL"
+ db.default.url="jdbc:h2:file:./yobi;MODE=PostgreSQL;MV_STORE=FALSE;MVCC=FALSE"
 # db.default.user=sa
 # db.default.password=sa
 db.default.logStatements=true
+db.default.partitionCount=20
+db.default.maxConnectionsPerPartition=10
+db.default.minConnectionsPerPartition=2
+db.default.acquireIncrement=4
+db.default.acquireRetryAttempts=3
+db.default.acquireRetryDelay=1 seconds
+db.default.connectionTimeout=3 second
+db.default.statementsCacheSize=1000
 
 # MySQL Configuration
 # db.default.driver=com.mysql.jdbc.Driver
@@ -85,7 +93,7 @@ applyEvolutions.default=true
 # ~~~~~
 
 # Server name used by servlet, as the value of "Server" field in HTTP response message.
-application.server="Play/2.1"
+application.server="Play/2.3"
 
 # Components used to construct the URL to this application.
 application.scheme="http"
@@ -112,6 +120,37 @@ smtp.mock = true
 # optional, size of mail archive for tests, default: 5
 smtp.archive.size = 5
 
+# Mailbox Service
+# ~~~~~~~~~~~~~~~
+#
+# Mailbox Service fetches and process mails from IMAP server. For example, if
+# the service fetches an email to a project, it posts the email as an issue of
+# the project.
+#
+# If you want to use this feature, your IMAP server has to be configured to
+# support the address alias using '+' sign, also known as 'subaddressing' or
+# 'detailed addressing'. For example, emails to 'yobi+issue@yourmail.com' have
+# to be delivered to 'yobi@yourmail.com'.
+#
+# SECURITY WARNING: Yobi believes the email address in From header of the
+# received email is truthful and use it for authentication without doubt. To
+# avoid this problem, your imap server must deny every email whose From header
+# is forged.
+#
+# Here is an example if you use Gmail.
+#
+# Set imap.use to true if you want to use this feature.
+imap.use = false
+imap.host = imap.googlemail.com
+imap.ssl = true
+imap.user = "your-yobi-email-address@gmail.com"
+# The email address of Yobi. Mailbox Service processes an email only if its
+# address is as follows.
+imap.address = "your-yobi-email-address@gmail.com"
+# Be careful!!!
+imap.password = yourGmailPassword
+imap.folder = inbox
+
 # Production configuration
 %prod.http.port=80
 %prod.application.log=INFO
@@ -129,6 +168,10 @@ smtp.archive.size = 5
 application.notification.bymail.interval = 60s
 # Sending a notification mail delays this seconds.
 application.notification.bymail.delay = 180s
+# Split notification emails by the recipient limit.
+# The value is number of maximum recipients per an email and inclusive.
+# (default: 0, This means there is no limitation.)
+application.notification.bymail.recipientLimit = 100
 # Hide recipients of notification email by using bcc. (default: true)
 application.notification.bymail.hideAddress = true
 # A new event notification can be merged if possible with previous one which is
@@ -148,7 +191,8 @@ application.update.repositoryUrl = "http://repo.yobi.io/naver/yobi"
 # specifier for Yobi version to download like "0.5.7".
 application.update.releaesUrlFormat = "https://github.com/naver/yobi/releases/tag/v%s"
 
-#customize play default thread pool size
+# customize play default thread pool size
+# see: https://www.playframework.com/documentation/2.3.x/ThreadPools
 play {
   akka {
     event-handlers = ["akka.event.Logging$DefaultLogger", "akka.event.slf4j.Slf4jEventHandler"]
@@ -156,8 +200,8 @@ play {
     actor {
       default-dispatcher = {
         fork-join-executor {
-          parallelism-min = 400
-          parallelism-max = 400
+          parallelism-min = 50
+          parallelism-max = 300
         }
       }
     }
@@ -166,7 +210,7 @@ play {
 
 # customize akka thread pool size
 akka {
-  event-handlers = ["akka.event.Logging$DefaultLogger", "akka.event.slf4j.Slf4jEventHandler"]
+  loggers = ["akka.event.Logging$DefaultLogger", "akka.event.slf4j.Slf4jLogger"]
   loglevel = WARNING
   actor {
     default-dispatcher = {
@@ -185,3 +229,9 @@ akka {
     }
   }
 }
+
+# If you want allowing to access yobi pages logged in users only, set it false
+application.allowsAnonymousAccess = true
+
+# No referrer information is to be leaked when following the link from yobi pages. If you don't want, set it false
+application.noreferrer = true

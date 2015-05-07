@@ -4,7 +4,7 @@
 * Copyright 2013 NAVER Corp.
 * http://yobi.io
 *
-* @Author Keesun Baik
+* @author Keesun Baik
 *
 * Licensed under the Apache License, Version 2.0 (the "License");
 * you may not use this file except in compliance with the License.
@@ -18,7 +18,7 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 **@
-@(title:String, form:Form[PullRequest], project:Project,
+@(title:String, form: play.data.Form[PullRequest], project:Project,
   fromBranches: List[playRepository.GitBranch], toBranches:List[playRepository.GitBranch],
   pullRequest:models.PullRequest)
 
@@ -81,9 +81,12 @@
                     <!-- // -->
                 </div>
 
-                <div id="status" class="alert mt20 mb20">
-                    @Messages("pullRequest.is.merging")
-                </div>
+                <span id="pullRequestState" data-value="@pullRequest.state"></span>
+                @if(pullRequest.isOpen) {
+                    <div id="status" class="alert mt20 mb20">
+                        @Messages("pullRequest.is.merging")
+                    </div>
+                }
 
                 <div>
                     <input type="text" id="title" name="title" maxlength="255" class="text"
@@ -131,7 +134,8 @@ $(function(){
         "fromProject" : $("#fromProjectId"),
         "toProject"   : $("#toProjectId"),
         "fromBranch"  : $("#fromBranch"),
-        "toBranch"    : $("#toBranch")
+        "toBranch"    : $("#toBranch"),
+        "state"       : $("#pullRequestState").data("value")
     });
 
     // yobi.Mention

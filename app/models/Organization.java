@@ -4,7 +4,7 @@
  * Copyright 2013 NAVER Corp.
  * http://yobi.io
  *
- * @Author Keesun Baik, Wansoon Park, ChangSung Kim
+ * @author Keesun Baik, Wansoon Park, ChangSung Kim
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -80,6 +80,10 @@ public class Organization extends Model implements ResourceConvertible {
         return (findRowCount != 0);
     }
 
+    public boolean isLastAdmin(User currentUser) {
+        return OrganizationUser.isAdmin(this, currentUser) && getAdmins().size() == 1;
+    }
+
     @Transactional
     public void cleanEnrolledUsers() {
         List<User> enrolledUsers = this.enrolledUsers;
@@ -103,13 +107,13 @@ public class Organization extends Model implements ResourceConvertible {
             result.addAll(this.projects);
         } else if(OrganizationUser.isMember(this.id, user.id)) {
             for(Project project : this.projects) {
-                if(!project.isPrivate() || ProjectUser.isMember(user.id, project.id)) {
+                if(!project.isPrivate() || user.isMemberOf(project)) {
                     result.add(project);
                 }
             }
         } else {
             for(Project project : this.projects) {
-                if(project.isPublic() || ProjectUser.isMember(user.id, project.id)) {
+                if(project.isPublic() || user.isMemberOf(project)) {
                     result.add(project);
                 }
             }
@@ -180,5 +184,6 @@ public class Organization extends Model implements ResourceConvertible {
             project.update();
         }
     }
+
 }
 

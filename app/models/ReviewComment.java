@@ -4,7 +4,7 @@
  * Copyright 2013 NAVER Corp.
  * http://yobi.io
  *
- * @Author Keesun Baik, Wansoon Park
+ * @author Keesun Baik, Wansoon Park
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,16 +20,15 @@
  */
 package models;
 
-import java.util.Date;
-import java.util.List;
-
-import javax.persistence.*;
-
 import models.enumeration.ResourceType;
 import models.resource.Resource;
 import models.resource.ResourceConvertible;
 import play.data.validation.Constraints;
 import play.db.ebean.Model;
+
+import javax.persistence.*;
+import java.util.Date;
+import java.util.List;
 
 /**
  * @author Keesun Baik

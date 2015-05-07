@@ -4,7 +4,7 @@
  * Copyright 2013 NAVER Corp.
  * http://yobi.io
  *
- * @Author JiHan Kim
+ * @author JiHan Kim
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,9 +32,7 @@
             _initVar(options);
             _initElement(options);
             _attachEvent();
-
             _initFileUploader();
-            _onChangeBranch();
         }
 
         /**
@@ -59,6 +57,7 @@
             elements.fromBranch  = options.fromBranch;
             elements.toProject   = options.toProject;
             elements.toBranch    = options.toBranch;
+            elements.state       = options.state;
 
             elements.uploader = $("#upload");
             elements.numOfCommits = $("#numOfCommits");
@@ -79,12 +78,16 @@
             elements.toProject.on("change", _onChangeProject);
 
             // onChangeBranch
-            elements.fromBranch.on("change", _onChangeBranch);
-            elements.toBranch.on("change", _onChangeBranch);
+            elements.fromBranch.on("change", _checkMergeResult);
+            elements.toBranch.on("change", _checkMergeResult);
 
             $(document.body).on("click", "button.moreBtn", function(){
                 $(this).next("pre.commitMsg.desc").toggleClass("hidden");
             });
+
+            if(elements.state === "OPEN") {
+                _checkMergeResult();
+            }
         }
 
         /**
@@ -119,7 +122,7 @@
          *
          * @private
          */
-        function _onChangeBranch(){
+        function _checkMergeResult(){
             var data = _getFormValue();
 
             if(!data.fromBranch && !data.toBranch){
@@ -128,7 +131,7 @@
 
             _showMergeResult({"message" : Messages("pullRequest.is.merging")});
 
-            yobi.ui.Spinner.show();
+            NProgress.start();
 
             $.ajax(vars.mergeResultURL, {
                 "data": data
@@ -136,7 +139,7 @@
             .done(_onSuccessMergeResult)
             .fail(_onErrorMergeResult)
             .always(function(){
-                yobi.ui.Spinner.hide();
+                NProgress.done();
             });
         }
 

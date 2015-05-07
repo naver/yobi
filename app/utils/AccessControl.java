@@ -4,7 +4,7 @@
  * Copyright 2012 NAVER Corp.
  * http://yobi.io
  *
- * @Author Yi EungJun
+ * @author Yi EungJun
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,6 +26,9 @@ import models.enumeration.ResourceType;
 import models.resource.GlobalResource;
 import models.resource.Resource;
 import org.apache.commons.lang.BooleanUtils;
+
+import static models.OrganizationUser.isAdmin;
+import static models.OrganizationUser.isMember;
 
 public class AccessControl {
     private static boolean allowsAnonymousAccess = true;
@@ -63,7 +66,7 @@ public class AccessControl {
         // Site manager, Group admin, Project members can create anything.
         if (user.isSiteManager()
             || OrganizationUser.isAdmin(project.organization, user)
-            || ProjectUser.isMember(user.id, project.id)
+            || user.isMemberOf(project)
             || isAllowedIfGroupMember(project, user)) {
             return true;
         }
@@ -141,8 +144,8 @@ public class AccessControl {
                                                    Operation operation) {
         if(operation == Operation.ASSIGN_ISSUE && resource.getType() == ResourceType.PROJECT) {
             Project project = Project.find.byId(Long.parseLong(resource.getId()));
-            return ProjectUser.isMember(user.id, project.id)
-                    || (!project.isPrivate() && OrganizationUser.isMember(project.organization, user));
+            return user.isMemberOf(project)
+                    || (!project.isPrivate() && isMember(project.organization, user));
         }
 
         // Temporary attachments are allowed only for the user who uploads them.
@@ -158,9 +161,9 @@ public class AccessControl {
                     return false;
                 }
                 return project.isPublic()
-                    || ProjectUser.isMember(user.id, project.id)
-                    || OrganizationUser.isAdmin(project.organization, user)
-                    || isAllowedIfGroupMember(project, user);
+                        || user.isMemberOf(project)
+                        || isAdmin(project.organization, user)
+                        || isAllowedIfGroupMember(project, user);
             }
 
             // anyone can read any resource which is not a project.
@@ -174,8 +177,8 @@ public class AccessControl {
                     return false;
                 }
                 return (project.isPublic() && !user.isAnonymous())
-                        || (ProjectUser.isMember(user.id, project.id)
-                        || OrganizationUser.isAdmin(project.organization, user))
+                        || (user.isMemberOf(project)
+                        || isAdmin(project.organization, user))
                         || isAllowedIfGroupMember(project, user);
             }
         }
@@ -183,7 +186,7 @@ public class AccessControl {
         if (operation == Operation.LEAVE) {
             if (resource.getType() == ResourceType.PROJECT) {
                 Project project = Project.find.byId(Long.valueOf(resource.getId()));
-                return project != null && !project.isOwner(user) && ProjectUser.isMember(user.id, project.id);
+                return project != null && !project.isOwner(user) && user.isMemberOf(project);
             }
         }
 
@@ -223,15 +226,7 @@ public class AccessControl {
      * @return true if the user has the permission
      */
     private static boolean isProjectResourceAllowed(User user, Project project, Resource resource, Operation operation) {
-        if (OrganizationUser.isAdmin(project.organization, user)) {
-            return true;
-        }
-
-        if (user.isSiteManager()
-                || ProjectUser.isManager(user.id, project.id)
-                || isAllowedIfAuthor(user, resource)
-                || isAllowedIfAssignee(user, resource)
-                || isAllowedIfGroupMember(project, user)) {
+        if (user.isSiteManager()) {
             return true;
         }
 
@@ -250,6 +245,17 @@ public class AccessControl {
                 default:
                     return false;
             }
+        }
+
+        if (OrganizationUser.isAdmin(project.organization, user)) {
+            return true;
+        }
+
+        if (user.isManagerOf(project)
+                || isAllowedIfAuthor(user, resource)
+                || isAllowedIfAssignee(user, resource)
+                || isAllowedIfGroupMember(project, user)) {
+            return true;
         }
 
         // Some resource's permission depends on their container.
@@ -278,25 +284,25 @@ public class AccessControl {
         switch(operation) {
         case READ:
             return project.isPublic()
-                    || ProjectUser.isMember(user.id, project.id)
+                    || user.isMemberOf(project)
                     || isAllowedIfGroupMember(project, user);
         case UPDATE:
-            return ProjectUser.isMember(user.id, project.id)
+            return user.isMemberOf(project)
                     || isAllowedIfGroupMember(project, user);
         case DELETE:
             if (resource.getType() == ResourceType.CODE) {
                 return false;
             }
-            return ProjectUser.isMember(user.id, project.id)
+            return user.isMemberOf(project)
                     || isAllowedIfGroupMember(project, user);
         case ACCEPT:
         case CLOSE:
         case REOPEN:
-            return ProjectUser.isMember(user.id, project.id)
+            return user.isMemberOf(project)
                     || isAllowedIfGroupMember(project, user);
         case WATCH:
             return (project.isPublic() && !user.isAnonymous())
-                    || (ProjectUser.isMember(user.id, project.id))
+                    || (user.isMemberOf(project))
                     || isAllowedIfGroupMember(project, user);
         default:
             // undefined

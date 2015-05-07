@@ -4,7 +4,7 @@
  * Copyright 2013 NAVER Corp.
  * http://yobi.io
  *
- * @Author Changsung Kim
+ * @author Changsung Kim
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,6 +33,7 @@ import utils.RouteUtil;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 /**
  * The Controller which plays a role in voting in the issue.
@@ -117,22 +118,17 @@ public class VoteApp extends Controller {
         return redirect(RouteUtil.getUrl(issueComment));
     }
 
-    public static List<User> getVotersForAvatar(List<User> voters, int size){
+    public static List<User> getVotersForAvatar(Set<User> voters, int size){
         return getSubList(voters, 0, size);
     }
 
-    public static List<User> getVotersForName(List<User> voters, int fromIndex, int size){
+    public static List<User> getVotersForName(Set<User> voters, int fromIndex, int size){
         return getSubList(voters, fromIndex, fromIndex + size);
     }
 
-    public static List<User> getVotersExceptCurrentUser(List<User> voters){
-        List<User> result = new ArrayList<User>(voters);
-
-        while(result.contains(UserApp.currentUser())){
-            result.remove(UserApp.currentUser());
-        }
-
-        return result;
+    public static Set<User> getVotersExceptCurrentUser(Set<User> voters){
+        voters.remove(UserApp.currentUser());
+        return voters;
     }
 
     /**
@@ -142,9 +138,9 @@ public class VoteApp extends Controller {
      * @param toIndex
      * @return
      */
-    private static List<User> getSubList(List<User> voters, int fromIndex, int toIndex) {
+    private static List<User> getSubList(Set<User> voters, int fromIndex, int toIndex) {
         try {
-            return voters.subList(
+            return new ArrayList<>(voters).subList(
                     Math.max(0, fromIndex),
                     Math.min(voters.size(), toIndex)
             );

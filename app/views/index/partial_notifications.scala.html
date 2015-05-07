@@ -4,7 +4,7 @@
 * Copyright 2013 NAVER Corp.
 * http://yobi.io
 *
-* @Author Yi EungJun
+* @author Yi EungJun
 *
 * Licensed under the Apache License, Version 2.0 (the "License");
 * you may not use this file except in compliance with the License.
@@ -51,7 +51,7 @@
 }
 
 @defining(NotificationEvent.findByReceiver(UserApp.currentUser, from, size)){ notifications =>
-    @if(notifications.size() == 0){
+    @if(notifications.size == 0){
     <div class="warning-none">
         <i class="yobicon-danger"></i> @Messages("notification.none")
     </div>
@@ -96,7 +96,7 @@
     }
 }
 
-@if(UserApp.currentUser.notificationEvents.size > size){
+@if(NotificationEvent.getNotificationsCount(UserApp.currentUser()) > size){
 <li><a href="javascript: void(0);" id="notification-more" class="ybtn">More</a></li>
 <script type="text/javascript">
     $(document).ready(function(){

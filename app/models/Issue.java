@@ -4,7 +4,7 @@
  * Copyright 2012 NAVER Corp.
  * http://yobi.io
  *
- * @Author yoon
+ * @author yoon
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,19 +35,19 @@ import models.enumeration.State;
 import models.resource.Resource;
 import models.support.SearchCondition;
 import org.apache.commons.lang3.time.DateUtils;
+import org.apache.shiro.util.CollectionUtils;
+import play.data.Form;
 import play.data.format.Formats;
 import play.i18n.Messages;
 import utils.JodaDateUtil;
 
 import javax.persistence.*;
-
-import play.data.Form;
-
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.lang.Boolean;
 import java.text.SimpleDateFormat;
 import java.util.*;
+import java.util.regex.Pattern;
 import java.util.regex.Pattern;
 
 @Entity
@@ -69,11 +69,8 @@ public class Issue extends AbstractPosting implements LabelOwner {
     @Formats.DateTime(pattern = "yyyy-MM-dd")
     public Date dueDate;
 
-    public static List<State> availableStates = new ArrayList<>();
-    static {
-        availableStates.add(State.OPEN);
-        availableStates.add(State.CLOSED);
-    }
+    public static final List<State> availableStates =
+            Collections.unmodifiableList(CollectionUtils.asList(State.OPEN, State.CLOSED));
 
     @ManyToOne
     public Milestone milestone;
@@ -96,7 +93,7 @@ public class Issue extends AbstractPosting implements LabelOwner {
             joinColumns = @JoinColumn(name = "issue_id"),
             inverseJoinColumns = @JoinColumn(name = "user_id")
     )
-    public List<User> voters = new ArrayList<>();
+    public Set<User> voters = new HashSet<>();
 
     @Transient
     @Formula(select = "case when due_date is null then cast('0001-01-01 00:00:00' as timestamp) else due_date end")
@@ -105,6 +102,15 @@ public class Issue extends AbstractPosting implements LabelOwner {
     @Transient
     @Formula(select = "case when due_date is null then cast('9999-12-31 23:59:59' as timestamp) else due_date end")
     public Date dueDateAsc;
+
+    public Issue(Project project, User author, String title, String body) {
+        super(project, author, title, body);
+        this.state = State.OPEN;
+    }
+
+    public Issue() {
+        super();
+    }
 
     /**
      * @see models.AbstractPosting#computeNumOfComments()
@@ -230,6 +236,13 @@ public class Issue extends AbstractPosting implements LabelOwner {
         cf2.setBorder(Border.ALL, BorderLineStyle.THIN);
         cf2.setAlignment(Alignment.CENTRE);
 
+        DateFormat valueFormatDate = new DateFormat("yyyy-MM-dd HH:mm:ss");
+        WritableCellFormat cfDate = new WritableCellFormat(valueFormatDate);
+        cfDate.setFont(wf2);
+        cfDate.setShrinkToFit(true);
+        cfDate.setBorder(Border.ALL, BorderLineStyle.THIN);
+        cfDate.setAlignment(Alignment.CENTRE);
+
         ByteArrayOutputStream bos = new ByteArrayOutputStream();
         workbook = Workbook.createWorkbook(bos);
         sheet = workbook.createSheet(String.valueOf(JodaDateUtil.today().getTime()), 0);
@@ -247,7 +260,7 @@ public class Issue extends AbstractPosting implements LabelOwner {
             sheet.addCell(new jxl.write.Label(colcnt++, i, issue.state.toString(), cf2));
             sheet.addCell(new jxl.write.Label(colcnt++, i, issue.title, cf2));
             sheet.addCell(new jxl.write.Label(colcnt++, i, getAssigneeName(issue.assignee), cf2));
-            sheet.addCell(new jxl.write.Label(colcnt++, i, issue.createdDate.toString(), cf2));
+            sheet.addCell(new jxl.write.DateTime(colcnt++, i, issue.createdDate, cfDate));
         }
         workbook.write();
 
@@ -356,7 +369,7 @@ public class Issue extends AbstractPosting implements LabelOwner {
             return otherAssignee == null || otherAssignee.user == null || otherAssignee.user.isAnonymous();
         }
         if (otherAssignee == null || otherAssignee.user == null || otherAssignee.user.isAnonymous()) {
-            return assignee == null || assignee.user == null || assignee.user.isAnonymous();
+            return assignee.user.isAnonymous();
         }
         return assignee.equals(otherAssignee) || assignee.user.equals(otherAssignee.user);
     }
@@ -455,8 +468,9 @@ public class Issue extends AbstractPosting implements LabelOwner {
      * @param user
      */
     public void addVoter(User user) {
-        this.voters.add(user);
-        this.update();
+        if (voters.add(user)) {
+            update();
+        }
     }
 
     /**
@@ -465,8 +479,9 @@ public class Issue extends AbstractPosting implements LabelOwner {
      * @param user
      */
     public void removeVoter(User user) {
-        this.voters.remove(user);
-        this.update();
+        if (voters.remove(user)) {
+            update();
+        }
     }
 
     /**
@@ -506,4 +521,28 @@ public class Issue extends AbstractPosting implements LabelOwner {
             return Messages.get("common.time.default.day", JodaDateUtil.localDaysBetween(now, dueDate));
         }
     }
+
+    public static int countOpenIssuesByLabel(Project project, IssueLabel label) {
+        return finder.where()
+                .eq("project", project)
+                .eq("labels", label)
+                .findRowCount();
+    }
+
+    public static int countOpenIssuesByAssignee(Project project, Assignee assignee) {
+        return finder.where()
+                .eq("project", project)
+                .eq("assignee", assignee)
+                .findRowCount();
+    }
+
+    public static int countOpenIssuesByMilestone(Project project, Milestone milestone) {
+        return finder.where()
+                .eq("project", project)
+                .eq("milestone", milestone)
+                .findRowCount();
+    }
+
+
+
 }

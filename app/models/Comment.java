@@ -4,7 +4,7 @@
  * Copyright 2012 NAVER Corp.
  * http://yobi.io
  *
- * @Author Ahn Hyeok Jun
+ * @author Ahn Hyeok Jun
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -58,6 +58,12 @@ abstract public class Comment extends Model implements TimelineItem, ResourceCon
         createdDate = new Date();
     }
 
+    public Comment(User author, String contents) {
+        this();
+        setAuthor(author);
+        this.contents = contents;
+    }
+
     public Duration ago() {
         return JodaDateUtil.ago(this.createdDate);
     }
@@ -81,8 +87,14 @@ abstract public class Comment extends Model implements TimelineItem, ResourceCon
         getParent().update();
     }
 
+    @Transactional
+    public void update() {
+        super.update();
+        updateMention();
+    }
+
     protected void updateMention() {
-        Mention.add(this.asResource(), NotificationEvent.getMentionedUsers(this.contents));
+        Mention.update(this.asResource(), NotificationEvent.getMentionedUsers(this.contents));
     }
 
     public void delete() {

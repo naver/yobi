@@ -4,7 +4,7 @@
  * Copyright 2014 NAVER Corp.
  * http://yobi.io
  *
- * @Author Keesun
+ * @author Keesun
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,14 +20,13 @@
  */
 package models;
 
-import java.util.List;
+import models.enumeration.RoleType;
+import play.db.ebean.Model;
 
 import javax.persistence.Entity;
 import javax.persistence.Id;
 import javax.persistence.ManyToOne;
-
-import models.enumeration.RoleType;
-import play.db.ebean.Model;
+import java.util.List;
 
 @Entity
 public class OrganizationUser extends Model {

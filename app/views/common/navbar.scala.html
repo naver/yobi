@@ -4,7 +4,7 @@
  * Copyright 2014 NAVER Corp.
  * http://yobi.io
  *
- * @Author Deokhong Kim
+ * @author Deokhong Kim
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -55,10 +55,8 @@
             <li class="@isActiveMenu(MenuType.PROJECTS)">
                 <a href="@routes.ProjectApp.projects()">@Messages("title.projectList")</a>
             </li>
-            <li class="@isActiveMenu(MenuType.HELP)">
-                <a href="@routes.HelpApp.help()">@Messages("title.help")</a>
-            </li>
             @if(appFeedbackUrl){
+            <li class="divider"></li>
             <li>
                 <a href="@appFeedbackUrl" target="_blank">@Messages("title.yobi.feedback")</a>
             </li>

@@ -4,7 +4,7 @@
  * Copyright 2012 NAVER Corp.
  * http://yobi.io
  *
- * @Author Tae
+ * @author Tae
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,12 +24,13 @@ import models.enumeration.ResourceType;
 import models.resource.Resource;
 
 import javax.persistence.*;
-import java.util.List;
+import java.util.HashSet;
+import java.util.Set;
 
 @Entity
 public class IssueComment extends Comment {
     private static final long serialVersionUID = 1L;
-    public static Finder<Long, IssueComment> find = new Finder<>(Long.class, IssueComment.class);
+    public static final Finder<Long, IssueComment> find = new Finder<>(Long.class, IssueComment.class);
 
     @ManyToOne
     public Issue issue;
@@ -40,7 +41,12 @@ public class IssueComment extends Comment {
             joinColumns = @JoinColumn(name = "issue_comment_id"),
             inverseJoinColumns = @JoinColumn(name = "user_id")
     )
-    public List<User> voters;
+    public Set<User> voters = new HashSet<>();
+
+    public IssueComment(Issue issue, User author, String contents) {
+        super(author, contents);
+        this.issue = issue;
+    }
 
     /**
      * @see Comment#getParent()
@@ -83,16 +89,14 @@ public class IssueComment extends Comment {
     }
 
     public void addVoter(User user) {
-        if (!this.voters.contains(user)) {
-            this.voters.add(user);
-            this.update();
+        if (voters.add(user)) {
+            update();
         }
     }
 
     public void removeVoter(User user) {
-        if (this.voters.contains(user)) {
-            this.voters.remove(user);
-            this.update();
+        if (voters.remove(user)) {
+            update();
         }
     }
 }

@@ -4,7 +4,7 @@
  * Copyright 2013 NAVER Corp.
  * http://yobi.io
  *
- * @Author Keesun Baik
+ * @author Keesun Baik
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -106,7 +106,7 @@ public class Email extends Model {
         this.token = RandomStringUtils.randomNumeric(50);
         this.confirmUrl = Url.create(routes.UserApp.confirmEmail(this.id, this.token).url());
         update();
-        Akka.system().actorOf(new Props(ValidationEmailSender.class)).tell(this, null);
+        Akka.system().actorOf(Props.create(ValidationEmailSender.class)).tell(this, null);
     }
 
     public static Email findByEmail(String email, boolean isValid) {

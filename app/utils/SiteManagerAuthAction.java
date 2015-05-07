@@ -4,7 +4,7 @@
  * Copyright 2013 NAVER Corp.
  * http://yobi.io
  *
- * @Author Wansoon Park
+ * @author Wansoon Park
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,17 +24,18 @@ import controllers.UserApp;
 import play.mvc.Action;
 import play.mvc.Http.Context;
 import play.mvc.Result;
+import play.mvc.Result;
+import play.libs.F.Promise;
 
 /**
  * The Class SiteManagerAuthAction.
  */
 public class SiteManagerAuthAction extends Action.Simple {
     @Override
-    public Result call(Context context) throws Throwable {
+    public Promise<Result> call(Context context) throws Throwable {
         if (!UserApp.currentUser().isSiteManager()) {
-            return forbidden(ErrorViews.Forbidden.render("error.auth.unauthorized.waringMessage"));
+            return Promise.pure((Result) forbidden(ErrorViews.Forbidden.render("error.auth.unauthorized.waringMessage")));
         }
         return delegate.call(context);
     }
-
 }

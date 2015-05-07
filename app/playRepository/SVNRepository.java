@@ -4,7 +4,7 @@
  * Copyright 2012 NAVER Corp.
  * http://yobi.io
  *
- * @Author Ahn Hyeok Jun
+ * @author Ahn Hyeok Jun
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,25 +28,22 @@ import models.enumeration.ResourceType;
 import models.resource.Resource;
 import org.apache.commons.io.FileUtils;
 import org.apache.tika.Tika;
-import org.codehaus.jackson.node.ObjectNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.diff.RawText;
 import org.joda.time.format.DateTimeFormatter;
 import org.joda.time.format.ISODateTimeFormat;
-import org.tigris.subversion.javahl.ClientException;
 import org.tmatesoft.svn.core.*;
 import org.tmatesoft.svn.core.io.SVNRepositoryFactory;
 import org.tmatesoft.svn.core.wc.SVNClientManager;
 import org.tmatesoft.svn.core.wc.SVNDiffClient;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import play.libs.Json;
+import utils.Config;
 import utils.FileUtil;
 import utils.GravatarUtil;
 
-import java.io.ByteArrayOutputStream;
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.IOException;
+import java.io.*;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -86,72 +83,19 @@ public class SVNRepository implements PlayRepository {
         return baos.toByteArray();
     }
 
+    public boolean isIntermediateFolder(String path) {
+        return false;
+    }
+
     @Override
     public ObjectNode getMetaDataFromPath(String path) throws SVNException, IOException {
-        org.tmatesoft.svn.core.io.SVNRepository repository = getSVNRepository();
-
-        SVNNodeKind nodeKind = repository.checkPath(path , -1 );
-
-        if(nodeKind == SVNNodeKind.DIR){
-            ObjectNode result = Json.newObject();
-            ObjectNode listData = Json.newObject();
-            SVNProperties prop = new SVNProperties();
-            Collection<SVNDirEntry> entries = repository.getDir(path, -1, prop, SVNDirEntry.DIRENT_ALL, (Collection)null);
-
-            result.put("type", "folder");
-
-            for (SVNDirEntry entry : entries) {
-                ObjectNode data = Json.newObject();
-                String author = entry.getAuthor();
-                User user = User.findByLoginId(author);
-                Long commitTime = entry.getDate().getTime();
-
-                data.put("type", entry.getKind() == SVNNodeKind.DIR ? "folder" : "file");
-                data.put("msg", entry.getCommitMessage());
-                data.put("author", author);
-                data.put("avatar", getAvatar(user));
-                data.put("userName", user.name);
-                data.put("userLoginId", user.loginId);
-                data.put("createdDate", commitTime);
-                data.put("commitMessage", entry.getCommitMessage());
-                data.put("commiter", author);
-                data.put("commitDate", commitTime);
-                data.put("commitId", entry.getRevision());
-                data.put("size", entry.getSize());
-
-                listData.put(entry.getName(), data);
-            }
-            result.put("data", listData);
-
-            return result;
-
-        } else if(nodeKind == SVNNodeKind.FILE) {
-            return fileAsJson(path, repository);
-        } else {
-            return null;
-        }
+        return getMetaDataFromPath(-1, path);
     }
 
-    private static String getAvatar(User user) {
-        if(user.isAnonymous() || user.avatarUrl().equals(UserApp.DEFAULT_AVATAR_URL)) {
-            String defaultImageUrl = "http://ko.gravatar.com/userimage/53495145/0eaeeb47c620542ad089f17377298af6.png";
-            return GravatarUtil.getAvatar(user.email, 34, defaultImageUrl);
-        } else {
-            return user.avatarUrl();
-        }
-    }
-
-    @Override
-    public ObjectNode getMetaDataFromPath(String branch, String path) throws
-            IOException, SVNException {
-        List<String> branches = getBranchNames();
-        if (!branches.contains(branch)) {
-            return null;
-        }
-
+    private ObjectNode getMetaDataFromPath(int revision, String path) throws SVNException, IOException {
         org.tmatesoft.svn.core.io.SVNRepository repository = getSVNRepository();
 
-        SVNNodeKind nodeKind = repository.checkPath(path , -1 );
+        SVNNodeKind nodeKind = repository.checkPath(path , revision);
 
         if(nodeKind == SVNNodeKind.DIR){
             ObjectNode result = Json.newObject();
@@ -191,6 +135,28 @@ public class SVNRepository implements PlayRepository {
         } else {
             return null;
         }
+    }
+
+    private static String getAvatar(User user) {
+        if(user.isAnonymous() || user.avatarUrl().equals(UserApp.DEFAULT_AVATAR_URL)) {
+            String defaultImageUrl = "http://ko.gravatar.com/userimage/53495145/0eaeeb47c620542ad089f17377298af6.png";
+            return GravatarUtil.getAvatar(user.email, 34, defaultImageUrl);
+        } else {
+            return user.avatarUrl();
+        }
+    }
+
+    @Override
+    public ObjectNode getMetaDataFromPath(String revision, String path) throws
+            IOException, SVNException {
+        int revisionNumber = -1;
+        try {
+            revisionNumber = Integer.parseInt(revision);
+        } catch (NumberFormatException e) {
+            play.Logger.info("Illegal SVN revision: " + revision);
+        }
+
+        return getMetaDataFromPath(revisionNumber, path);
     }
 
     private ObjectNode fileAsJson(String path, org.tmatesoft.svn.core.io.SVNRepository repository) throws SVNException, IOException {
@@ -241,31 +207,29 @@ public class SVNRepository implements PlayRepository {
     }
 
     @Override
-    public void create() throws ClientException {
-        String svnPath = new File(SVNRepository.getRepoPrefix() + ownerName + "/" + projectName)
-                .getAbsolutePath();
-        new org.tigris.subversion.javahl.SVNAdmin().create(svnPath, false, false, null, "fsfs");
+    public void create() throws SVNException {
+        SVNRepositoryFactory.createLocalRepository(getDirectory(), true, false);
     }
 
     @Override
-    public void delete() {
-        FileUtil.rm_rf(new File(getRepoPrefix() + ownerName + "/" + projectName));
+    public void delete() throws Exception {
+        FileUtil.rm_rf(getDirectory());
     }
 
     @Override
-    public String getPatch(String commitId) throws SVNException {
+    public String getPatch(String commitId) throws SVNException, UnsupportedEncodingException {
         long rev = Integer.parseInt(commitId);
         return getPatch(rev - 1, rev);
     }
 
     @Override
-    public String getPatch(String revA, String revB) throws SVNException {
+    public String getPatch(String revA, String revB) throws SVNException, UnsupportedEncodingException {
         return getPatch(Long.parseLong(revA), Long.parseLong(revB));
     }
 
-    private String getPatch(long revA, long revB) throws SVNException {
+    private String getPatch(long revA, long revB) throws SVNException, UnsupportedEncodingException {
         // Prepare required arguments.
-        SVNURL svnURL = SVNURL.fromFile(new File(getRepoPrefix() + ownerName + "/" + projectName));
+        SVNURL svnURL = SVNURL.fromFile(getDirectory());
 
         // Get diffClient.
         SVNClientManager clientManager = SVNClientManager.newInstance();
@@ -277,7 +241,7 @@ public class SVNRepository implements PlayRepository {
         diffClient.doDiff(svnURL, null, SVNRevision.create(revA), SVNRevision.create(revB),
                 SVNDepth.INFINITY, true, byteArrayOutputStream);
 
-        return byteArrayOutputStream.toString();
+        return byteArrayOutputStream.toString(Config.getCharset().name());
     }
 
     @Override
@@ -294,7 +258,7 @@ public class SVNRepository implements PlayRepository {
     public List<Commit> getHistory(int page, int limit, String until, String path) throws
             IOException, GitAPIException, SVNException {
         // Get the repository
-        SVNURL svnURL = SVNURL.fromFile(new File(repoPrefix + ownerName + "/" + projectName));
+        SVNURL svnURL = SVNURL.fromFile(getDirectory());
         org.tmatesoft.svn.core.io.SVNRepository repository = SVNRepositoryFactory.create(svnURL);
 
         // path to get log
@@ -328,7 +292,7 @@ public class SVNRepository implements PlayRepository {
     public Commit getCommit(String revNumber) throws IOException, SVNException {
         long rev = Integer.parseInt(revNumber);
         String[] paths = {"/"};
-        SVNURL svnURL = SVNURL.fromFile(new File(getRepoPrefix() + ownerName + "/" + projectName));
+        SVNURL svnURL = SVNURL.fromFile(getDirectory());
         org.tmatesoft.svn.core.io.SVNRepository repository = SVNRepositoryFactory.create(svnURL);
 
         for(Object entry : repository.log(paths, null, rev, rev, false, false)) {
@@ -339,7 +303,7 @@ public class SVNRepository implements PlayRepository {
     }
 
     @Override
-    public List<String> getBranchNames() {
+    public List<String> getRefNames() {
         ArrayList<String> branches = new ArrayList<>();
         branches.add(SVNRevision.HEAD.getName());
         return branches;
@@ -367,8 +331,7 @@ public class SVNRepository implements PlayRepository {
     }
 
     private org.tmatesoft.svn.core.io.SVNRepository getSVNRepository() throws SVNException {
-        SVNURL svnURL = SVNURL.fromFile(new File(getRepoPrefix() + ownerName + "/" +
-                projectName));
+        SVNURL svnURL = SVNURL.fromFile(getDirectory());
 
         return SVNRepositoryFactory.create(svnURL);
     }
@@ -384,7 +347,7 @@ public class SVNRepository implements PlayRepository {
 
     @Override
     public boolean isFile(String path, String revStr) throws SVNException {
-        return isFile(path, Long.valueOf(revStr));
+        return isFile(path, Long.parseLong(revStr));
     }
 
 
@@ -417,7 +380,7 @@ public class SVNRepository implements PlayRepository {
         SVNURL svnURL;
         org.tmatesoft.svn.core.io.SVNRepository repository = null;
         try {
-            svnURL = SVNURL.fromFile(new File(repoPrefix + ownerName + "/" + projectName));
+            svnURL = SVNURL.fromFile(getDirectory());
             repository = SVNRepositoryFactory.create(svnURL);
             return repository.getLatestRevision() == 0;
         } catch (SVNException e) {
@@ -430,8 +393,8 @@ public class SVNRepository implements PlayRepository {
     }
 
     public boolean move(String srcProjectOwner, String srcProjectName, String desrProjectOwner, String destProjectName) {
-        File src = new File(getRepoPrefix() + srcProjectOwner + "/" + srcProjectName);
-        File dest = new File(getRepoPrefix() + desrProjectOwner + "/" + destProjectName);
+        File src = new File(getRootDirectory(), srcProjectOwner + "/" + srcProjectName);
+        File dest = new File(getRootDirectory(), desrProjectOwner + "/" + destProjectName);
         src.setWritable(true);
 
         try {
@@ -447,6 +410,10 @@ public class SVNRepository implements PlayRepository {
 
     @Override
     public File getDirectory() {
-        return new File(getRepoPrefix() + ownerName + "/" + projectName);
+        return new File(getRootDirectory(), ownerName + "/" + projectName);
+    }
+
+    public static File getRootDirectory() {
+        return new File(Config.getYobiHome(), getRepoPrefix());
     }
 }

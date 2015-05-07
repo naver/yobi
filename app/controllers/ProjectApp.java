@@ -4,7 +4,7 @@
  * Copyright 2012 NAVER Corp.
  * http://yobi.io
  *
- * @Author Sangcheol Hwang
+ * @author Sangcheol Hwang
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,10 +21,7 @@
 package controllers;
 
 import actions.DefaultProjectCheckAction;
-import com.avaje.ebean.Expr;
-import com.avaje.ebean.ExpressionList;
-import com.avaje.ebean.Junction;
-import com.avaje.ebean.Page;
+import com.avaje.ebean.*;
 
 import controllers.annotation.AnonymousCheck;
 import controllers.annotation.IsAllowed;
@@ -35,7 +32,7 @@ import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang.exception.ExceptionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.mail.HtmlEmail;
-import org.codehaus.jackson.node.ObjectNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.api.errors.NoHeadException;
 import org.tmatesoft.svn.core.SVNException;
@@ -61,6 +58,7 @@ import views.html.project.setting;
 import views.html.project.transfer;
 import views.html.project.change_vcs;
 
+import javax.annotation.Nonnull;
 import javax.servlet.ServletException;
 import java.io.IOException;
 import java.security.NoSuchAlgorithmException;
@@ -102,7 +100,7 @@ public class ProjectApp extends Controller {
             return notFound(ErrorViews.NotFound.render("error.notfound"));
         }
 
-        targetProject.overview = request().body().asJson().findPath("overview").getTextValue();
+        targetProject.overview = request().body().asJson().findPath("overview").textValue();
         targetProject.save();
 
         ObjectNode result = Json.newObject();
@@ -169,7 +167,7 @@ public class ProjectApp extends Controller {
         Project project = Project.findByOwnerAndProjectName(ownerId, projectName);
         Form<Project> projectForm = form(Project.class).fill(project);
         PlayRepository repository = RepositoryService.getRepository(project);
-        return ok(setting.render("title.projectSetting", projectForm, project, repository.getBranchNames()));
+        return ok(setting.render("title.projectSetting", projectForm, project, repository.getRefNames()));
     }
 
     @Transactional
@@ -246,7 +244,7 @@ public class ProjectApp extends Controller {
 
         if (validateWhenUpdate(ownerId, filledUpdatedProjectForm)) {
             return badRequest(setting.render("title.projectSetting",
-                    filledUpdatedProjectForm, project, repository.getBranchNames()));
+                    filledUpdatedProjectForm, project, repository.getRefNames()));
         }
 
         Project updatedProject = filledUpdatedProjectForm.get();
@@ -376,6 +374,7 @@ public class ProjectApp extends Controller {
         collectAuthorAndCommenter(project, number, userList, resourceType);
         addProjectMemberList(project, userList);
         addGroupMemberList(project, userList);
+        addProjectAuthorsAndWatchersList(project, userList);
 
         userList.remove(UserApp.currentUser());
         userList.add(UserApp.currentUser()); //send me last at list
@@ -801,6 +800,18 @@ public class ProjectApp extends Controller {
         }
     }
 
+    private static void addProjectAuthorsAndWatchersList(Project project, List<User> userList) {
+        if(project == null){
+            return;
+        }
+
+        for (User user : findAuthorsAndWatchers(project)) {
+            if (!userList.contains(user)) {
+                userList.add(user);
+            }
+        }
+    }
+
     @Transactional
     @With(DefaultProjectCheckAction.class)
     @IsAllowed(Operation.UPDATE)
@@ -837,7 +848,7 @@ public class ProjectApp extends Controller {
             addMemberForm.reject("loginId", "project.member.isManager");
         } else if (user.isAnonymous()) {
             addMemberForm.reject("loginId", "project.member.notExist");
-        } else if (ProjectUser.isMember(user.id, project.id)) {
+        } else if (user.isMemberOf(project)) {
             addMemberForm.reject("loginId", "project.member.alreadyMember");
         }
 
@@ -938,9 +949,9 @@ public class ProjectApp extends Controller {
     private static Result getPagingProjects(String query, int pageNum) {
         ExpressionList<Project> el = createProjectSearchExpressionList(query);
 
-        Set<Long> labelIds = LabelSearchUtil.getLabelIds(request());
+        Set<Long> labelIds = LabelApp.getLabelIds(request());
         if (CollectionUtils.isNotEmpty(labelIds)) {
-            el.add(LabelSearchUtil.createLabelSearchExpression(el.query(), labelIds));
+            el.in("labels.id", labelIds);
         }
 
         el.orderBy("createdDate desc");
@@ -1064,14 +1075,13 @@ public class ProjectApp extends Controller {
         if (label == null) {
             // Create new label if there is no label which has the given name.
             label = new Label(category, name);
-            label.projects.add(project);
             label.save();
             isCreated = true;
         }
 
         Boolean isAttached = project.attachLabel(label);
 
-        if (!isCreated && !isAttached) {
+        if (isCreated && !isAttached) {
             // Something is wrong. This case is not possible.
             play.Logger.warn(
                     "A label '" + label + "' is created but failed to attach to project '" + project + "'.");
@@ -1138,4 +1148,36 @@ public class ProjectApp extends Controller {
         }
         return ok();
     }
+
+    public static Set<User> findAuthorsAndWatchers(@Nonnull Project project) {
+        Set<User> allAuthors = new LinkedHashSet<>();
+
+        allAuthors.addAll(getIssueUsers(project));
+        allAuthors.addAll(getPostingUsers(project));
+        allAuthors.addAll(getPullRequestUsers(project));
+        allAuthors.addAll(getWatchedUsers(project));
+
+        return allAuthors;
+    }
+
+    private static Set<User> getPostingUsers(Project project) {
+        String postSql = "SELECT distinct author_id id FROM posting where project_id=" + project.id;
+        return User.find.setRawSql(RawSqlBuilder.parse(postSql).create()).findSet();
+    }
+
+    private static Set<User> getIssueUsers(Project project) {
+        String issueSql = "SELECT distinct author_id id FROM ISSUE where project_id=" + project.id;
+        return User.find.setRawSql(RawSqlBuilder.parse(issueSql).create()).findSet();
+    }
+
+    private static Set<User> getPullRequestUsers(Project project) {
+        String postSql = "SELECT distinct contributor_id id FROM pull_request where to_project_id=" + project.id;
+        return User.find.setRawSql(RawSqlBuilder.parse(postSql).create()).findSet();
+    }
+
+    private static Set<User> getWatchedUsers(Project project) {
+        String postSql = "SELECT distinct user_id id FROM watch where resource_type='PROJECT' and resource_id=" + project.id;
+        return User.find.setRawSql(RawSqlBuilder.parse(postSql).create()).findSet();
+    }
+
 }

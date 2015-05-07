@@ -10,9 +10,9 @@ GET            /navitest                                                        
 # Home page
 GET            /                                                                      controllers.Application.index()
 # Map static resources from the /public folder to the /assets URL path
-GET            /assets/*file                                                          controllers.Assets.at(path="/public", file)
 GET            /messages.js                                                           controllers.Application.jsMessages()
 GET            /favicon.ico                                                           controllers.Assets.at(path="/public", file="images/favicon.ico")
+GET            /assets/*file                                                          controllers.Assets.at(path="/public", file)
 
 # Bootstrapping for test
 GET            /init                                                                  controllers.Application.init()
@@ -80,6 +80,7 @@ DELETE         /sites/project/delete/:projectId                                 
 POST           /sites/toggleAccountLock                                               controllers.SiteApp.toggleAccountLock(loginId: String, state: String ?= null, query: String ?= null)
 GET            /sites/update                                                          controllers.SiteApp.update()
 POST           /sites/unwatchUpdate                                                   controllers.SiteApp.unwatchUpdate()
+GET            /sites/diagnostic                                                      controllers.SiteApp.diagnose()
 GET            /lostPassword                                                          controllers.PasswordResetApp.lostPassword
 POST           /lostPassword                                                          controllers.PasswordResetApp.requestResetPasswordEmail()
 GET            /resetPassword                                                         controllers.PasswordResetApp.resetPasswordForm(s:String)
@@ -292,6 +293,9 @@ POST           /:user/:project/issue/:number/comment/:commentId/unvote          
 # Comment Thread
 POST           /threads/:id/open                                                      controllers.CommentThreadApp.open(id: Long)
 POST           /threads/:id/close                                                     controllers.CommentThreadApp.close(id: Long)
+
+# Markdown Renderer
+POST           /markdown/:user/:project                                               controllers.MarkdownApp.render(user, project)
 
 # remove trailing slash - must be the bottom of this file
 GET            /*paths                                                                controllers.Application.removeTrailer(paths)

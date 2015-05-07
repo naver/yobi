@@ -430,7 +430,7 @@
         for (var i in compact_words) {
             var spacified = compact_words[i].split('').join('\\s*')+'\\s*';
 
-            str = str.replace(new RegExp('('+spacified+')(\\W)', 'ig'), function(m, compat, after) {
+            str = str.replace(new RegExp('('+spacified+')(\\s)', 'ig'), function(m, compat, after) {
                 return compat.replace(/\s+/g, '') + after;
             });
         }
@@ -918,6 +918,10 @@
     Filter.prototype.xss = function(is_image) {
         this.modify(exports.xssClean(this.str, is_image));
         return this.str;
+    }
+
+    Filter.prototype.defence = function(str) {
+        return this.sanitize(str).xss();
     }
 
     Filter.prototype.entityDecode = function() {

@@ -4,7 +4,7 @@
  * Copyright 2013 NAVER Corp.
  * http://yobi.io
  *
- * @Author Yi EungJun
+ * @author Yi EungJun
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -163,7 +163,7 @@ yobi.Pagination = (function(window, document) {
      * @private
      */
     function _getPageInputBox(htData){
-        var welPageInput = $('<input type="number" pattern="[0-9]*" class="input-mini">');
+        var welPageInput = $('<input type="number" pattern="[0-9]*" class="input-mini nospinner">');
 
         welPageInput.prop({
             "name" : htData.paramNameForPage,

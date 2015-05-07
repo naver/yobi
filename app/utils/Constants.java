@@ -4,7 +4,7 @@
  * Copyright 2012 NAVER Corp.
  * http://yobi.io
  *
- * @Author Sangcheol Hwang
+ * @author Sangcheol Hwang
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,8 +27,6 @@ public class Constants {
 
     public static final String TITLE = "title";
     public static final String DESCRIPTION = "description";
-
-    public static final String DEFAULT_LOGO_PATH = "public/uploadFiles/";
 
     public static final String RESOURCE_KEY_DELIM = "_";
     public static final String ADMIN_LOGIN_ID = "admin";

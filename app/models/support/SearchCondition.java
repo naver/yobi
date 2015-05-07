@@ -4,7 +4,7 @@
  * Copyright 2012 NAVER Corp.
  * http://yobi.io
  *
- * @Author Tae
+ * @author Tae
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,15 +29,14 @@ import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.time.DateUtils;
 import play.data.format.Formats;
-import utils.LabelSearchUtil;
 
-import javax.persistence.Transient;
 import java.text.SimpleDateFormat;
 import java.util.*;
 
-import static models.enumeration.ResourceType.*;
+import static models.enumeration.ResourceType.ISSUE_COMMENT;
+import static models.enumeration.ResourceType.ISSUE_POST;
 
-public class SearchCondition extends AbstractPostingApp.SearchCondition {
+public class SearchCondition extends AbstractPostingApp.SearchCondition implements Cloneable {
     public String state;
     public Boolean commentedCheck;
     public Long milestoneId;
@@ -257,7 +256,7 @@ public class SearchCondition extends AbstractPostingApp.SearchCondition {
             Junction<Issue> junction = el.disjunction();
             junction.icontains("title", filter)
             .icontains("body", filter);
-            List<Object> ids = null;
+            List<Object> ids;
             if( project == null){
                 ids = Issue.finder.where()
                         .icontains("comments.contents", filter).findIds();
@@ -307,7 +306,7 @@ public class SearchCondition extends AbstractPostingApp.SearchCondition {
         }
 
         if (CollectionUtils.isNotEmpty(labelIds)) {
-            el.add(LabelSearchUtil.createLabelSearchExpression(el.query(), labelIds));
+            el.in("labels.id", labelIds);
         }
 
         if (StringUtils.isNotBlank(orderBy)) {

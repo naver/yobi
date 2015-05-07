@@ -4,7 +4,7 @@
  * Copyright 2012 NAVER Corp.
  * http://yobi.io
  *
- * @Author Yi EungJun
+ * @author Yi EungJun
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -69,6 +69,8 @@ public class CodeHistoryApp extends Controller {
             SVNException {
         Project project = Project.findByOwnerAndProjectName(ownerName, projectName);
         PlayRepository repository = RepositoryService.getRepository(project);
+        branch = HttpUtil.decodePathSegment(branch);
+        path = HttpUtil.decodePathSegment(path);
 
         String pageStr = HttpUtil.getFirstValueFromQuery(request().queryString(), "page");
         int page = 0;
@@ -96,7 +98,7 @@ public class CodeHistoryApp extends Controller {
         Project project = Project.findByOwnerAndProjectName(ownerName, projectName);
         PlayRepository repository = RepositoryService.getRepository(project);
 
-        Commit commit = null;
+        Commit commit;
 
         try {
             commit = repository.getCommit(commitId);
@@ -110,7 +112,7 @@ public class CodeHistoryApp extends Controller {
 
         Commit parentCommit = repository.getParentCommitOf(commitId);
         List<CommentThread> threads
-                = CommentThread.findByCommitId(CommentThread.find, project, commitId);
+                = CommentThread.findByCommitId(CommentThread.find, project, commit.getId());
 
         String selectedBranch = StringUtils.defaultIfBlank(request().getQueryString("branch"), "HEAD");
         String path = StringUtils.defaultIfBlank(request().getQueryString("path"), "");

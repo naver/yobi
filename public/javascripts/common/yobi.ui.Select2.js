@@ -4,7 +4,7 @@
  * Copyright 2014 NAVER Corp.
  * http://yobi.io
  *
- * @Author Jihan Kim
+ * @author Jihan Kim
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -80,7 +80,7 @@
                                     || '<div title="[${stateLabel}] ${name}">${name}</div>';
 
                 var formattedResult = $yobi.tmpl(tplMilestoneItem, {
-                    "name" : itemObject.text.trim(),
+                    "name" : itemObject.text.trim().replace('<', '&lt;'),
                     "state": milestoneState,
                     "stateLabel": milestoneStateLabel
                 });

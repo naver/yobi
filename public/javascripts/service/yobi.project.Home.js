@@ -4,7 +4,7 @@
  * Copyright 2013 NAVER Corp.
  * http://yobi.io
  *
- * @Author Jihan Kim
+ * @author Jihan Kim
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -166,8 +166,11 @@
                                             ? data.overview
                                             : $("#project-description-input").attr('placeholder');
 
+                        yobi.Markdown.render($("#project-description"), sDescription);
+
                         $('[data-toggle="project-description-tab"]').toggleClass('hidden');
-                        $("#project-description").text(sDescription);
+
+
                 }).fail(function(err){
                         console.log("err>> ", err);
                 });

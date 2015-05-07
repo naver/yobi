@@ -4,7 +4,7 @@
  * Copyright 2012 NAVER Corp.
  * http://yobi.io
  *
- * @Author Sangcheol Hwang
+ * @author Sangcheol Hwang
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,7 +20,7 @@
  */
 package models.support;
 
-import java.util.*;
+import java.util.LinkedHashMap;
 
 public class Options extends LinkedHashMap<String, String> {
     private static final long serialVersionUID = 1L;

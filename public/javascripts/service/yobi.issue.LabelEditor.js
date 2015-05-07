@@ -4,7 +4,7 @@
  * Copyright 2014 NAVER Corp.
  * http://yobi.io
  *
- * @Author Jihan Kim
+ * @author Jihan Kim
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -48,6 +48,7 @@
          * @private
          */
         function _initElement(options){
+
             elements.list = $(options.list);
             elements.form = $(options.form);
             elements.formInput = elements.form.find('input,button[type=submit]');
@@ -335,12 +336,7 @@
          * @private
          */
         function _reloadLabelList(){
-            $.ajax(vars.listURL, {
-                "method" : "get",
-                "headers": {"X-PJAX": true}
-            }).done(function(res){
-                elements.list.html(res);
-            });
+            document.location.reload(true);
         }
 
         /**
@@ -403,6 +399,7 @@
             var targetButton = $(evt.target);
             var targetColor = _getRefinedHexColor(targetButton.css('background-color'));
 
+            elements.inputColor.val(targetColor);
             elements.inputColor.focus();
             elements.colorsWrap.find(".btn-preset-color").removeClass("active");
             targetButton.addClass("active");
@@ -613,7 +610,7 @@
                 "project.id" : elements.editCategoryForm.data("projectId")
             };
 
-            yobi.ui.Spinner.show();
+            NProgress.start();
 
             $.ajax(elements.editCategoryForm.data("categoryUpdateUri"), {
                 "method": "put",
@@ -624,7 +621,7 @@
                 _showError(res, "label.category.edit");
             }).always(function(){
                 elements.editCategoryForm.modal("hide");
-                yobi.ui.Spinner.hide();
+                NProgress.done();
             });
         }
 
@@ -665,7 +662,7 @@
             // Check is label with same name exists on new category
             var categoryName = elements.editLabelCategory.data("select2").data().text;
             var initialLabelName = elements.editLabelForm.data("labelName");
-            var isLabelNameChanged = (requestData.name !== initialLabelName);
+            var isLabelNameChanged = (requestData.name != initialLabelName);
 
             if(isLabelNameChanged && _isLabelExists(categoryName, requestData.name)){
                 _popoverMessageOn(Messages("label.error.duplicated.in.category", categoryName), elements.editLabelName);
@@ -678,7 +675,7 @@
                 return false;
             }
 
-            yobi.ui.Spinner.show();
+            NProgress.start();
 
             $.ajax(elements.editLabelForm.data("updateUri"), {
                 "method": "put",
@@ -689,7 +686,7 @@
                 _showError(res, "label.edit");
             }).always(function(){
                 elements.editLabelForm.modal("hide");
-                yobi.ui.Spinner.hide();
+                NProgress.done();
             });
         }
 

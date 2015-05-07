@@ -4,7 +4,7 @@
  * Copyright 2012 NAVER Corp.
  * http://yobi.io
  *
- * @Author Yi EungJun
+ * @author Yi EungJun
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,6 +23,7 @@ package utils;
 import controllers.UserApp;
 import models.User;
 import org.apache.commons.codec.binary.Base64;
+import play.libs.F.Promise;
 import play.mvc.Action;
 import play.mvc.Http;
 import play.mvc.Http.Context;
@@ -57,10 +58,7 @@ public class BasicAuthAction extends Action<Object> {
             return null;
         }
 
-        String userpassBase64 = credentials.substring(6);
-        byte[] userpassBytes;
-
-        userpassBytes = Base64.decodeBase64(userpassBase64.getBytes());
+        byte[] userpassBytes = Base64.decodeBase64(credentials.substring(6));
 
         // Use ISO-8859-1 only and not others, even if in RFC 2616, Section 2.2 "Basic Rules" allows
         // TEXT to be encoded according to the rules of RFC 2047.
@@ -96,18 +94,18 @@ public class BasicAuthAction extends Action<Object> {
     }
 
     @Override
-    public Result call(Context context) throws Throwable {
+    public Promise<Result> call(Context context) throws Throwable {
         User user;
         try {
             user = authenticate(context.request());
         } catch (MalformedCredentialsException error) {
-            return AccessLogger.log(context.request()
-                    , badRequest()
-                    , null);
+            Promise<Result> promise = Promise.pure((Result) badRequest());
+            AccessLogger.log(context.request(), promise, null);
+            return promise;
         } catch (UnsupportedEncodingException e) {
-            return AccessLogger.log(context.request()
-                    , internalServerError()
-                    , null);
+            Promise<Result> promise = Promise.pure((Result) internalServerError());
+            AccessLogger.log(context.request(), promise, null);
+            return promise;
         }
 
         if (!user.isAnonymous()) {

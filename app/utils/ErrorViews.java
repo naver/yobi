@@ -4,7 +4,7 @@
  * Copyright 2013 NAVER Corp.
  * http://yobi.io
  *
- * @Author Wansoon Park
+ * @author Wansoon Park
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,7 +23,7 @@ import controllers.UserApp;
 import models.Organization;
 import models.Project;
 import models.User;
-import play.api.templates.Html;
+import play.twirl.api.Html;
 import views.html.index.index;
 
 

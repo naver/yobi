@@ -4,7 +4,7 @@
  * Copyright 2013 NAVER Corp.
  * http://yobi.io
  *
- * @Author Yi EungJun
+ * @author Yi EungJun
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,14 +22,14 @@ package models;
 
 import models.enumeration.ResourceType;
 
-import javax.persistence.*;
+import javax.persistence.Entity;
 import java.util.List;
 
 @Entity
 public class Unwatch extends UserAction {
     private static final long serialVersionUID = 1L;
 
-    public static Finder<Long, Unwatch> find = new Finder<>(Long.class, Unwatch.class);
+    public static final Finder<Long, Unwatch> find = new Finder<>(Long.class, Unwatch.class);
 
     public static List<Unwatch> findBy(ResourceType resourceType, String resourceId) {
         return findBy(find, resourceType, resourceId);

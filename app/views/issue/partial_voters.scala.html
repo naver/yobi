@@ -4,7 +4,7 @@
 * Copyright 2014 NAVER Corp.
 * http://yobi.io
 *
-* @Author Jihan Kim
+* @author Jihan Kim
 *
 * Licensed under the Apache License, Version 2.0 (the "License");
 * you may not use this file except in compliance with the License.
@@ -59,13 +59,13 @@
         <ul class="unstyled">
         @for(voter <- issue.voters){
             <li>
-                <a href="@routes.UserApp.userInfo(voter.loginId)" class="usf-group" target="_blank">
+                <span>
                     <span class="avatar-wrap mlarge">
                         <img src="@voter.avatarUrl" width="40" height="40">
                     </span>
                     <strong class="name">@voter.name</strong>
                     <span class="loginid"> <strong>@{"@"}</strong>@voter.loginId</span>
-                </a>
+                </span>
             </li>
         }
         </ul>

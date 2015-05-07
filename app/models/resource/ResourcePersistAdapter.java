@@ -4,7 +4,7 @@
  * Copyright 2013 NAVER Corp.
  * http://yobi.io
  *
- * @Author Jungkook Kim
+ * @author Jungkook Kim
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,14 +20,13 @@
  */
 package models.resource;
 
-import models.Unwatch;
-import models.Watch;
-
 import com.avaje.ebean.EbeanServer;
 import com.avaje.ebean.Query;
 import com.avaje.ebean.Transaction;
 import com.avaje.ebean.event.BeanPersistAdapter;
 import com.avaje.ebean.event.BeanPersistRequest;
+import models.Unwatch;
+import models.Watch;
 
 /**
  * @see com.avaje.ebean.event.BeanPersistController

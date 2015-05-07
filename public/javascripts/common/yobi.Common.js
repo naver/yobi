@@ -4,7 +4,7 @@
  * Copyright 2013 NAVER Corp.
  * http://yobi.io
  *
- * @Author Jihan Kim
+ * @author Jihan Kim
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -112,6 +112,8 @@ $yobi = yobi.Common = (function(){
             sDepth = aNames.shift();
             oModule = oModule[sDepth];
         }
+
+        $("[data-toggle=popover]").popover();
 
         // temporary code for compatibility with nForge
         var oInstance;
@@ -412,6 +414,12 @@ $yobi = yobi.Common = (function(){
         return null;
     }
 
+    function xssClean(str) {
+      var filter = new Filter();
+
+      return filter.defence(str);
+    }
+
     /* public Interface */
     return {
         "setScriptPath"   : setScriptPath,
@@ -430,7 +438,8 @@ $yobi = yobi.Common = (function(){
         "nl2br"     : nl2br,
         "tmpl"      : processTpl,
         "htmlspecialchars": htmlspecialchars,
-        "isImageFile": isImageFile
+        "isImageFile": isImageFile,
+        "xssClean" : xssClean
     };
 })();
 

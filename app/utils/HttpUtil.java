@@ -4,7 +4,7 @@
  * Copyright 2012 NAVER Corp.
  * http://yobi.io
  *
- * @Author Yi EungJun
+ * @author Yi EungJun
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -181,5 +181,20 @@ public class HttpUtil {
      */
     public static Boolean isPJAXRequest(Http.Request request){
         return Boolean.parseBoolean(request.getHeader("X-PJAX"));
+    }
+
+    /**
+     * Decodes the percent-encoded path segment.
+     *
+     * @param pathSegment
+     * @return decoded path segment or null if the given path segment is null
+     * @throws UnsupportedEncodingException
+     */
+    public static String decodePathSegment(String pathSegment) throws UnsupportedEncodingException {
+        if (pathSegment != null) {
+            return URLDecoder.decode(pathSegment, "UTF-8");
+        } else {
+            return null;
+        }
     }
 }

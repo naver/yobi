@@ -4,7 +4,7 @@
  * Copyright 2014 NAVER Corp.
  * http://yobi.io
  *
- * @Author Suwon Chae
+ * @author Suwon Chae
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,7 +36,7 @@ import javax.servlet.ServletException;
 import java.io.IOException;
 
 import static org.eclipse.jgit.lib.Constants.HEAD;
-import static utils.LineEnding.*;
+import static utils.LineEnding.findLineEnding;
 
 public class BareRepository {
     /**
@@ -58,7 +58,7 @@ public class BareRepository {
         if (loader == null) {
             return null;
         }
-        return new String(loader.getCachedBytes());
+        return new String(loader.getCachedBytes(), utils.Config.getCharset());
     }
 
     public static Repository getRepository(Project project){
@@ -125,7 +125,7 @@ public class BareRepository {
         if(oldObjectId.equals(ObjectId.zeroId())){
             return EndingType.UNDEFINED;
         } else {
-            String fileContents = new String(repository.open(oldObjectId).getBytes());
+            String fileContents = new String(repository.open(oldObjectId).getBytes(), utils.Config.getCharset());
             return findLineEnding(fileContents);
         }
     }

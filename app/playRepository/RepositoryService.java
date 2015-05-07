@@ -4,7 +4,7 @@
  * Copyright 2012 NAVER Corp.
  * http://yobi.io
  *
- * @Author Yi EungJun
+ * @author Yi EungJun
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,16 +20,15 @@
  */
 package playRepository;
 
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import controllers.ProjectApp;
 import controllers.UserApp;
 import models.Project;
 import models.User;
-import org.codehaus.jackson.node.ObjectNode;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.lib.Repository;
 import org.eclipse.jgit.transport.*;
 import org.eclipse.jgit.transport.RefAdvertiser.PacketLineOutRefAdvertiser;
-import org.tigris.subversion.javahl.ClientException;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.internal.server.dav.DAVServlet;
 import play.Logger;
@@ -37,6 +36,7 @@ import play.mvc.Http.RawBuffer;
 import play.mvc.Http.Request;
 import play.mvc.Http.Response;
 import playRepository.hooks.*;
+import utils.Config;
 
 import javax.servlet.ServletConfig;
 import javax.servlet.ServletContext;
@@ -60,7 +60,7 @@ public class RepositoryService {
      * @see {@link playRepository.PlayRepository#delete()}
      */
     public static void deleteRepository(Project project)
-            throws IOException, ServletException {
+            throws Exception {
         RepositoryService.getRepository(project).delete();
     }
 
@@ -68,8 +68,7 @@ public class RepositoryService {
      * @see {@link #deleteRepository(Project)}
      * @see {@link PlayRepository#create()}
      */
-    public static void createRepository(Project project) throws IOException, ServletException,
-            ClientException, UnsupportedOperationException {
+    public static void createRepository(Project project) throws Exception {
         RepositoryService.deleteRepository(project);
         RepositoryService.getRepository(project).create();
     }
@@ -83,14 +82,25 @@ public class RepositoryService {
 
         String partialPath = "";
         String[] pathArray = path.split("/");
-        Integer pathLength = pathArray.length;
+        int pathLength = path.equals("") ? 0 : pathArray.length;
         ObjectNode metaData;
 
+        metaData = repository.getMetaDataFromPath(branch, "");
+        if (metaData == null) {
+            return null;
+        }
+        metaData.put("path", "");
+        recursiveData.add(metaData);
         for(int i = 0; i < pathLength; i++){
-            metaData = repository.getMetaDataFromPath(branch, partialPath);
-            metaData.put("path", partialPath);
             partialPath = (partialPath.equals("")) ? pathArray[i] : partialPath + "/" + pathArray[i];
-            recursiveData.add(metaData);
+            if (!repository.isIntermediateFolder(partialPath)) {
+                metaData = repository.getMetaDataFromPath(branch, partialPath);
+                if (metaData == null) {
+                    return null;
+                }
+                metaData.put("path", partialPath);
+                recursiveData.add(metaData);
+            }
         }
 
         return recursiveData;
@@ -139,7 +149,7 @@ public class RepositoryService {
             @Override
             public String getInitParameter(String name) {
                 if (name.equals("SVNParentPath")) {
-                    return new File(SVNRepository.getRepoPrefix() + userName + "/").getAbsolutePath();
+                    return new File(SVNRepository.getRootDirectory(), userName + "/").getAbsolutePath();
                 } else {
                     return play.Configuration.root().getString("application." + name);
                 }

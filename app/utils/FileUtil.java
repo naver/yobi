@@ -4,7 +4,7 @@
  * Copyright 2012 NAVER Corp.
  * http://yobi.io
  *
- * @Author Ahn Hyeok Jun
+ * @author Ahn Hyeok Jun
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,14 +29,16 @@ import org.mozilla.universalchardet.UniversalDetector;
 
 import java.io.*;
 import java.nio.charset.Charset;
+import java.nio.file.Path;
 
 public class FileUtil {
 
-    public static final int MAX_SIZE_FOR_BINARY_DETECTION = 512;
-
-    public static void rm_rf(File file){
+    public static void rm_rf(File file) throws Exception {
         if(file.isDirectory()){
             File[] list = file.listFiles();
+            if (list == null) {
+                throw new Exception("Unexpected error while deleting: " + file);
+            }
             for (File f : list) {
                 rm_rf(f);
             }
@@ -143,5 +145,26 @@ public class FileUtil {
     public static String getCharset(MediaType mediaType) {
         return mediaType.hasParameters()
                 ? mediaType.getParameters().get("charset") : null;
+    }
+
+    /**
+     * Checks whether the subpath is a subpath of the given path
+     *
+     * @param subpath
+     * @param path
+     * @return true if the subpath is a subpath of the given path
+     * @throws IOException
+     */
+    public static boolean isSubpathOf(Path subpath, Path path) throws IOException {
+        return isSubpathOf(subpath, path, true);
+    }
+
+    public static boolean isSubpathOf(Path subpath, Path path, boolean resolveSymlink) throws IOException {
+        if (resolveSymlink) {
+            path = path.toRealPath();
+            subpath = subpath.toRealPath();
+        }
+
+        return subpath.normalize().startsWith(path.normalize());
     }
 }

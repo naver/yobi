@@ -4,7 +4,7 @@
  * Copyright 2012 NAVER Corp.
  * http://yobi.io
  *
- * @Author Yi EungJun
+ * @author Yi EungJun
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,7 +20,20 @@
  */
 package controllers;
 
-import static play.libs.Json.toJson;
+import controllers.annotation.AnonymousCheck;
+import models.Attachment;
+import models.User;
+import models.enumeration.Operation;
+import models.enumeration.ResourceType;
+import org.apache.commons.lang3.StringUtils;
+import com.fasterxml.jackson.databind.JsonNode;
+import play.Configuration;
+import play.Logger;
+import play.mvc.Controller;
+import play.mvc.Http.MultipartFormData.FilePart;
+import play.mvc.Result;
+import utils.AccessControl;
+import utils.HttpUtil;
 
 import java.io.File;
 import java.io.IOException;
@@ -30,20 +43,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import controllers.annotation.AnonymousCheck;
-import models.Attachment;
-import models.User;
-import models.enumeration.Operation;
-import models.enumeration.ResourceType;
-import org.apache.commons.lang3.StringUtils;
-import org.codehaus.jackson.JsonNode;
-import play.Configuration;
-import play.Logger;
-import play.mvc.Controller;
-import play.mvc.Http.MultipartFormData.FilePart;
-import play.mvc.Result;
-import utils.AccessControl;
-import utils.HttpUtil;
+import static play.libs.Json.toJson;
 
 @AnonymousCheck
 public class AttachmentApp extends Controller {
@@ -209,14 +209,10 @@ public class AttachmentApp extends Controller {
         return metadata;
     }
 
-    public static Result getFileList() {
+    public static Map<String, List<Map<String, String>>> getFileList(String containerType, String
+            containerId) throws PermissionDeniedException {
         Map<String, List<Map<String, String>>> files =
                 new HashMap<>();
-
-        // Get attached files only if the user has permission to read it.
-        Map<String, String[]> query = request().queryString();
-        String containerType = HttpUtil.getFirstValueFromQuery(query, "containerType");
-        String containerId = HttpUtil.getFirstValueFromQuery(query, "containerId");
 
         if (StringUtils.isNotEmpty(containerType) && StringUtils.isNotEmpty(containerId)) {
             List<Map<String, String>> attachments = new ArrayList<>();
@@ -224,15 +220,32 @@ public class AttachmentApp extends Controller {
                     (containerType), containerId)) {
                 if (!AccessControl.isAllowed(UserApp.currentUser(),
                         attach.asResource(), Operation.READ)) {
-                    return forbidden();
+                    throw new PermissionDeniedException();
                 }
                 attachments.add(extractFileMetaDataFromAttachementAsMap(attach));
             }
             files.put("attachments", attachments);
         }
 
+        return files;
+    }
+
+    public static Result getFileList() {
+        // Get attached files only if the user has permission to read it.
+        Map<String, String[]> query = request().queryString();
+        String containerType = HttpUtil.getFirstValueFromQuery(query, "containerType");
+        String containerId = HttpUtil.getFirstValueFromQuery(query, "containerId");
+
         // Return the list of files as JSON.
         response().setHeader("Content-Type", "application/json");
-        return ok(toJson(files));
+        try {
+            return ok(toJson(getFileList(containerType, containerId)));
+        } catch (PermissionDeniedException e) {
+            return forbidden();
+        }
+    }
+
+    private static class PermissionDeniedException extends Exception {
+        private static final long serialVersionUID = 1L;
     }
 }

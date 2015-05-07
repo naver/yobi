@@ -4,7 +4,7 @@
  * Copyright 2012 NAVER Corp.
  * http://yobi.io
  *
- * @Author Ahn Hyeok Jun
+ * @author Ahn Hyeok Jun
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,12 +20,9 @@
  */
 package playRepository;
 
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import models.resource.Resource;
-
-import org.codehaus.jackson.node.ObjectNode;
 import org.eclipse.jgit.api.errors.GitAPIException;
-import org.eclipse.jgit.lib.Repository;
-import org.tigris.subversion.javahl.ClientException;
 import org.tmatesoft.svn.core.SVNException;
 
 import java.io.File;
@@ -37,13 +34,15 @@ public interface PlayRepository {
     public final long MAX_FILE_SIZE_CAN_BE_VIEWED = play.Configuration.root().getInt(
             "application.codeBrowser.viewer.maxFileSize", 1024 * 1024);
 
-    public abstract void create() throws IOException, ClientException;
+    public abstract void create() throws IOException, SVNException;
+
+    public abstract boolean isIntermediateFolder(String path);
 
     public abstract ObjectNode getMetaDataFromPath(String path) throws IOException, GitAPIException, SVNException;
 
     public abstract byte[] getRawFile(String revision, String path) throws IOException, SVNException;
 
-    public abstract void delete();
+    public abstract void delete() throws Exception;
 
     public abstract String getPatch(String commitId) throws IOException, SVNException;
 
@@ -57,7 +56,7 @@ public interface PlayRepository {
 
     public abstract Commit getCommit(String rev) throws IOException, SVNException;
 
-    public abstract List<String> getBranchNames();
+    public abstract List<String> getRefNames();
 
     public abstract ObjectNode getMetaDataFromPath(String branch, String path) throws IOException, SVNException, GitAPIException;
 

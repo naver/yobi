@@ -4,7 +4,7 @@
  * Copyright 2012 NAVER Corp.
  * http://yobi.io
  *
- * @Author Ahn Hyeok Jun
+ * @author Ahn Hyeok Jun
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,8 +33,8 @@ import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.tika.Tika;
 import org.apache.tika.metadata.Metadata;
-import org.codehaus.jackson.JsonNode;
-import org.codehaus.jackson.node.ObjectNode;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.LogCommand;
 import org.eclipse.jgit.api.errors.GitAPIException;
@@ -133,11 +133,11 @@ public class GitRepository implements PlayRepository {
                                                 boolean alternatesMergeRepo) {
         try {
             RepositoryBuilder repo = new RepositoryBuilder()
-                    .setGitDir(new File(getGitDirectory(ownerName, projectName)));
+                    .setGitDir(getGitDirectory(ownerName, projectName));
 
             if (alternatesMergeRepo) {
-                repo.addAlternateObjectDirectory(new File(getDirectoryForMergingObjects(ownerName,
-                        projectName)));
+                repo.addAlternateObjectDirectory(getDirectoryForMergingObjects(ownerName,
+                        projectName));
             }
 
             return repo.build();
@@ -162,7 +162,7 @@ public class GitRepository implements PlayRepository {
     }
 
     public static void cloneLocalRepository(Project originalProject, Project forkProject)
-            throws IOException, GitAPIException {
+            throws Exception {
         try {
             cloneHardLinkedRepository(originalProject, forkProject);
         } catch (Exception e) {
@@ -187,6 +187,65 @@ public class GitRepository implements PlayRepository {
     @Override
     public ObjectNode getMetaDataFromPath(String path) throws IOException, GitAPIException, SVNException {
         return getMetaDataFromPath(null, path);
+    }
+
+    /**
+     * Returns the path extended so that empty intermediate folders
+     * are skipped.
+     *
+     * @see <a href="https://github.com/blog/1877-folder-jumping">Folder Jumping on GitHub blog</a>
+     */
+    public String extendPath(String basePath, String path) {
+        try {
+            ObjectId objectId = repository.resolve(Constants.HEAD);
+            RevWalk revWalk = new RevWalk(repository);
+            RevTree revTree = revWalk.parseTree(objectId);
+            while (true) {
+                String fullPath;
+                if (StringUtils.isEmpty(basePath)) {
+                    fullPath = path;
+                } else {
+                    fullPath = basePath + "/" + path;
+                }
+
+                TreeWalk treeWalk = TreeWalk.forPath(repository, fullPath, revTree);
+                // path is not a folder
+                if (treeWalk == null || !treeWalk.isSubtree()) return path;
+                treeWalk.enterSubtree();
+                treeWalk.next();
+                // path contains a file
+                if (!treeWalk.isSubtree()) return path;
+                String next = path + "/" + treeWalk.getNameString();
+                // path contains more than a single entry
+                if (treeWalk.next()) return path;
+                path = next;
+            }
+        } catch (IOException e) {
+            return path;
+        }
+    }
+
+    public boolean isIntermediateFolder(String path) {
+        try {
+            ObjectId objectId = repository.resolve(Constants.HEAD);
+            RevWalk revWalk = new RevWalk(repository);
+            RevTree revTree = revWalk.parseTree(objectId);
+            if (StringUtils.isEmpty(path)) {
+                return false;
+            }
+            TreeWalk treeWalk = TreeWalk.forPath(repository, path, revTree);
+            // path is not a folder
+            if (treeWalk == null || !treeWalk.isSubtree()) return false;
+            treeWalk.enterSubtree();
+            treeWalk.next();
+            // path contains a file
+            if (!treeWalk.isSubtree()) return false;
+            // patch contains more than a single entry
+            if (treeWalk.next()) return false;
+            return true;
+        } catch (IOException e) {
+            return false;
+        }
     }
 
     public boolean isFile(String path, String revStr) throws IOException {
@@ -328,6 +387,7 @@ public class GitRepository implements PlayRepository {
         private Map<String, JsonNode> targets = new HashMap<>();
         private String basePath;
         private Iterator<RevCommit> commitIterator;
+        private AnyObjectId untilCommitId;
 
         public ObjectFinder(String basePath, TreeWalk treeWalk, AnyObjectId untilCommitId) throws IOException, GitAPIException {
             while (treeWalk.next()) {
@@ -337,6 +397,7 @@ public class GitRepository implements PlayRepository {
                 targets.put(path, object);
             }
             this.basePath = basePath;
+            this.untilCommitId = untilCommitId;
             this.commitIterator = getCommitIterator(untilCommitId);
         }
 
@@ -365,14 +426,14 @@ public class GitRepository implements PlayRepository {
                     try {
                         commitIterator = getCommitIterator(curr.getId());
 
-                        // If the new iteartor returns a same commit as the
+                        // If the new iterator returns a same commit as the
                         // previous one, just skip it.
                         curr = commitIterator.next();
                         if (curr.equals(prev)) {
                             curr = commitIterator.next();
                         }
-                    } catch (GitAPIException e) {
-                        play.Logger.warn("An exception occurs while traversing git history", e);
+                    } catch (Exception e) {
+                        play.Logger.warn("An exception occurred while traversing git history", e);
                         break;
                     }
                 }
@@ -382,9 +443,23 @@ public class GitRepository implements PlayRepository {
                 prev = curr;
             }
 
-            if (i >= COMMIT_HISTORY_LIMIT) {
-                play.Logger.warn("Stopped object traversal of '" + basePath + "' in '" +
-                        repository + "' because of reaching the limit");
+            // Fall back in a slow way for the remainder of targets.
+            for (String path : targets.keySet()) {
+                Git git = new Git(repository);
+                Iterator<RevCommit> iterator;
+
+                try {
+                    String targetPath = new File(basePath, path).getPath();
+                    iterator = git.log().add(untilCommitId).addPath(targetPath)
+                            .setMaxCount(1).call().iterator();
+                } catch (GitAPIException e) {
+                    play.Logger.warn("An exception occurred while traversing git history", e);
+                    continue;
+                }
+
+                if (iterator.hasNext()) {
+                    setLatestCommit(fixRevCommitNoParents(iterator.next()), path);
+                }
             }
 
             return found;
@@ -409,6 +484,12 @@ public class GitRepository implements PlayRepository {
 
                 @Override
                 public RevCommit next() {
+                    // This may be a bug of JGit; RevWalk.iterator().next()
+                    // should do this but doesn't.
+                    if (!hasNext()) {
+                        throw new NoSuchElementException();
+                    }
+
                     return fixRevCommitNoParents(iterator.next());
                 }
 
@@ -502,21 +583,25 @@ public class GitRepository implements PlayRepository {
          */
         private void found(RevCommit revCommit, Map<String, ObjectId> objects) {
             for (String path : objects.keySet()) {
-                GitCommit commit = new GitCommit(revCommit);
-                ObjectNode data = (ObjectNode) targets.get(path);
-                data.put("msg", commit.getShortMessage());
-                String emailAddress = commit.getAuthorEmail();
-                User user = User.findByEmail(emailAddress);
-                data.put("avatar", getAvatar(user));
-                data.put("userName", user.name);
-                data.put("userLoginId", user.loginId);
-                data.put("createdDate", revCommit.getCommitTime() * 1000l);
-                data.put("author", commit.getAuthorName());
-                data.put("commitId", commit.getShortId());
-                data.put("commitUrl", routes.CodeHistoryApp.show(ownerName, projectName, commit.getShortId()).url());
-                found.put(path, data);
+                setLatestCommit(revCommit, path);
                 targets.remove(path);
             }
+        }
+
+        private void setLatestCommit(RevCommit revCommit, String path) {
+            GitCommit commit = new GitCommit(revCommit);
+            ObjectNode data = (ObjectNode) targets.get(path);
+            data.put("msg", commit.getShortMessage());
+            String emailAddress = commit.getAuthorEmail();
+            User user = User.findByEmail(emailAddress);
+            data.put("avatar", getAvatar(user));
+            data.put("userName", user.name);
+            data.put("userLoginId", user.loginId);
+            data.put("createdDate", revCommit.getCommitTime() * 1000l);
+            data.put("author", commit.getAuthorName());
+            data.put("commitId", commit.getShortId());
+            data.put("commitUrl", routes.CodeHistoryApp.show(ownerName, projectName, commit.getShortId()).url());
+            found.put(extendPath(basePath, path), data);
         }
     }
 
@@ -553,7 +638,7 @@ public class GitRepository implements PlayRepository {
      * initializing {@code Cache} used in the repository.
      */
     @Override
-    public void delete() {
+    public void delete() throws Exception {
         repository.close();
         WindowCacheConfig config = new WindowCacheConfig();
         config.install();
@@ -757,7 +842,7 @@ public class GitRepository implements PlayRepository {
      * @return a list of the name strings
      */
     @Override
-    public List<String> getBranchNames() {
+    public List<String> getRefNames() {
         List<String> branches = new ArrayList<>();
 
         for(String refName : repository.getAllRefs().keySet()) {
@@ -782,6 +867,7 @@ public class GitRepository implements PlayRepository {
             GitCommit commit = new GitCommit(
                     new RevWalk(getRepository()).parseCommit(ref.getObjectId()));
             GitBranch newBranch = new GitBranch(ref.getName(), commit);
+            setTheLatestPullRequest(newBranch);
             branches.add(newBranch);
         }
 
@@ -836,7 +922,7 @@ public class GitRepository implements PlayRepository {
      * @return
      * @see #getGitDirectory(String, String)
      */
-    public static String getGitDirectory(Project project) {
+    public static File getGitDirectory(Project project) {
         return getGitDirectory(project.owner, project.name);
     }
 
@@ -851,8 +937,7 @@ public class GitRepository implements PlayRepository {
      * @throws IOException
      */
     public static String getGitDirectoryURL(Project project) throws IOException {
-        String currentDirectory = new java.io.File( "." ).getCanonicalPath();
-        return currentDirectory + "/" + getGitDirectory(project);
+        return getGitDirectory(project).getCanonicalPath();
     }
 
     /**
@@ -865,8 +950,16 @@ public class GitRepository implements PlayRepository {
      * @param projectName
      * @return
      */
-    public static String getGitDirectory(String ownerName, String projectName) {
-        return getRepoPrefix() + ownerName + "/" + projectName + ".git";
+    public static File getGitDirectory(String ownerName, String projectName) {
+        return new File(getRootDirectory(), ownerName + "/" + projectName + ".git");
+    }
+
+    private static File getRootDirectory() {
+        return new File(utils.Config.getYobiHome(), getRepoPrefix());
+    }
+
+    private static File getRootDirectoryForMerging() {
+        return new File(utils.Config.getYobiHome(), getRepoForMergingPrefix());
     }
 
     /**
@@ -882,20 +975,18 @@ public class GitRepository implements PlayRepository {
      * * @see <a href="https://www.kernel.org/pub/software/scm/git/docs/gitglossary.html#def_bare_repository">bare repository</a>
      */
     public static void cloneRepository(String gitUrl, Project forkingProject) throws GitAPIException {
-        String directory = getGitDirectory(forkingProject);
         Git.cloneRepository()
                 .setURI(gitUrl)
-                .setDirectory(new File(directory))
+                .setDirectory(getGitDirectory(forkingProject))
                 .setCloneAllBranches(true)
                 .setBare(true)
                 .call();
     }
 
     public static void cloneRepository(String gitUrl, Project forkingProject, String authId, String authPw) throws GitAPIException {
-        String directory = getGitDirectory(forkingProject);
         Git.cloneRepository()
                 .setURI(gitUrl)
-                .setDirectory(new File(directory))
+                .setDirectory(getGitDirectory(forkingProject))
                 .setCloneAllBranches(true)
                 .setBare(true)
                 .setCredentialsProvider(new UsernamePasswordCredentialsProvider(authId, authPw))
@@ -925,12 +1016,12 @@ public class GitRepository implements PlayRepository {
      * @param projectName
      * @return
      */
-    public static String getDirectoryForMerging(String owner, String projectName) {
-        return getRepoForMergingPrefix() + owner + "/" + projectName + ".git";
+    public static File getDirectoryForMerging(String owner, String projectName) {
+        return new File(getRootDirectoryForMerging(), owner + "/" + projectName + ".git");
     }
 
-    public static String getDirectoryForMergingObjects(String owner, String projectName) {
-        return getDirectoryForMerging(owner, projectName) + "/.git/objects";
+    public static File getDirectoryForMergingObjects(String owner, String projectName) {
+        return new File(getDirectoryForMerging(owner, projectName), ".git/objects");
     }
 
     @SuppressWarnings("unchecked")
@@ -979,8 +1070,8 @@ public class GitRepository implements PlayRepository {
             if (diffs.size() > BLAME_FILE_LIMIT) {
                 String msg = String.format("Reject to get related authors " +
                         "from changes because of performance issue: The " +
-                        "changes include %n files and it exceeds our limit " +
-                        "of '%n' files.", diffs.size(), BLAME_FILE_LIMIT);
+                        "changes include %d files and it exceeds our limit " +
+                        "of '%d' files.", diffs.size(), BLAME_FILE_LIMIT);
                 throw new LimitExceededException(msg);
             }
 
@@ -1142,12 +1233,12 @@ public class GitRepository implements PlayRepository {
     }
 
     public static Repository buildMergingRepository(Project project) {
-        String workingTree = GitRepository.getDirectoryForMerging(project.owner, project.name);
+        File workingDirectory = GitRepository.getDirectoryForMerging(project.owner, project.name);
 
         try {
-            File gitDir = new File(workingTree + "/.git");
+            File gitDir = new File(workingDirectory + "/.git");
             if(!gitDir.exists()) {
-                return cloneRepository(project, workingTree).getRepository();
+                return cloneRepository(project, workingDirectory).getRepository();
             } else {
                 return new RepositoryBuilder().setGitDir(gitDir).build();
             }
@@ -1156,10 +1247,10 @@ public class GitRepository implements PlayRepository {
         }
     }
 
-    private static Git cloneRepository(Project project, String workingTreePath) throws GitAPIException, IOException {
+    private static Git cloneRepository(Project project, File workingDirectory) throws GitAPIException, IOException {
         return Git.cloneRepository()
                 .setURI(GitRepository.getGitDirectoryURL(project))
-                .setDirectory(new File(workingTreePath))
+                .setDirectory(workingDirectory)
                 .call();
     }
 
@@ -1735,7 +1826,7 @@ public class GitRepository implements PlayRepository {
 
     @Override
     public boolean isEmpty() {
-        return this.getBranchNames().isEmpty();
+        return this.getRefNames().isEmpty();
     }
 
     /*
@@ -1773,10 +1864,10 @@ public class GitRepository implements PlayRepository {
         WindowCacheConfig config = new WindowCacheConfig();
         config.install();
 
-        File srcGitDirectory = new File(getGitDirectory(srcProjectOwner, srcProjectName));
-        File destGitDirectory = new File(getGitDirectory(desrProjectOwner, destProjectName));
-        File srcGitDirectoryForMerging = new File(getDirectoryForMerging(srcProjectOwner, srcProjectName));
-        File destGitDirectoryForMerging = new File(getDirectoryForMerging(desrProjectOwner, destProjectName));
+        File srcGitDirectory = getGitDirectory(srcProjectOwner, srcProjectName);
+        File destGitDirectory = getGitDirectory(desrProjectOwner, destProjectName);
+        File srcGitDirectoryForMerging = getDirectoryForMerging(srcProjectOwner, srcProjectName);
+        File destGitDirectoryForMerging = getDirectoryForMerging(desrProjectOwner, destProjectName);
         srcGitDirectory.setWritable(true);
         srcGitDirectoryForMerging.setWritable(true);
 

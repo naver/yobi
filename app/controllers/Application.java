@@ -4,7 +4,7 @@
  * Copyright 2012 NAVER Corp.
  * http://yobi.io
  *
- * @Author Sangcheol Hwang
+ * @author Sangcheol Hwang
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,6 +28,7 @@ import play.mvc.Result;
 import playRepository.RepositoryService;
 import views.html.error.notfound_default;
 import views.html.index.index;
+import jsmessages.JsMessages;
 
 import java.io.File;
 
@@ -51,17 +52,14 @@ public class Application extends Controller {
     }
 
     public static Result init() {
-        makeUploadFolder();
         makeTestRepository();
         return redirect(routes.Application.index());
     }
 
-    public static Result jsMessages() {
-        return ok(jsmessages.JsMessages.generate("Messages")).as("application/javascript");
-    }
+    static final JsMessages messages = JsMessages.create(play.Play.application());
 
-    private static void makeUploadFolder() {
-        new File("public/uploadFiles/").mkdir();
+    public static Result jsMessages() {
+        return ok(messages.generate("Messages")).as("application/javascript");
     }
 
     private static void makeTestRepository() {

@@ -4,7 +4,7 @@
  * Copyright 2013 NAVER Corp.
  * http://yobi.io
  *
- * @Author Jihan Kim
+ * @author Jihan Kim
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -41,7 +41,7 @@
             _initFileDownloader();
             _initCommentAndCloseButton();
 
-            _setTimelineUpdateTimer();
+            //_setTimelineUpdateTimer();
             _affixIssueInfoWrap();
         }
 

@@ -4,7 +4,7 @@
 * Copyright 2014 NAVER Corp.
 * http://yobi.io
 *
-* @Author Deokhong Kim
+* @author Deokhong Kim
 *
 * Licensed under the Apache License, Version 2.0 (the "License");
 * you may not use this file except in compliance with the License.
@@ -31,12 +31,11 @@
         </ul>
         <div class="project-setting">
             <ul class="project-menu-nav">
-                @if(OrganizationUser.isAdmin(org, UserApp.currentUser)) {
+                @if(OrganizationUser.isAdmin(org, UserApp.currentUser) || UserApp.currentUser().isSiteManager) {
                     <li class="">
                         <a href="@routes.OrganizationApp.settingForm(org.name)">
                             <i class="yobicon-cog"></i>
                             <span class="blind">@Messages("menu.admin")</span>
-
                         </a>
                     <li>
                 }

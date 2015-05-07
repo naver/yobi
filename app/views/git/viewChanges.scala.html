@@ -4,7 +4,7 @@
 * Copyright 2013 NAVER Corp.
 * http://yobi.io
 *
-* @Author Keesun Baik
+* @author Keesun Baik
 *
 * Licensed under the Apache License, Version 2.0 (the "License");
 * you may not use this file except in compliance with the License.
@@ -47,11 +47,12 @@
                 </div>
             </div>
 
-            <div class="codediff-wrap mt10 @if(request.cookies.get("diffs-only") != null){diffs-only}">
-                <button type="button" class="ybtn ybtn-default btn-show-reviewcards">
+            <div class="codediff-wrap mt10 @if(pull.commentThreads.size == 0) {diffs-only}">
+              @if(pull.commentThreads.size > 0) {
+              <button type="button" class="ybtn ybtn-default btn-show-reviewcards">
                     <i class="yobicon-restore"></i>
                 </button>
-
+                }
                 <div id="changes" class="diffs-wrap">
                     <div id="commits" class="btn-group auto mb10">
                         <button class="btn dropdown-toggle auto" data-toggle="dropdown">
@@ -63,11 +64,11 @@
                                     case (commit: PullRequestCommit) => {
                                         @commit.state match {
                                             case PullRequestCommit.State.PRIOR => {
-                                                <strong class="blue-txt mr10">@shortId(commitId)</strong>
+                                                <strong class="blue-txt mr10 commit-hash">@shortId(commitId)</strong>
                                                 <span>@commit.getCommitMessage.split("\n")(0) (@Messages("review.outdated"))</span>
                                             }
                                             case _ => {
-                                                <strong class="blue-txt mr10">@shortId(commitId)</strong>
+                                                <strong class="blue-txt mr10 commit-hash">@shortId(commitId)</strong>
                                                 <span>@commit.getCommitMessage.split("\n")(0)</span>
                                             }
                                         }
@@ -88,7 +89,7 @@
                             @for(commit <- pull.pullRequestCommits if commit.state == PullRequestCommit.State.CURRENT){
                             <li data-value="@commit.commitId">
                                 <a href="@routes.PullRequestApp.specificChange(project.owner, project.name, pull.number, commit.commitId)">
-                                    <strong class="blue-txt mr10">@commit.commitShortId</strong>
+                                    <strong class="blue-txt mr10 commit-hash">@commit.commitShortId</strong>
                                     <span>@commit.getCommitMessage.split("\n")(0)</span>
                                 </a>
                             </li>
@@ -150,7 +151,7 @@
                     }
                     @** // BlockComment **@
                 </div>
-
+                @if(pull.commentThreads.size > 0) {
                 <div class="review-wrap">
                     <div class="review-container">
                         <button type="button" class="ybtn ybtn-default btn-hide-reviewcards">
@@ -158,8 +159,8 @@
                         </button>
 
                         <ul class="nav nav-tabs" style="margin-bottom:10px;">
-                            <li class="active"><a href="#reviewcards-open" data-toggle="tab">@Messages("issue.state.open") @pull.getCommentThreadsByState(CommentThread.ThreadState.OPEN).size()</a></li>
-                            <li><a href="#reviewcards-closed" data-toggle="tab">@Messages("issue.state.closed") @pull.getCommentThreadsByState(CommentThread.ThreadState.CLOSED).size()</a></li>
+                            <li class="active"><a href="#reviewcards-open" data-toggle="tab">@Messages("issue.state.open") @pull.getCommentThreadsByState(CommentThread.ThreadState.OPEN).size</a></li>
+                            <li><a href="#reviewcards-closed" data-toggle="tab">@Messages("issue.state.closed") @pull.getCommentThreadsByState(CommentThread.ThreadState.CLOSED).size</a></li>
                         </ul>
 
                         <div class="tab-content review-list">
@@ -171,8 +172,10 @@
                                 @partial_reviewlist(pull.getCommentThreadsByState(CommentThread.ThreadState.CLOSED))
                             </div>
                         </div>
+
                     </div>
                 </div>
+                }
             </div>
         </div>
     </div>

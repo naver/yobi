@@ -4,7 +4,7 @@
  * Copyright 2013 NAVER Corp.
  * http://yobi.io
  *
- * @Author Yi EungJun
+ * @author Yi EungJun
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,7 +22,10 @@ package models.enumeration;
 
 import play.i18n.Messages;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
 
 public enum EventType {
 
@@ -43,7 +46,8 @@ public enum EventType {
     ISSUE_BODY_CHANGED("notification.type.issue.body.changed", 17),
     ISSUE_REFERRED_FROM_PULL_REQUEST("notification.type.issue.referred.from.pullrequest", 16),
     REVIEW_THREAD_STATE_CHANGED("notification.type.review.state.changed", 18),
-    ORGANIZATION_MEMBER_ENROLL_REQUEST("notification.organization.type.member.enroll",19);
+    ORGANIZATION_MEMBER_ENROLL_REQUEST("notification.organization.type.member.enroll",19),
+    COMMENT_UPDATED("notification.type.comment.updated", 20);
 
     private String descr;
 
@@ -83,7 +87,7 @@ public enum EventType {
             case NEW_PULL_REQUEST:
             case NEW_COMMENT:
             case NEW_REVIEW_COMMENT:
-            case NEW_COMMIT:
+            // We consider "NEW_COMMIT" as "UPDATE" because it updates a project.
                 return true;
             default:
                 return false;

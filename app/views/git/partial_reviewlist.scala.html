@@ -4,7 +4,7 @@
 * Copyright 2014 NAVER Corp.
 * http://yobi.io
 *
-* @Author Jihan Kim
+* @author Jihan Kim
 *
 * Licensed under the Apache License, Version 2.0 (the "License");
 * you may not use this file except in compliance with the License.
@@ -32,7 +32,7 @@
             @thread.getFirstReviewComment().getContents()
         </p>
         <p class="info">
-            @defining(thread.reviewComments.size()-1) { numberOfComments =>
+            @defining(thread.reviewComments.size-1) { numberOfComments =>
                 @if(numberOfComments > 0) {
                     <span class="comments pull-left">
                         <i class="yobicon-comments"></i> @numberOfComments

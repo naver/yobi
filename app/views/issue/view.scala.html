@@ -4,7 +4,7 @@
 * Copyright 2012 NAVER Corp.
 * http://yobi.io
 *
-* @Author Ahn Hyeok Jun
+* @author Ahn Hyeok Jun
 *
 * Licensed under the Apache License, Version 2.0 (the "License");
 * you may not use this file except in compliance with the License.
@@ -18,7 +18,7 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 **@
-@(title:String, issue:Issue, issueForm:Form[Issue], commentForm:Form[Comment],project:Project)
+@(title:String, issue:Issue, issueForm: play.data.Form[Issue], commentForm: play.data.Form[Comment],project:Project)
 @import org.apache.commons.lang.StringUtils
 @import helper._
 @import scala.collection.mutable.Map
@@ -32,12 +32,19 @@
 @import utils.TemplateHelper._
 @import utils.AccessControl._
 @import utils.Config
+@import play.libs.Json.toJson
+@import utils.Markdown
 
 @getTitle(issue:Issue) = @{ "#" + issue.getNumber + " " + issue.title }
 
 @isFirstState(state:State) = {@if(issue.state.state == Issue.availableStates.get(0).state()){dirty}}
 
-@urlToIssues = @{ urlToList(request.getHeader("Referer"), routes.IssueApp.issues(project.owner, project.name, "open").toString()) }
+@urlToIssues = @{
+  requestHeader.headers.get("Referer") match {
+    case Some(u) => urlToList(u, routes.IssueApp.issues(project.owner, project.name, "open").toString())
+    case _ => routes.IssueApp.issues(project.owner, project.name, "open").toString()
+  }
+}
 
 @urlToVote = @{
     if(issue.isVotedBy(UserApp.currentUser)){
@@ -93,13 +100,9 @@
                 @if(StringUtils.isEmpty(issue.body)){
                     <div class="content empty-content"></div>
                 } else {
-                    <div class="markdown-loader">
-                        <i class="yobicon-loading2"></i> @Messages("common.loading")
-                    </div>
-                    <div class="content markdown-wrap markdown-before" markdown="true">@issue.body</div>
+                    <div class="content markdown-wrap">@Html(Markdown.render(issue.body, issue.project))</div>
                 }
-                <div class="attachments" id="attachments" data-resource-type="@ResourceType.ISSUE_POST" data-resource-id="@issue.id"></div>
-
+                <div class="attachments" id="attachments" data-attachments="@toJson(AttachmentApp.getFileList(ResourceType.ISSUE_POST.toString(), issue.id.toString()))"></div>
                 <div class="board-actrow right-txt">
                     <div class="pull-left">
                         <div>
@@ -115,7 +118,7 @@
                             }
 
                             <div id="vote" class="vote-wrap">
-                                @if(isResourceCreatable(User.findByLoginId(session.get("loginId")), issue.asResource(), ResourceType.ISSUE_COMMENT)) {
+                                @if(isResourceCreatable(UserApp.currentUser, issue.asResource(), ResourceType.ISSUE_COMMENT)) {
                                     <a href="@urlToVote" class="ybtn @if(issue.isVotedBy(UserApp.currentUser)){ybtn-watching}" title="@getVoteButtonTitle"
                                        data-request-method="post" data-toggle="tooltip">
                                         <span class="heart"><i class="yobicon-hearts"></i></span>
@@ -325,7 +328,6 @@
     	</div>
     </div>
 </div>
-
 @common.markdown(project)
 @common.commentDeleteModal()
 @common.select2()

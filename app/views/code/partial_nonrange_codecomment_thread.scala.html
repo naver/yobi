@@ -4,7 +4,7 @@
  * Copyright 2014 NAVER Corp.
  * http://yobi.io
  *
- * @Author Jihan Kim
+ * @author Jihan Kim
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,6 +23,8 @@
 @import utils.JodaDateUtil
 @import utils.TemplateHelper._
 @import utils.TemplateHelper.DiffRenderer._
+@import play.libs.Json.toJson
+@import utils.Markdown
 
 <div id="thread-@thread.id" class="comment-thread-wrap @thread.state.toString().toLowerCase()">
     <div class="btn-thread-here btn-thread-minimize">
@@ -52,8 +54,8 @@
                     }
                 </div>
 
-                <div class="comment-body markdown-wrap markdown-before" markdown="true">@comment.getContents</div>
-                <div class="attachments" data-resource-type="@comment.asResource.getType" data-resource-id="@comment.id"></div>
+                <div class="comment-body markdown-wrap" data-via-email="@OriginalEmail.exists(comment.asResource)">@Html(Markdown.render(comment.getContents, comment.asResource().getProject()))</div>
+                <div class="attachments" data-attachments="@toJson(AttachmentApp.getFileList(comment.asResource().getType().toString(), comment.id.toString()))"></div>
             </div>
         </li>
         }

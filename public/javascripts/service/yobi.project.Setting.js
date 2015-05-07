@@ -4,7 +4,7 @@
  * Copyright 2013 NAVER Corp.
  * http://yobi.io
  *
- * @Author Jihan Kim
+ * @author Jihan Kim
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -54,6 +54,13 @@
             htElement.welInputName = $("input#project-name");
             htElement.welBtnSave   = $("#save");
             htElement.welReviewerCount = $("#welReviewerCount");
+            htElement.welMenuSettingCode = $("#menuSettingCode");
+            htElement.welMenuSettingPullRequest = $("#menuSettingPullRequest");
+            htElement.welReviewerCountDisable = $('#reviewerCountDisable')
+            htElement.welMenuSettingReview = $("#menuSettingReview");
+            htElement.welReviewerCountSettingPanel = $("#reviewerCountSettingPanel");
+            htElement.welDefaultBranceSettingPanel = $("#defaultBranceSettingPanel");
+            htElement.welSubMenuProjectChangeVCS = $("#subMenuProjectChangeVCS");
         }
 
         /**
@@ -61,7 +68,12 @@
          */
         function _attachEvent(){
             htElement.welInputLogo.change(_onChangeLogoPath);
+            
             htElement.welBtnSave.click(_onClickBtnSave);
+            
+            htElement.welMenuSettingCode.on('click', _onClickMenuSettingCode);
+            htElement.welMenuSettingPullRequest.on('click', _onClickMenuSettingPullRequest);
+            htElement.welMenuSettingReview.on('click', _onClickMenuSettingReview);
 
             if(htElement.welReviewerCount.data("value") === true) {
                 htElement.welReviewerCount.show();
@@ -99,6 +111,41 @@
             }
 
             return true;
+        }
+
+        function _onClickMenuSettingCode() {
+            var isChecked = $(this).prop("checked");
+            
+            if (!isChecked) {
+                htElement.welMenuSettingCode.prop("checked", false);
+                htElement.welMenuSettingPullRequest.prop("checked", false);
+                htElement.welMenuSettingReview.prop("checked", false);
+                htElement.welReviewerCountDisable.trigger('click');
+                
+                htElement.welReviewerCountSettingPanel.hide();
+                htElement.welDefaultBranceSettingPanel.hide();
+                htElement.welSubMenuProjectChangeVCS.hide();
+            }
+        }
+
+        function _onClickMenuSettingPullRequest() {
+            var isChecked = $(this).prop("checked");
+            
+            if(isChecked) {
+                htElement.welMenuSettingCode.prop("checked", true);
+                htElement.welReviewerCountSettingPanel.show();    
+            } else {
+                htElement.welReviewerCountSettingPanel.hide();    
+                htElement.welReviewerCountDisable.trigger('click');
+            }   
+        }
+
+        function _onClickMenuSettingReview() {
+            var isChecked = $(this).prop("checked");
+            
+            if(isChecked) {
+                htElement.welMenuSettingCode.prop("checked", true);
+            }     
         }
 
         _init(htOptions);

@@ -4,7 +4,7 @@
 * Copyright 2013 NAVER Corp.
 * http://yobi.io
 *
-* @Author JiHan Kim
+* @author JiHan Kim
 *
 * Licensed under the Apache License, Version 2.0 (the "License");
 * you may not use this file except in compliance with the License.
@@ -20,7 +20,7 @@
 **@
 @(section:String, project:Project)(implicit request: play.api.mvc.RequestHeader)
 
-@isMac = @{request.headers.get("User-Agent").getOrElse("").contains("Macintosh")}
+@isMac = @{requestHeader.headers.get("User-Agent").getOrElse("").contains("Macintosh")}
 @ctrl = @{if(isMac){"⌘"}else{"CTRL"}}
 
 <div class="pull-right" style="padding:10px 0;">
@@ -56,7 +56,7 @@
                 }
 
                 @if(project != null ) {
-                    @if(ProjectUser.roleOf(session.get("loginId"), project).equals("manager")){
+                    @if(UserApp.currentUser.isManagerOf(project)){
                         <span class="ybtn ybtn-small">Q</span>
                         <span class="help-inline">@Messages("project.setting")</span><br>
                     }

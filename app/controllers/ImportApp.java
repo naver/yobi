@@ -4,7 +4,7 @@
  * Copyright 2013 NAVER Corp.
  * http://yobi.io
  *
- * @Author Keesun Baik
+ * @author Keesun Baik
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -42,6 +42,7 @@ import views.html.project.importing;
 import java.io.File;
 import java.io.IOException;
 import java.util.List;
+import java.util.Objects;
 
 import static play.data.Form.form;
 
@@ -57,7 +58,7 @@ public class ImportApp extends Controller {
     }
 
     @Transactional
-    public static Result newProject() throws GitAPIException, IOException {
+    public static Result newProject() throws Exception {
         if( !AccessControl.isGlobalResourceCreatable(UserApp.currentUser()) ){
             return forbidden("'" + UserApp.currentUser().name + "' has no permission");
         }
@@ -108,7 +109,7 @@ public class ImportApp extends Controller {
 
         if (!filledNewProjectForm.errors().isEmpty()) {
             List<OrganizationUser> orgUserList = OrganizationUser.findByAdmin(UserApp.currentUser().id);
-            FileUtil.rm_rf(new File(GitRepository.getGitDirectory(project)));
+            FileUtil.rm_rf(GitRepository.getGitDirectory(project));
             return badRequest(importing.render("title.newProject", filledNewProjectForm, orgUserList));
         } else {
             return redirect(routes.ProjectApp.project(project.owner, project.name));
@@ -180,7 +181,7 @@ public class ImportApp extends Controller {
             result = badRequest(create.render("title.newProject", newProjectForm, orgUserList));
         }
 
-        if (ownerIsUser && UserApp.currentUser().id != user.id) {
+        if (ownerIsUser && !Objects.equals(UserApp.currentUser().id, user.id)) {
             newProjectForm.reject("owner", "project.owner.invalidate");
             hasError = true;
             result = badRequest(create.render("title.newProject", newProjectForm, orgUserList));

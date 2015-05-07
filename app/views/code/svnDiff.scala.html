@@ -4,7 +4,7 @@
 * Copyright 2012 NAVER Corp.
 * http://yobi.io
 *
-* @Author Yi EungJun
+* @author Yi EungJun
 *
 * Licensed under the Apache License, Version 2.0 (the "License");
 * you may not use this file except in compliance with the License.
@@ -25,6 +25,9 @@
 @import utils.TemplateHelper._
 @import utils.JodaDateUtil
 @import utils.AccessControl._
+@import play.libs.Json.toJson
+@import utils.Markdown
+@import org.apache.commons.lang3.StringUtils
 
 @projectLayout(Messages("code.commits") + " @" + commit.getId, project, utils.MenuType.CODE) {
 @projectMenu(project, utils.MenuType.CODE, "main-menu-only")
@@ -37,10 +40,10 @@
                     <span class="d-caret"><span class="caret"></span></span>
                 </button>
                 <ul class="dropdown-menu">
-                @defining(RepositoryService.getRepository(project).getBranchNames()) { branches =>
+                @defining(RepositoryService.getRepository(project).getRefNames()) { branches =>
                     @for(branch <- branches){
                         @common.branchItem("history", project, branch, null,
-                            utils.TemplateHelper.equals(branch, selectedBranch))
+                            StringUtils.equals(branch, selectedBranch))
                     }
                 }
                 </ul>
@@ -124,9 +127,9 @@
                                 }
                             </div>
 
-                            <div class="comment-body markdown-wrap markdown-before" markdown="true">@comment.contents</div>
+                            <div class="comment-body markdown-wrap" data-via-email="@OriginalEmail.exists(comment.asResource)">@Html(Markdown.render(comment.contents, comment.asResource().getProject()))</div>
 
-                            <div class="attachments" data-resource-type="@ResourceType.COMMIT_COMMENT" data-resource-id="@comment.id"></div>
+                            <div class="attachments" data-attachments="@toJson(AttachmentApp.getFileList(ResourceType.COMMIT_COMMENT.toString(), comment.id.toString()))"></div>
                         </div>
                     </li>
                     }
@@ -175,8 +178,7 @@
             "sUnwatchUrl"    : "@routes.WatchApp.unwatch(commit.asResource(project).asParameter)",
             "sParentCommitId": "@if(parentCommit != null){@parentCommit.getId}",
             "sCommitId"      : "@commit.getId",
-            "sTplFileURL"    : "@routes.CodeApp.codeBrowserWithBranch(project.owner, project.name, "${commitId}", "${path}")",
-            "sTplRawURL"     : "@routes.CodeApp.showRawFile(project.owner, project.name, "${commitId}", "${path}")"
+            "sCodeURL"       : "@routes.CodeApp.codeBrowser(project.owner, project.name)"
         });
 
         yobi.Mention({

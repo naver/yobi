@@ -4,7 +4,7 @@
  * Copyright 2013 NAVER Corp.
  * http://yobi.io
  *
- * @Author Wansoon Park
+ * @author Wansoon Park
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,26 +20,22 @@
  */
 package models;
 
-import java.util.Date;
-import java.util.List;
-
-import javax.persistence.Entity;
-import javax.persistence.EnumType;
-import javax.persistence.Enumerated;
-import javax.persistence.Id;
-import javax.persistence.ManyToOne;
-import javax.persistence.Transient;
-
+import org.apache.commons.lang3.StringUtils;
 import play.db.ebean.Model;
 import playRepository.GitCommit;
 import utils.JodaDateUtil;
+
+import javax.annotation.Nonnull;
+import javax.persistence.*;
+import java.util.Date;
+import java.util.List;
 
 @Entity
 public class PullRequestCommit extends Model implements TimelineItem {
 
     private static final long serialVersionUID = -4343181252386722689L;
 
-    public static Finder<Long, PullRequestCommit> find = new Finder<>(Long.class, PullRequestCommit.class);
+    public static final Finder<Long, PullRequestCommit> find = new Finder<>(Long.class, PullRequestCommit.class);
 
     @Id
     public String id;
@@ -50,6 +46,7 @@ public class PullRequestCommit extends Model implements TimelineItem {
     public String commitId;
     public Date authorDate;
     public Date created;
+    @Lob
     public String commitMessage;
     public String commitShortId;
     public String authorEmail;
@@ -69,6 +66,24 @@ public class PullRequestCommit extends Model implements TimelineItem {
         return commitMessage;
     }
 
+    public @Nonnull String getCommitShortMessage() {
+        String commitMessage = getCommitMessage();
+        if (StringUtils.isEmpty(commitMessage)) {
+            return "";
+        }
+
+        if (!commitMessage.contains("\n")) {
+            return commitMessage;
+        }
+
+        String[] segments = commitMessage.split("\n");
+        if (segments.length > 0) {
+            return segments[0];
+        }
+
+        return "";
+    }
+
     public String getCommitId() {
         return commitId;
     }
@@ -83,9 +98,20 @@ public class PullRequestCommit extends Model implements TimelineItem {
         return created;
     }
 
+    /**
+     * PullRequestCommits that have the same {@code pullRequest} and {@code commitId}
+     * but have different state. And, this method find the latest PullRequestCommit.
+     * 
+     * @param pullRequest
+     * @param commitId
+     * @return
+     */
     public static PullRequestCommit getByCommitId(PullRequest pullRequest, String commitId) {
-        return find.select("state").where().eq("pullRequest", pullRequest).eq("commitId",
-                commitId).findUnique();
+        return find.select("state").where().eq("pullRequest", pullRequest)
+                .eq("commitId",commitId)
+                .orderBy().desc("created")
+                .setMaxRows(1)
+                .findUnique();
     }
 
     public static State getStateByCommitId(PullRequest pullRequest, String commitId) {

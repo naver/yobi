@@ -4,7 +4,7 @@
  * Copyright 2012 NAVER Corp.
  * http://yobi.io
  *
- * @Author Ahn Hyeok Jun
+ * @author Ahn Hyeok Jun
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,7 +28,7 @@ import models.enumeration.Operation;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.tika.Tika;
 import org.apache.tika.mime.MediaType;
-import org.codehaus.jackson.node.ObjectNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.tmatesoft.svn.core.SVNException;
 import play.mvc.*;
@@ -36,6 +36,7 @@ import playRepository.PlayRepository;
 import playRepository.RepositoryService;
 import utils.ErrorViews;
 import utils.FileUtil;
+import utils.HttpUtil;
 import views.html.code.nohead;
 import views.html.code.nohead_svn;
 import views.html.code.view;
@@ -43,7 +44,6 @@ import views.html.code.view;
 import javax.servlet.ServletException;
 import java.io.IOException;
 import java.net.URLEncoder;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -90,20 +90,17 @@ public class CodeApp extends Controller {
             return status(Http.Status.NOT_IMPLEMENTED, project.vcs + " is not supported!");
         }
 
+        branch = HttpUtil.decodePathSegment(branch);
+        path = HttpUtil.decodePathSegment(path);
+
         PlayRepository repository = RepositoryService.getRepository(project);
-        ObjectNode fileInfo = repository.getMetaDataFromPath(branch, path);
-        if (fileInfo == null) {
-            return notFound(ErrorViews.NotFound.render("error.notfound"));
-        }
-        fileInfo.put("path", path);
+        List<String> branches = repository.getRefNames();
+        List<ObjectNode> recursiveData = RepositoryService.getMetaDataFromAncestorDirectories(
+                repository, branch, path);
 
-        List<ObjectNode> recursiveData = new ArrayList<>();
-        List<String> branches = repository.getBranchNames();
-
-        if(fileInfo.get("type").getTextValue().equals("folder") && !path.equals("")){
-            recursiveData.addAll(RepositoryService.getMetaDataFromAncestorDirectories(repository, branch, path));
+        if (recursiveData == null) {
+            return notFound(ErrorViews.NotFound.render());
         }
-        recursiveData.add(fileInfo);
 
         return ok(view.render(project, branches, recursiveData, branch, path));
     }
@@ -111,6 +108,7 @@ public class CodeApp extends Controller {
     @With(DefaultProjectCheckAction.class)
     public static Result ajaxRequest(String userName, String projectName, String path) throws Exception{
         PlayRepository repository = RepositoryService.getRepository(userName, projectName);
+        path = HttpUtil.decodePathSegment(path);
         ObjectNode fileInfo = repository.getMetaDataFromPath(path);
 
         if(fileInfo != null) {
@@ -125,6 +123,8 @@ public class CodeApp extends Controller {
             throws UnsupportedOperationException, IOException, SVNException, GitAPIException, ServletException{
         CodeApp.hostName = request().host();
         PlayRepository repository = RepositoryService.getRepository(userName, projectName);
+        branch = HttpUtil.decodePathSegment(branch);
+        path = HttpUtil.decodePathSegment(path);
         ObjectNode fileInfo = repository.getMetaDataFromPath(branch, path);
 
         if(fileInfo != null) {
@@ -136,6 +136,8 @@ public class CodeApp extends Controller {
 
     @With(DefaultProjectCheckAction.class)
     public static Result showRawFile(String userName, String projectName, String revision, String path) throws Exception{
+        path = HttpUtil.decodePathSegment(path);
+        revision = HttpUtil.decodePathSegment(revision);
         byte[] fileAsRaw = RepositoryService.getFileAsRaw(userName, projectName, revision, path);
         if(fileAsRaw == null){
             return redirect(routes.CodeApp.codeBrowserWithBranch(userName, projectName, revision, path));
@@ -154,6 +156,8 @@ public class CodeApp extends Controller {
 
     @With(DefaultProjectCheckAction.class)
     public static Result showImageFile(String userName, String projectName, String revision, String path) throws Exception{
+        revision = HttpUtil.decodePathSegment(revision);
+        path = HttpUtil.decodePathSegment(path);
         final byte[] fileAsRaw = RepositoryService.getFileAsRaw(userName, projectName, revision, path);
         String mimeType = tika.detect(fileAsRaw);
         return ok(fileAsRaw).as(mimeType);
@@ -192,6 +196,8 @@ public class CodeApp extends Controller {
     @IsAllowed(Operation.READ)
     public static Result openFile(String userName, String projectName, String revision,
                            String path) throws Exception{
+        revision = HttpUtil.decodePathSegment(revision);
+        path = HttpUtil.decodePathSegment(path);
         byte[] raw = RepositoryService.getFileAsRaw(userName, projectName, revision, path);
 
         if(raw == null){

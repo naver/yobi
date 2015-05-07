@@ -4,7 +4,7 @@
  * Copyright 2013 NAVER Corp.
  * http://yobi.io
  *
- * @Author Keesun Baik
+ * @author Keesun Baik
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,6 +24,8 @@ import actions.support.PathParser;
 import models.Project;
 import play.mvc.Http.Context;
 import play.mvc.Result;
+import play.mvc.Result;
+import play.libs.F.Promise;
 
 /**
  * Default implementation of {@link AbstractProjectCheckAction}.
@@ -34,7 +36,7 @@ import play.mvc.Result;
  */
 public class DefaultProjectCheckAction extends AbstractProjectCheckAction<Void> {
     @Override
-    protected Result call(Project project, Context context, PathParser parser) throws Throwable {
+    protected Promise<Result> call(Project project, Context context, PathParser parser) throws Throwable {
         return this.delegate.call(context);
     }
 }

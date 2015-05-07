@@ -4,7 +4,7 @@
  * Copyright 2013 NAVER Corp.
  * http://yobi.io
  *
- * @Author JiHan Kim
+ * @author JiHan Kim
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,7 +39,14 @@ yobi.Attachments = function(htOptions) {
 
         _initVar(htOptions);
         _initElement(htOptions);
-        _requestList();
+
+        // Request attachments only if the container is specified.
+        if (htVar.attachments) {
+            _updateAttachments(htVar.attachments);
+        } else if ((htVar.sResourceType && htVar.sResourceId) || htVar.attachments) {
+            _requestList();
+        }
+
 
         if(htOptions.sUploaderId){
             _attachUploaderEvent(htOptions.sUploaderId);
@@ -75,6 +82,10 @@ yobi.Attachments = function(htOptions) {
         htElements.welContainer.data("isYobiAttachment", true);
         htVar.sResourceId = htVar.sResourceId || htElements.welContainer.data('resourceId');
         htVar.sResourceType = htVar.sResourceType || htElements.welContainer.data('resourceType');
+
+        if (!htVar.attachments) {
+            htVar.attachments = htElements.welContainer.data('attachments');
+        }
 
         // welTextarea (Optional)
         htElements.welTextarea  = $(htOptions.elTextarea);
@@ -553,7 +564,7 @@ yobi.Attachments = function(htOptions) {
      */
     function _requestList(){
         yobi.Files.getList({
-            "fOnLoad"      : _onLoadRequest,
+            "fOnLoad"      : _updateAttachments,
             "sResourceType": htVar.sResourceType,
             "sResourceId"  : htVar.sResourceId
         });
@@ -562,7 +573,7 @@ yobi.Attachments = function(htOptions) {
     /**
      * @param {Object} oRes
      */
-    function _onLoadRequest(oRes) {
+    function _updateAttachments(oRes) {
         _appendFileItem({
             "vFile"     : oRes.attachments, // Array
             "bTemporary": false

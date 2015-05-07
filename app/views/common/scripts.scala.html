@@ -4,7 +4,7 @@
 * Copyright 2012 NAVER Corp.
 * http://yobi.io
 *
-* @Author Sangcheol Hwang
+* @author Sangcheol Hwang
 *
 * Licensed under the Apache License, Version 2.0 (the "License");
 * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@
 **@
 @()
 @import utils.TemplateHelper._
+@import play.mvc.Http.Context
 
 @**<!-- yobi.ui.Dialog -->**@
 <div id="yobiDialog" class="modal hide fade yobiDialog" tabindex="-1" role="dialog" aria-hidden="true">
@@ -49,12 +50,6 @@
 </script>
 @**<!-- //yobi.ui.Toast -->**@
 
-@**<!-- //yobi.ui.Spinner -->**@
-<div id="yobiSpinner" class="yobiSpinner">
-    <div class="spinContainer"></div>
-</div>
-@**<!-- //yobi.ui.Spinner -->**@
-
 @if(UserApp.currentUser.isAnonymous){
 @common.loginDialog()
 }
@@ -73,7 +68,7 @@
 <script type="text/javascript" src="@routes.Assets.at("javascripts/lib/rgbcolor.js")"></script>
 <script type="text/javascript" src="@routes.Assets.at("javascripts/lib/humanize.js")"></script>
 <script type="text/javascript" src="@routes.Assets.at("javascripts/lib/validate.js")"></script>
-<script type="text/javascript" src="@routes.Assets.at("javascripts/lib/spin.js")"></script>
+<script type="text/javascript" src="@routes.Assets.at("javascripts/lib/xss.js")"></script>
 <script type="text/javascript" src="@routes.Assets.at("javascripts/common/yobi.Attachments.js")"></script>
 <script type="text/javascript" src="@routes.Assets.at("javascripts/common/yobi.Files.js")"></script>
 <script type="text/javascript" src="@routes.Assets.at("javascripts/common/yobi.Mention.js")"></script>
@@ -85,7 +80,7 @@
 <script type="text/javascript" src="@routes.Assets.at("javascripts/common/yobi.ui.Dialog.js")"></script>
 <script type="text/javascript" src="@routes.Assets.at("javascripts/common/yobi.ui.Toast.js")"></script>
 <script type="text/javascript" src="@routes.Assets.at("javascripts/common/yobi.ui.Tabs.js")"></script>
-<script type="text/javascript" src="@routes.Assets.at("javascripts/common/yobi.ui.Spinner.js")"></script>
+<script type="text/javascript" src="@routes.Assets.at("javascripts/common/yobi.OriginalMessage.js")"></script>
 
 <script type="text/javascript">
     $yobi.setScriptPath("@getJSPath");
@@ -101,7 +96,7 @@
 
         // current language set!
         if (typeof window.moment == "function" && typeof window.moment.lang == "function") {
-            moment.lang("@lang.language");
+            moment.lang("@implicitJavaLang.language");
         }
 
      	// yobi.Dropdown
@@ -120,10 +115,15 @@
                 $(htInfo.welTarget.parents("form").get(0)).submit();
             }
         });
-        @if(session.contains("loginId")){
-            yobi.ShortcutKey.setKeymapLink({
-            "P": "@routes.UserApp.userInfo(session.get("loginId"))"
-        });
+        @requestHeader.session.get("loginId") match {
+            case Some(loginId) => { }
+            case None => { }
+        }
+        @requestHeader.session.get("loginId") match {
+            case Some(v) => { yobi.ShortcutKey.setKeymapLink({
+                "P": "@routes.UserApp.userInfo(v)"
+            }); }
+            case None => { }
         }
 
         // yobi.Files
@@ -147,8 +147,8 @@
                 }
 
                 welTarget.popover({
-                    "title"    : htData.title,
-                    "content"  : htData.body,
+                    "title"    : htData.title.replace('<', '&lt;'),
+                    "content"  : $yobi.xssClean(htData.body),
                     "html"     : true,
                     "placement": "right",
                     "trigger"  : "hover"
@@ -168,14 +168,14 @@
         }
 
         // notify flash messages
-        @for(key <- flash.keys) {
+        @for(key <- Context.current().flash().keySet) {
             @if(key != utils.Constants.TITLE &&
                 key != utils.Constants.DESCRIPTION){
-                $yobi.notify("@Messages(flash.get(key))", 3000);
+                $yobi.notify("@Messages(Context.current().flash().get(key))", 3000);
             }
             @if(key == utils.Constants.TITLE){
-                $yobi.alert("@Messages(flash.get(key))", null,
-                            "@Messages(flash.get(utils.Constants.DESCRIPTION))");
+                $yobi.alert("@Messages(Context.current().flash().get(key))", null,
+                            "@Messages(Context.current().flash().get(utils.Constants.DESCRIPTION))");
             }
         }
 
@@ -184,5 +184,6 @@
             $('#gnb-search-scope-title').text($(this).text());
         });
 
+        yobi.OriginalMessage.hide($("[data-via-email]"));
     });
 </script>

@@ -4,7 +4,7 @@
  * Copyright 2013 NAVER Corp.
  * http://yobi.io
  *
- * @Author Yi EungJun
+ * @author Yi EungJun
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@
 package models;
 
 import info.schleichardt.play2.mailplugin.Mailer;
+import mailbox.EmailAddressWithDetail;
 import models.enumeration.ResourceType;
 import models.enumeration.UserState;
 import models.resource.Resource;
@@ -40,9 +41,9 @@ import play.libs.Akka;
 import scala.concurrent.duration.Duration;
 import utils.Config;
 import utils.Markdown;
-import utils.RouteUtil;
 import utils.Url;
 
+import javax.annotation.Nullable;
 import javax.mail.MessagingException;
 import javax.mail.Session;
 import javax.mail.internet.InternetAddress;
@@ -58,7 +59,9 @@ import java.util.concurrent.TimeUnit;
 @Entity
 public class NotificationMail extends Model {
     private static final long serialVersionUID = 1L;
+    private static final int RECIPIENT_NO_LIMIT = 0;
     static boolean hideAddress = true;
+    private static int recipientLimit = RECIPIENT_NO_LIMIT;
 
     @Id
     public Long id;
@@ -66,12 +69,15 @@ public class NotificationMail extends Model {
     @OneToOne
     public NotificationEvent notificationEvent;
 
-    public static Finder<Long, NotificationMail> find = new Finder<>(Long.class,
+    public static final Finder<Long, NotificationMail> find = new Finder<>(Long.class,
             NotificationMail.class);
 
     public static void onStart() {
         hideAddress = play.Configuration.root().getBoolean(
             "application.notification.bymail.hideAddress", true);
+
+        recipientLimit = play.Configuration.root().getInt(
+                "application.notification.bymail.recipientLimit", RECIPIENT_NO_LIMIT);
 
         if (notificationEnabled()) {
             NotificationMail.startSchedule();
@@ -108,7 +114,7 @@ public class NotificationMail extends Model {
                     try {
                         sendMail();
                     } catch (Exception e) {
-                        play.Logger.warn("Failed to send notification mail", e);
+                        play.Logger.warn("Error occured while sending notification mails", e);
                     }
                 }
 
@@ -133,10 +139,15 @@ public class NotificationMail extends Model {
                                     .orderBy("notificationEvent.created ASC").findList();
 
                     for (NotificationMail mail: mails) {
-                        if (mail.notificationEvent.resourceExists()) {
-                            sendNotification(mail.notificationEvent);
+                        try {
+                            NotificationEvent event = mail.notificationEvent;
+                            mail.delete();
+                            if (event.resourceExists()) {
+                                sendNotification(event);
+                            }
+                        } catch (Exception e) {
+                            play.Logger.warn("Error occured while sending a notification mail", e);
                         }
-                        mail.delete();
                     }
                 }
             },
@@ -163,9 +174,7 @@ public class NotificationMail extends Model {
                 protected void updateMessageID() throws MessagingException {
                     if (event != null && event.eventType.isCreating()) {
                         setHeader("Message-ID",
-                                String.format("<%s@%s>",
-                                        event.getUrlToView(),
-                                        Config.getHostname()));
+                                event.getResource().getMessageId());
                     } else {
                         super.updateMessageID();
                     }
@@ -189,10 +198,18 @@ public class NotificationMail extends Model {
             Resource container = resource.getContainer();
 
             if (container != null) {
-                String reference = RouteUtil.getUrl(
-                        container.getType(), container.getId());
-                addHeader("References",
-                        "<" + reference + "@" + Config.getHostname() + ">");
+                String reference;
+                switch (container.getType()) {
+                    case COMMENT_THREAD:
+                        CommentThread thread =
+                                CommentThread.find.byId(Long.valueOf(container.getId()));
+                        reference = thread.getFirstReviewComment().asResource().getMessageId();
+                        break;
+                    default:
+                        reference = container.getMessageId();
+                        break;
+                }
+                addHeader("References", reference);
             }
         }
     }
@@ -204,7 +221,7 @@ public class NotificationMail extends Model {
      * @see <a href="https://github.com/nforge/yobi/blob/master/docs/technical/watch.md>watch.md</a>
      */
     private static void sendNotification(NotificationEvent event) {
-        Set<User> receivers = event.receivers;
+        Set<User> receivers = event.findReceivers();
 
         // Remove inactive users.
         Iterator<User> iterator = receivers.iterator();
@@ -224,11 +241,7 @@ public class NotificationMail extends Model {
         HashMap<String, List<User>> usersByLang = new HashMap<>();
 
         for (User receiver : receivers) {
-            String lang = receiver.lang;
-
-            if (lang == null) {
-                lang = Locale.getDefault().getLanguage();
-            }
+            String lang = receiver.getPreferredLanguage();
 
             if (usersByLang.containsKey(lang)) {
                 usersByLang.get(lang).add(receiver);
@@ -238,69 +251,146 @@ public class NotificationMail extends Model {
         }
 
         for (String langCode : usersByLang.keySet()) {
-            final EventEmail email = new EventEmail(event);
+            List<User> users = usersByLang.get(langCode);
 
-            try {
-                email.setFrom(Config.getEmailFromSmtp(), event.getSender().name);
-                email.addTo(Config.getEmailFromSmtp(), utils.Config.getSiteName());
-
-                for (User receiver : usersByLang.get(langCode)) {
-                    if (hideAddress) {
-                        email.addBcc(receiver.email, receiver.name);
-                    } else {
-                        email.addTo(receiver.email, receiver.name);
-                    }
+            if (recipientLimit == RECIPIENT_NO_LIMIT) {
+                sendMail(event, users, langCode);
+            } else {
+                int usersSize = users.size();
+                int fromIndex, toIndex = 0;
+                while (toIndex < usersSize) {
+                    fromIndex = toIndex;
+                    toIndex = Math.min(toIndex + recipientLimit, usersSize);
+                    sendMail(event, users.subList(fromIndex, toIndex), langCode);
                 }
-
-                if (email.getToAddresses().isEmpty()) {
-                    continue;
-                }
-
-                Lang lang = Lang.apply(langCode);
-
-                String message = event.getMessage(lang);
-                String urlToView = event.getUrlToView();
-                String reference = Url.removeFragment(event.getUrlToView());
-
-                email.setSubject(event.title);
-
-                Resource resource = event.getResource();
-                if (resource.getType() == ResourceType.ISSUE_COMMENT) {
-                    IssueComment issueComment = IssueComment.find.byId(Long.valueOf(resource.getId()));
-                    resource = issueComment.issue.asResource();
-                }
-                email.setHtmlMsg(getHtmlMessage(lang, message, urlToView, resource));
-                email.setTextMsg(getPlainMessage(lang, message, Url.create(urlToView)));
-                email.setCharset("utf-8");
-                email.addReferences();
-                email.setSentDate(event.created);
-                Mailer.send(email);
-                String escapedTitle = email.getSubject().replace("\"", "\\\"");
-                Set<InternetAddress> recipients = new HashSet<>();
-                recipients.addAll(email.getToAddresses());
-                recipients.addAll(email.getCcAddresses());
-                recipients.addAll(email.getBccAddresses());
-                String logEntry = String.format("\"%s\" %s", escapedTitle, recipients);
-                play.Logger.of("mail").info(logEntry);
-            } catch (Exception e) {
-                Logger.warn("Failed to send a notification: "
-                        + email + "\n" + ExceptionUtils.getStackTrace(e));
             }
         }
     }
 
-    private static String getHtmlMessage(Lang lang, String message, String urlToView, Resource resource) {
-        String content = getRenderedHTMLWithTemplate(lang, Markdown.render(message), urlToView, resource);
+    private static void sendMail(NotificationEvent event, List<User> receivers, String langCode) {
+        if (receivers.isEmpty()) {
+            return;
+        }
+
+        final EventEmail email = new EventEmail(event);
+
+        try {
+            email.setFrom(Config.getEmailFromSmtp(), event.getSender().name);
+
+            String replyTo = getReplyTo(event.getResource());
+            boolean acceptsReply = false;
+            if (replyTo != null) {
+                email.addReplyTo(replyTo);
+                acceptsReply = true;
+            }
+
+            for (User receiver : receivers) {
+                if (hideAddress) {
+                    email.addBcc(receiver.email, receiver.name);
+                } else {
+                    email.addTo(receiver.email, receiver.name);
+                }
+            }
+
+            if (email.getToAddresses().isEmpty()) {
+                email.addTo(Config.getEmailFromSmtp(), utils.Config.getSiteName());
+            }
+
+            // FIXME: gmail은 From과 To에 같은 주소가 있으면 reply-to를 무시한다.
+
+            Lang lang = Lang.apply(langCode);
+
+            String message = event.getMessage(lang);
+
+            if (message == null) {
+                return;
+            }
+
+            String urlToView = event.getUrlToView();
+
+            email.setSubject(event.title);
+            Resource resource = event.getResource();
+            if (resource.getType() == ResourceType.ISSUE_COMMENT) {
+                IssueComment issueComment = IssueComment.find.byId(Long.valueOf(resource.getId()));
+                resource = issueComment.issue.asResource();
+            }
+            email.setHtmlMsg(getHtmlMessage(lang, message, urlToView, resource, acceptsReply));
+            email.setTextMsg(getPlainMessage(lang, message, Url.create(urlToView), acceptsReply));
+            email.setCharset("utf-8");
+            email.addReferences();
+            email.setSentDate(event.created);
+            Mailer.send(email);
+            String escapedTitle = email.getSubject().replace("\"", "\\\"");
+            Set<InternetAddress> recipients = new HashSet<>();
+            recipients.addAll(email.getToAddresses());
+            recipients.addAll(email.getCcAddresses());
+            recipients.addAll(email.getBccAddresses());
+            String logEntry = String.format("\"%s\" %s", escapedTitle, recipients);
+            play.Logger.of("mail.out").info(logEntry);
+        } catch (Exception e) {
+            Logger.warn("Failed to send a notification: "
+                    + email + "\n" + ExceptionUtils.getStackTrace(e));
+        }
+    }
+
+    @Nullable
+    public static String getReplyTo(Resource resource) {
+        if (resource == null) {
+            return null;
+        }
+
+        if (Config.getEmailFromImap() == null) {
+            return null;
+        }
+
+        String detail = null;
+
+        switch(resource.getType()) {
+            case ISSUE_COMMENT:
+            case NONISSUE_COMMENT:
+            case COMMIT_COMMENT:
+            case REVIEW_COMMENT:
+                detail = resource.getContainer().getDetail();
+                break;
+            case ISSUE_POST:
+            case BOARD_POST:
+            case COMMIT:
+                detail = resource.getDetail();
+                break;
+            default:
+                break;
+        }
+
+        if (detail != null) {
+            EmailAddressWithDetail addr =
+                    new EmailAddressWithDetail(Config.getEmailFromImap());
+            addr.setDetail(detail);
+            return addr.toString();
+        } else {
+            return null;
+        }
+    }
+
+    private static String getHtmlMessage(Lang lang, String message, String urlToView,
+                                         Resource resource, boolean acceptsReply) {
+        String content = views.html.common.notificationMail.render(
+                lang, Markdown.render(message), urlToView, resource, acceptsReply).toString();
+
         Document doc = Jsoup.parse(content);
 
         handleLinks(doc);
         handleImages(doc);
 
-        return doc.html();
-    }
+        // Do not add "pretty" spaces. Some mail services render a text/plain
+        // alternative body in an ugly way. If you are using the such email
+        // service, forward or reply this notification email and the recipients
+        // read the email in plain text, they will see ugly whitespaces in the
+        // footer.
+        doc.outputSettings().prettyPrint(false);
 
-    private static String getRenderedHTMLWithTemplate(Lang lang, String message, String urlToView, Resource resource){
-        return views.html.common.notificationMail.render(lang, message, urlToView, resource).toString();
+        String html = doc.html();
+
+        return html;
     }
 
     /**
@@ -352,12 +442,14 @@ public class NotificationMail extends Model {
         }
     }
 
-    private static String getPlainMessage(Lang lang, String message, String urlToView) {
+    private static String getPlainMessage(Lang lang, String message, String urlToView, boolean acceptsReply) {
         String msg = message;
         String url = urlToView;
+        String messageKey = acceptsReply ?
+                "notification.replyOrLinkToView" : "notification.linkToView";
 
         if (url != null) {
-            msg += String.format("\n\n--\n" + Messages.get(lang, "notification.linkToView", url));
+            msg += String.format("\n\n--\n" + Messages.get(lang, messageKey, url));
         }
 
         return msg;

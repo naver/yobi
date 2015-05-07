@@ -4,7 +4,7 @@
  * Copyright 2012 NAVER Corp.
  * http://yobi.io
  *
- * @Author Tae
+ * @author Tae
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,8 +33,8 @@ import models.enumeration.ResourceType;
 import models.enumeration.State;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.tika.Tika;
-import org.codehaus.jackson.node.ObjectNode;
-import play.api.templates.Html;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+import play.twirl.api.Html;
 import play.data.Form;
 import play.data.validation.ValidationError;
 import play.db.ebean.Transactional;
@@ -75,9 +75,6 @@ public class IssueApp extends AbstractPostingApp {
         Page<Issue> issues = el.findPagingList(itemsPerPage).getPage(searchCondition.pageNum);
 
         switch(format){
-            case EXCEL_EXT:
-                return issuesAsExcel(project, el);
-
             case "pjax":
                 return issuesAsPjax(project, issues, searchCondition);
 
@@ -102,7 +99,7 @@ public class IssueApp extends AbstractPostingApp {
         Form<models.support.SearchCondition> issueParamForm = new Form<>(models.support.SearchCondition.class);
         models.support.SearchCondition searchCondition = issueParamForm.bindFromRequest().get();
         searchCondition.pageNum = pageNum - 1;
-        searchCondition.labelIds.addAll(LabelSearchUtil.getLabelIds(request()));
+        searchCondition.labelIds.addAll(LabelApp.getLabelIds(request()));
         searchCondition.labelIds.remove(null);
 
         // determine pjax or json when requested with XHR
@@ -312,7 +309,7 @@ public class IssueApp extends AbstractPostingApp {
                 if(hasAssignee(issue)) {
                     oldAssignee = issue.assignee.user;
                 }
-                Assignee newAssignee = null;
+                Assignee newAssignee;
                 if (issueMassUpdate.assignee.isAnonymous()) {
                     newAssignee = null;
                 } else {
@@ -506,6 +503,7 @@ public class IssueApp extends AbstractPostingApp {
         }
 
         final Issue issue = issueForm.get();
+        setAssignee(issueForm, issue, project);
         removeAnonymousAssignee(issue);
         setMilestone(issueForm, issue);
         issue.dueDate = JodaDateUtil.lastSecondOfDay(issue.dueDate);
@@ -533,6 +531,16 @@ public class IssueApp extends AbstractPostingApp {
         };
 
         return editPosting(originalIssue, issue, issueForm, redirectTo, preUpdateHook);
+    }
+
+    private static void setAssignee(Form<Issue> issueForm, Issue issue, Project project) {
+        String value = issueForm.field("assignee.user.id").value();
+        if (value != null) {
+            long userId = Long.parseLong(value);
+            if (userId != User.anonymous.id) {
+                issue.assignee = new Assignee(userId, project.id);
+            }
+        }
     }
 
     private static void setMilestone(Form<Issue> issueForm, Issue issue) {
@@ -591,12 +599,23 @@ public class IssueApp extends AbstractPostingApp {
         final IssueComment comment = commentForm.get();
 
         IssueComment existingComment = IssueComment.find.where().eq("id", comment.id).findUnique();
-        if( existingComment != null){
-            existingComment.contents = comment.contents;
-            return saveComment(existingComment, commentForm, redirectTo, getContainerUpdater(issue, comment));
-        } else {
-            return saveComment(comment, commentForm, redirectTo, getContainerUpdater(issue, comment));
+
+        if (commentForm.hasErrors()) {
+            flash(Constants.WARNING, "common.comment.empty");
+            return redirect(routes.IssueApp.issue(project.owner, project.name, number));
         }
+
+        Comment savedComment;
+        if (existingComment != null) {
+            existingComment.contents = comment.contents;
+            savedComment = saveComment(existingComment, getContainerUpdater(issue, comment));
+            NotificationEvent.afterCommentUpdated(savedComment);
+        } else {
+            savedComment = saveComment(comment, getContainerUpdater(issue, comment));
+            NotificationEvent.afterNewComment(savedComment);
+        }
+
+        return redirect(RouteUtil.getUrl(savedComment));
     }
 
     private static Runnable getContainerUpdater(final Issue issue, final IssueComment comment) {

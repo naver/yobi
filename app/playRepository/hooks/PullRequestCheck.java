@@ -4,7 +4,7 @@
  * Copyright 2013 NAVER Corp.
  * http://yobi.io
  *
- * @Author Wansoon Park, kjkmadness
+ * @author Wansoon Park, kjkmadness
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -54,7 +54,7 @@ public class PullRequestCheck implements PostReceiveHook {
         Set<String> branches = ReceiveCommandUtil.getUpdatedBranches(commands);
         for (String branch : branches) {
             PullRequestEventMessage message = new PullRequestEventMessage(user, request, project, branch);
-            Akka.system().actorOf(new Props(RelatedPullRequestMergingActor.class)).tell(message, null);
+            Akka.system().actorOf(Props.create(RelatedPullRequestMergingActor.class)).tell(message, null);
         }
 
         Set<String> deletedBranches = ReceiveCommandUtil.getDeletedBranches(commands);

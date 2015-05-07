@@ -4,7 +4,7 @@
  * Copyright 2012 NAVER Corp.
  * http://yobi.io
  *
- * @Author Yi EungJun
+ * @author Yi EungJun
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -173,6 +173,9 @@ public class SvnApp extends Controller {
             // 205 MUST include message body of zero length.
             return status(statusCode, "");
         } else {
+            // Passing a stream to status method triggers chunked encoding which
+            // does not allow Content-Length header.
+            response().getHeaders().remove("Content-Length");
             return status(statusCode, input);
         }
     }

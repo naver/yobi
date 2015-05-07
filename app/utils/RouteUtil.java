@@ -4,7 +4,7 @@
  * Copyright 2014 NAVER Corp.
  * http://yobi.io
  *
- * @Author Yi EungJun
+ * @author Yi EungJun
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@
 package utils;
 
 import controllers.CodeHistoryApp;
+import controllers.routes;
 import models.*;
 import models.enumeration.ResourceType;
 import models.resource.Resource;
@@ -30,10 +31,11 @@ import models.SimpleCommentThread;
 import models.NonRangedCodeCommentThread;
 import models.CodeCommentThread;
 
+import playRepository.Commit;
 import utils.TemplateHelper.DiffRenderer$;
 
 public class RouteUtil {
-    public static DiffRenderer$ diffRenderer = new DiffRenderer$();
+    public static final DiffRenderer$ diffRenderer = new DiffRenderer$();
 
     public static String getUrl(ResourceType resourceType, String resourceId) {
         Long longId = Long.valueOf(resourceId);
@@ -65,6 +67,32 @@ public class RouteUtil {
         }
 
         return null;
+    }
+
+    public static String getUrl(User user) {
+        if (user == null) return null;
+        user.refresh();
+
+        return controllers.routes.UserApp.userInfo(
+                user.loginId,
+                controllers.routes.UserApp.userInfo$default$2(),
+                controllers.routes.UserApp.userInfo$default$3(),
+                controllers.routes.UserApp.userInfo$default$4()
+        ).url();
+    }
+
+    public static String getUrl(Organization org) {
+        if (org == null) return null;
+        org.refresh();
+
+        return controllers.routes.OrganizationApp.organization(org.name).url();
+    }
+
+    public static String getUrl(Project project) {
+        if (project == null) return null;
+        project.refresh();
+
+        return controllers.routes.ProjectApp.project(project.owner, project.name).url();
     }
 
     public static String getUrl(Issue issue) {
@@ -133,5 +161,11 @@ public class RouteUtil {
 
     public static String getUrl(CommentThread thread) {
         return diffRenderer.urlToContainer(thread) + "#thread-" + thread.id;
+    }
+
+    public static String getUrl(Commit commit, Project project) {
+        if (commit == null) return null;
+
+        return controllers.routes.CodeHistoryApp.show(project.owner, project.name, commit.getId()).url();
     }
 }

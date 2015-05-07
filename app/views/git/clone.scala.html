@@ -4,7 +4,7 @@
 * Copyright 2013 NAVER Corp.
 * http://yobi.io
 *
-* @Author Keesun Baik
+* @author Keesun Baik
 *
 * Licensed under the Apache License, Version 2.0 (the "License");
 * you may not use this file except in compliance with the License.
@@ -42,8 +42,7 @@
 </div>
 <script type="text/javascript">
     $(function(){
-        yobi.ui.Spinner.show();
-
+        NProgress.start();
         setTimeout(function(){
             var cloneUrl = "@routes.PullRequestApp.doClone(project.originalProject.owner, project.originalProject.name)";
             var cloneParam = {owner:"@project.owner", name:"@project.name", projectScope:"@project.projectScope.name"};

@@ -4,7 +4,7 @@
  * Copyright 2013 NAVER Corp.
  * http://yobi.io
  *
- * @Author Keesun Baik
+ * @author Keesun Baik
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -89,7 +89,7 @@
                 $('span.warning').hide();
                 $('span.msg').html(aErrors[0].message).show();
             } else {
-                yobi.ui.Spinner.show();
+                NProgress.start();
             }
         }
 

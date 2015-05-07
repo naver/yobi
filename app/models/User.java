@@ -4,7 +4,7 @@
  * Copyright 2012 NAVER Corp.
  * http://yobi.io
  *
- * @Author Ahn Hyeok Jun
+ * @author Ahn Hyeok Jun
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,33 +20,33 @@
  */
 package models;
 
-import java.text.SimpleDateFormat;
-import java.util.*;
-
-import javax.persistence.*;
-
+import com.avaje.ebean.*;
 import controllers.UserApp;
-import models.enumeration.*;
+import models.enumeration.ResourceType;
+import models.enumeration.RoleType;
+import models.enumeration.UserState;
 import models.resource.GlobalResource;
 import models.resource.Resource;
 import models.resource.ResourceConvertible;
-
+import models.support.UserComparator;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.shiro.crypto.hash.Sha256Hash;
 import org.apache.shiro.util.ByteSource;
 import play.data.format.Formats;
 import play.data.validation.Constraints;
-import play.data.validation.Constraints.*;
+import play.data.validation.Constraints.Pattern;
+import play.data.validation.Constraints.Required;
+import play.data.validation.Constraints.ValidateWith;
 import play.db.ebean.Model;
 import play.db.ebean.Transactional;
+import play.i18n.Messages;
 import utils.JodaDateUtil;
 import utils.ReservedWordsValidator;
 
-import com.avaje.ebean.Ebean;
-import com.avaje.ebean.ExpressionList;
-import com.avaje.ebean.Page;
-import com.avaje.ebean.RawSql;
-import com.avaje.ebean.RawSqlBuilder;
+import javax.persistence.*;
+import javax.persistence.OrderBy;
+import java.text.SimpleDateFormat;
+import java.util.*;
 
 @Table(name = "n4user")
 @Entity
@@ -96,6 +96,15 @@ public class User extends Model implements ResourceConvertible {
     public String passwordSalt;
     @Constraints.Email(message = "user.wrongEmail.alert")
     public String email;
+
+    @Transient
+    private Boolean siteManager;
+
+    @Transient
+    private Map<Long, Boolean> projectManagerMemo = new HashMap<>();
+
+    @Transient
+    private Map<Long, Boolean> projectMembersMemo = new HashMap<>();
 
     /**
      * used for enabling remember me feature
@@ -175,6 +184,14 @@ public class User extends Model implements ResourceConvertible {
 
     public User(Long id) {
         this.id = id;
+    }
+
+    public String getPreferredLanguage() {
+        if (lang != null) {
+            return lang;
+        } else {
+            return Locale.getDefault().getLanguage();
+        }
     }
 
     /**
@@ -318,6 +335,39 @@ public class User extends Model implements ResourceConvertible {
                 .findList();
     }
 
+    public static List<User> findUsersByProjectAndOrganization(Project project) {
+        // member of this project.
+        Set<Long> userIds = new HashSet<>();
+
+        List<ProjectUser> pus = project.members();
+        for(ProjectUser pu : pus) {
+            userIds.add(pu.user.id);
+        }
+
+        // member of the group
+        if(project.hasGroup()) {
+            List<OrganizationUser> ous = null;
+            if(project.isPrivate()) {
+                ous = project.organization.getAdmins();
+            } else {
+                ous = OrganizationUser.find.fetch("user")
+                        .where().eq("organization", project.organization).findList();
+            }
+
+            for(OrganizationUser ou : ous) {
+                userIds.add(ou.user.id);
+            }
+        }
+
+        if (UserApp.currentUser().isSiteManager()) {
+            userIds.add(UserApp.currentUser().id);
+        }
+
+        List<User> users = find.where().in("id", userIds).orderBy().asc("name").findList();
+
+        return users;
+    }
+
     @Transient
     public Long avatarId() {
         List<Attachment> attachments = Attachment.findByContainer(avatarAsResource());
@@ -394,7 +444,27 @@ public class User extends Model implements ResourceConvertible {
     }
 
     public boolean isSiteManager() {
-        return SiteAdmin.exists(this);
+        if (siteManager == null) {
+            siteManager = SiteAdmin.exists(this);
+        }
+
+        return siteManager;
+    }
+
+    public boolean isManagerOf(Project project) {
+        if (!projectManagerMemo.containsKey(project.id)) {
+            projectManagerMemo.put(project.id, ProjectUser.isManager(id, project.id));
+        }
+
+        return projectManagerMemo.get(project.id);
+    }
+
+    public boolean isMemberOf(Project project) {
+        if (!projectMembersMemo.containsKey(project.id)) {
+            projectMembersMemo.put(project.id, ProjectUser.isMember(id, project.id));
+        }
+
+        return projectMembersMemo.get(project.id);
     }
 
     public List<Project> getEnrolledProjects() {
@@ -538,17 +608,50 @@ public class User extends Model implements ResourceConvertible {
     }
 
     /**
-     * All user post a issue at a project whose id is {@code projectId}
+     * Find issue authors and {@code currentUser}
+     *
+     * Issue authors are found in a project whose id is {@code projectId}.
+     *
+     * @param currentUser
+     * @param projectId
+     * @return
+     */
+    public static List<User> findIssueAuthorsByProjectIdAndMe(User currentUser, long projectId) {
+        String sql = "SELECT DISTINCT t0.id AS id, t0.name AS name, t0.login_id AS loginId " +
+                "FROM n4user t0 JOIN issue t1 ON t0.id = t1.author_id";
+        List<User> users = find.setRawSql(RawSqlBuilder.parse(sql).create()).where()
+                .eq("t1.project_id", projectId)
+                .orderBy().asc("t0.name")
+                .findList();
+
+        if (!users.contains(currentUser)) {
+            users.add(currentUser);
+            Collections.sort(users, new UserComparator());
+        }
+
+        return users;
+    }
+
+    /**
+     * Find assigned users at a project whose id is {@code projectId}
      *
      * @param projectId
      * @return
      */
-    public static List<User> findIssueAuthorsByProjectId(long projectId) {
-        String sql = "select user.id, user.name, user.login_id from issue issue, n4user user where issue.author_id = user.id group by issue.author_id";
-        return createUserSearchQueryWithRawSql(sql).where()
-                .eq("issue.project_id", projectId)
-                .orderBy("user.name ASC")
+    public static List<User> findIssueAssigneeByProjectIdAndMe(User currentUser, long projectId) {
+        String sql = "SELECT DISTINCT t0.id AS id, t0.name AS name, t0.login_id AS loginId " +
+                "FROM n4user t0 JOIN assignee t1 ON t0.id = t1.user_id";
+        List<User> users = find.setRawSql(RawSqlBuilder.parse(sql).create()).where()
+                .eq("t1.project_id", projectId)
+                .orderBy().asc("t0.name")
                 .findList();
+
+        if (!users.contains(currentUser)) {
+            users.add(currentUser);
+            Collections.sort(users, new UserComparator());
+        }
+
+        return users;
     }
 
     /**
@@ -558,16 +661,12 @@ public class User extends Model implements ResourceConvertible {
      * @return
      */
     public static List<User> findPullRequestContributorsByProjectId(long projectId) {
-        String sql = "SELECT user.id, user.name, user.login_id FROM pull_request pullrequest, n4user user WHERE pullrequest.contributor_id = user.id GROUP BY pullrequest.contributor_id";
-        return createUserSearchQueryWithRawSql(sql).where()
-                .eq("pullrequest.to_project_id", projectId)
-                .orderBy("user.name ASC")
+        String sql = "SELECT DISTINCT t0.id AS id, t0.name AS name, t0.login_id AS loginId " +
+                "FROM n4user t0 JOIN pull_request t1 ON t0.id = t1.contributor_id";
+        return find.setRawSql(RawSqlBuilder.parse(sql).create()).where()
+                .eq("t1.to_project_id", projectId)
+                .orderBy().asc("t0.name")
                 .findList();
-    }
-
-    private static com.avaje.ebean.Query<User> createUserSearchQueryWithRawSql(String sql) {
-        RawSql rawSql = RawSqlBuilder.parse(sql).columnMapping("user.login_id", "loginId").create();
-        return User.find.setRawSql(rawSql);
     }
 
     /**
@@ -659,6 +758,14 @@ public class User extends Model implements ResourceConvertible {
 
     private void add(OrganizationUser ou) {
         this.organizationUsers.add(ou);
+    }
+
+    public String toString() {
+        if (isAnonymous()) {
+            return Messages.get("user.role.anonymous");
+        } else {
+            return name + "(" + loginId + ")";
+        }
     }
 
     @Override

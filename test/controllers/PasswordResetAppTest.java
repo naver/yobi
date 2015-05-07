@@ -31,17 +31,10 @@ import static org.fest.assertions.Assertions.assertThat;
 import static play.test.Helpers.*;
 
 public class PasswordResetAppTest {
-    @BeforeClass
-    public static void beforeClass() {
-        callAction(
-                routes.ref.Application.init()
-        );
-    }
-
     @Test
     public void testRequestResetPassword_validLoginIdAndEmailAddress() {
         Map<String, String> config = support.Helpers.makeTestConfig();
-        config.put("application.langs", "ko");
+        config.put("application.langs", "ko-KR");
 
         running(support.Helpers.makeTestApplication(config), new Runnable() {
             public void run() {

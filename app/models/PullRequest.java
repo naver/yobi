@@ -4,7 +4,7 @@
  * Copyright 2013 NAVER Corp.
  * http://yobi.io
  *
- * @Author Keesun Baik
+ * @author Keesun Baik
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -59,6 +59,7 @@ import playRepository.GitRepository;
 import utils.Constants;
 import utils.JodaDateUtil;
 
+import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import javax.persistence.*;
 import javax.persistence.OrderBy;
@@ -146,8 +147,9 @@ public class PullRequest extends Model implements ResourceConvertible {
     @ManyToMany(cascade = CascadeType.ALL)
     @JoinTable(
         name = "pull_request_reviewers",
-        joinColumns = @JoinColumn(name = "pull_request_id"),
-        inverseJoinColumns = @JoinColumn(name = "user_id")
+        joinColumns = @JoinColumn(name = "pull_request_id", unique = false),
+        inverseJoinColumns = @JoinColumn(name = "user_id", unique = false),
+        uniqueConstraints = @UniqueConstraint(columnNames = {"pull_request_id", "user_id"})
     )
     public Set<User> reviewers = new HashSet<>();
 
@@ -560,7 +562,7 @@ public class PullRequest extends Model implements ResourceConvertible {
             NotificationEvent.afterPullRequestUpdated(sender, this, State.OPEN, State.MERGED);
             PullRequestEvent.addStateEvent(sender, this, State.MERGED);
 
-            Akka.system().actorOf(new Props(RelatedPullRequestMergingActor.class)).tell(message, null);
+            Akka.system().actorOf(Props.create(RelatedPullRequestMergingActor.class)).tell(message, null);
         }
     }
 
@@ -570,9 +572,9 @@ public class PullRequest extends Model implements ResourceConvertible {
         return destination;
     }
 
-    public void updateMergedCommitId(Merger.MergeResult merger) {
-        mergedCommitIdFrom = merger.getLeftParentId().getName();
-        mergedCommitIdTo = merger.getMergeCommitId().getName();
+    public void updateMergedCommitId(Merger.MergeResult mergeResult) {
+        mergedCommitIdFrom = mergeResult.getLeftParentId().getName();
+        mergedCommitIdTo = mergeResult.getMergeCommitId().getName();
         update();
     }
 
@@ -597,11 +599,43 @@ public class PullRequest extends Model implements ResourceConvertible {
         return Watch.findActualWatchers(actualWatchers, asResource());
     }
 
+    /**
+     * Make merge commit message e.g.
+     *
+     * Merge branch 'dev' of dlab/hive into 'next'
+     *
+     * from pull-request 10
+     *
+     * @param commits
+     * @return
+     * @throws IOException
+     */
     private String makeMergeCommitMessage(List<GitCommit> commits) throws IOException {
         StringBuilder builder = new StringBuilder();
-        builder.append(String.format("Merge branch '%s' of %s/%s\n\n",
-                this.fromBranch.replace("refs/heads/", ""), fromProject.owner, fromProject.name));
-        builder.append("from pull-request " + number + "\n\n");
+        builder.append("Merge branch ");
+        builder.append("\'");
+        builder.append(Repository.shortenRefName(fromBranch));
+        builder.append("\'");
+
+        if (!fromProject.equals(toProject)) {
+            builder.append(" of ");
+            builder.append(fromProject.owner);
+            builder.append("/");
+            builder.append(fromProject.name);
+        }
+
+        if (toBranch.equals("refs/heads/master")) {
+            builder.append("\n\n");
+        } else {
+            builder.append(" into ");
+            builder.append("\'");
+            builder.append(Repository.shortenRefName(toBranch));
+            builder.append("\'");
+            builder.append("\n\n");
+        }
+        builder.append("from pull-request ");
+        builder.append(number);
+        builder.append("\n\n");
         addCommitMessages(commits, builder);
         addReviewers(builder);
         return builder.toString();
@@ -624,7 +658,7 @@ public class PullRequest extends Model implements ResourceConvertible {
     }
 
     private void addCommitMessages(List<GitCommit> commits, StringBuilder builder) {
-        builder.append(String.format("* %s:\n", this.fromBranch));
+        builder.append(String.format("* %s:\n", Repository.shortenRefName(this.fromBranch)));
         for(GitCommit gitCommit : commits) {
             builder.append(String.format("  %s\n", gitCommit.getShortMessage()));
         }

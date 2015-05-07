@@ -4,7 +4,7 @@
  * Copyright 2013 NAVER Corp.
  * http://yobi.io
  *
- * @Author Keesun Baik, kjkmadness
+ * @author Keesun Baik, kjkmadness
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -47,6 +47,6 @@ public class IssueReferredFromCommitEvent implements PostReceiveHook {
     @Override
     public void onPostReceive(ReceivePack receivePack, Collection<ReceiveCommand> commands) {
         PostReceiveMessage message = new PostReceiveMessage(commands, project, user);
-        Akka.system().actorOf(new Props(IssueReferredFromCommitEventActor.class)).tell(message, null);
+        Akka.system().actorOf(Props.create(IssueReferredFromCommitEventActor.class)).tell(message, null);
     }
 }

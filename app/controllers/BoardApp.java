@@ -4,7 +4,7 @@
  * Copyright 2012 NAVER Corp.
  * http://yobi.io
  *
- * @Author Sangcheol Hwang
+ * @author Sangcheol Hwang
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,7 +33,7 @@ import models.enumeration.Operation;
 import models.enumeration.ResourceType;
 
 import org.apache.commons.lang3.StringUtils;
-import org.codehaus.jackson.node.ObjectNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 
 import play.data.Form;
 import play.db.ebean.Transactional;
@@ -44,10 +44,7 @@ import play.mvc.With;
 import playRepository.BareCommit;
 import playRepository.BareRepository;
 import playRepository.RepositoryService;
-import utils.AccessControl;
-import utils.ErrorViews;
-import utils.JodaDateUtil;
-import utils.MenuType;
+import utils.*;
 import views.html.board.create;
 import views.html.board.edit;
 import views.html.board.list;
@@ -55,6 +52,7 @@ import views.html.board.view;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.Objects;
 
 import static com.avaje.ebean.Expr.icontains;
 
@@ -244,7 +242,7 @@ public class BoardApp extends AbstractPostingApp {
 
     private static void unmarkAnotherReadmePostingIfExists(Project project, Long postingNumber) {
         Posting previousReadmePosting = Posting.findREADMEPosting(project);
-        if(previousReadmePosting != null && previousReadmePosting.getNumber() != postingNumber){
+        if(previousReadmePosting != null && !Objects.equals(previousReadmePosting.getNumber(), postingNumber)){
             previousReadmePosting.readme = false;
             previousReadmePosting.directSave();
         }
@@ -272,7 +270,6 @@ public class BoardApp extends AbstractPostingApp {
     public static Result newComment(String owner, String projectName, Long number) throws IOException {
         Project project = Project.findByOwnerAndProjectName(owner, projectName);
         final Posting posting = Posting.findByNumber(project, number);
-        Call redirectTo = routes.BoardApp.post(project.owner, project.name, number);
         Form<PostingComment> commentForm = new Form<>(PostingComment.class)
                 .bindFromRequest();
 
@@ -287,12 +284,23 @@ public class BoardApp extends AbstractPostingApp {
 
         final PostingComment comment = commentForm.get();
         PostingComment existingComment = PostingComment.find.where().eq("id", comment.id).findUnique();
+
+        if (commentForm.hasErrors()) {
+            flash(Constants.WARNING, "common.comment.empty");
+            return redirect(routes.BoardApp.post(project.owner, project.name, number));
+        }
+
+        Comment savedComment;
         if (existingComment != null) {
             existingComment.contents = comment.contents;
-            return saveComment(existingComment, commentForm, redirectTo, getContainerUpdater(posting, comment));
+            savedComment = saveComment(existingComment, getContainerUpdater(posting, comment));
+            NotificationEvent.afterCommentUpdated(savedComment);
         } else {
-            return saveComment(comment, commentForm, redirectTo, getContainerUpdater(posting, comment));
+            savedComment = saveComment(comment, getContainerUpdater(posting, comment));
+            NotificationEvent.afterNewComment(savedComment);
         }
+
+        return redirect(RouteUtil.getUrl(savedComment));
     }
 
     private static Runnable getContainerUpdater(final Posting posting, final PostingComment comment) {
