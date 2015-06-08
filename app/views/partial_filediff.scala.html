@@ -64,9 +64,7 @@
 }
 
 @renderRawFile(klass: String, path: String, rawText: RawText, side: CodeRange.Side, prefix: String, comments: Map[String, List[_ <: CodeCommentThread]]) = {
-    @defining(new StringBuilder) { builder =>
-
-        
+    @defining(new StringBuilder) { builder =>        
         @for(i <- 0 until rawText.size) @{
             builder.append("<tr class='")
             builder.append(klass)
@@ -82,9 +80,9 @@
             builder.append("'></div><span class='hidden'>")
             builder.append(i + 1)
             builder.append("</span></td><td class='code'><pre class='diff-partial-codeline ")
-            builder.append(path.split('.')(1))
+            builder.append(path.split('.').last)
             builder.append("'>")            
-            builder.append(prefix)            
+            builder.append(prefix)
             builder.append(escapeHtml(rawText.getString(i)))       
             if ((i + 1 == rawText.size) && rawText.isMissingNewlineAtEnd) {
                 builder.append(noNewlineAtEof)

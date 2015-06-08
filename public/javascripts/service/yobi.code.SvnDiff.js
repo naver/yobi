@@ -420,7 +420,7 @@
                                     nCodeLineA=nLineA++;
                                     nCodeLineB=nLineB++;
                                 }
-                                var welCodeRow = _makeCodeLine(nCodeLineA,nCodeLineB,sLineType,sLine);
+                                var welCodeRow = _makeCodeLine(nCodeLineA,nCodeLineB,sLineType,sLine,sPath);
                                 welDiffCodeTableBody.append(welCodeRow);
 
                                 var welCodeReview = _appendCommentThreadOnLine(welCodeRow,sPath);
@@ -442,6 +442,12 @@
                 welDiffWrapOuter.append(welDiffWrapInner);
                 $('.diff-body').append(welDiffWrapOuter);
             });
+            $(document).ready(function(){
+            var preCode = document.getElementsByTagName('pre');
+            for (var i=0; i < preCode.length; i++) {
+                hljs.highlightBlock(preCode[i]);
+            }
+            });
         }
 
         function _makeCommitLink(sPath,sCommitId) {
@@ -453,7 +459,7 @@
             return welCommit;
         }
 
-        function _makeCodeLine(nLineA,nLineB,sRowType,sCode) {
+        function _makeCodeLine(nLineA,nLineB,sRowType,sCode,sPath) {
             var welRow = $('<tr/>',{class:sRowType});
             var welCellLineA = $('<td/>',{class:'linenum'});
             var welCellLineB = $('<td/>',{class:'linenum'});
@@ -467,6 +473,8 @@
                 welCellCode.text(sCode);
             } else {
                 var welCode = $('<pre/>',{class:'diff-partial-codeline'}).text(sCode);
+                var fileExtension = sPath.split('.').slice(-1)[0];
+                welCode.addClass(fileExtension);
                 var nLine = (nLineB==null) ? nLineA : nLineB;
                 welCellCode.addClass('code');
                 welRow.attr('data-line',nLine).attr('data-type',sRowType);
