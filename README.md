@@ -449,3 +449,4 @@ applyEvolutions.default 자바 프로퍼티를 true로 설정합니다.
 
 	file: yobi.h2.db
 	directory: repo, uploads
+# ossyobi

@@ -23,6 +23,12 @@
   fromBranches:List[playRepository.GitBranch], toBranches:List[playRepository.GitBranch],
   pullRequest:models.PullRequest)
 
+@import helper._
+@import scala.collection.mutable.Map
+@import models.enumeration.ResourceType
+@import models.enumeration.Operation
+@import utils.AccessControl._
+@import controllers.UserApp
 @import scala.collection.Map
 @import utils.TemplateHelper._
 @import utils.TemplateHelper.Branches._
@@ -89,15 +95,49 @@
 
                 <div>
                     <input type="text" id="title" name="title" maxlength="255" class="text" placeholder="@Messages("title")">
-                    <div style="position: relative;">
-                        @common.editor("body", pullRequest.body, "", "content-body")
+
+                    <div class="row-fluid">
+                        <div class="span9">
+                            <div style="position: relative;">
+                                @common.editor("body", pullRequest.body, "", "content-body")
+                            </div>
+                            @common.fileUploader(ResourceType.PULL_REQUEST, null)
+                            @common.markdown(project)
+                        </div>
+
+                        @if(project.menuSetting.milestone && isProjectResourceCreatable(UserApp.currentUser(), project, ResourceType.ISSUE_MILESTONE)) {
+                            <!-- milestone -->
+                        <dlv class="span3">
+                            <dl id="milestoneOption" class="PullRequest-option">
+                                <dt>@Messages("milestone")</dt>
+                                <dd>
+                                @defining(Milestone.findOpenMilestones(project.id)) { milestones =>
+                                    @if(milestones.isEmpty()) {
+                                        <a href="@routes.MilestoneApp.newMilestoneForm(project.owner, project.name)"
+                                           class="ybtn ybtn-small ybtn-fullsize" target="_blank">
+                                            @Messages("milestone.menu.new")
+                                        </a>
+                                    } else {
+                                        <select id="milestoneId" name="milestoneId"
+                                                data-toggle="select2" data-format="milestone" data-container-css-class="fullsize">
+                                            <option value="@Milestone.NULL_MILESTONE_ID" selected="selected">@Messages("pullRequest.noMilestone")</option>
+                                            @for(milestone <- milestones){
+                                            <option value="@milestone.id" data-state="@milestone.state">
+                                                @milestone.title
+                                            </option>
+                                            }
+                                        </select>
+                                    }
+                                }
+                                </dd>
+                            </dl>
+                        </dlv>
+                        }
                     </div>
-                    @common.fileUploader(ResourceType.PULL_REQUEST, null)
-                    @common.markdown(project)
 
                     <div class="actions">
-                        <button type="submit" class="ybtn ybtn-success">@Messages("pullRequest.send")</button>
-                        <a href="javascript:history.back();" class="ybtn">@Messages("button.cancel")</a>
+                                <button type="submit" class="ybtn ybtn-success">@Messages("pullRequest.send")</button>
+                                <a href="javascript:history.back();" class="ybtn">@Messages("button.cancel")</a>
                     </div>
                 </div>
 

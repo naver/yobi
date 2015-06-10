@@ -264,6 +264,8 @@ public class PullRequestApp extends Controller {
         pullRequest.fromProject = Project.find.byId(pullRequest.fromProjectId);
         pullRequest.isMerging = false;
         pullRequest.isConflict = false;
+        setMilestone(form, pullRequest);
+
 
         PullRequest sentRequest = PullRequest.findDuplicatedPullRequest(pullRequest);
         if(sentRequest != null) {
@@ -636,6 +638,14 @@ public class PullRequestApp extends Controller {
         return redirect(urlToView);
     }
 
+    private static void setMilestone(Form<PullRequest> pullRequestForm, PullRequest pullRequest) {
+        String milestoneId = pullRequestForm.data().get("milestoneId");
+        if(milestoneId != null && !milestoneId.isEmpty()) {
+            pullRequest.milestone = Milestone.findById(Long.parseLong(milestoneId));
+        } else {
+            pullRequest.milestone = null;
+        }
+    }
     static class ValidationResult {
         private Result result;
         private boolean hasError;
@@ -685,6 +695,7 @@ public class PullRequestApp extends Controller {
             this.category = category;
             return this;
         }
+
 
         @Override
         public SearchCondition clone() throws CloneNotSupportedException {

@@ -26,60 +26,140 @@
 @import utils.AccessControl._
 @import models.enumeration
 @import scala.collection.JavaConversions._
+@import models.enumeration._
 @import play.libs.Json.toJson
 @import utils.Markdown
+@import org.apache.commons.lang.StringUtils
+@import helper._
+@import scala.collection.mutable.Map
+@import models.enumeration.ResourceType
+@import models.enumeration.Operation
+@import models.Milestone
+@import java.net._
+@import java.text.SimpleDateFormat
+@import java.security.MessageDigest
+@import utils.Config
+
 
 @projectLayout(Messages("menu.pullRequest"), project, utils.MenuType.PULL_REQUEST) {
-    @projectMenu(project, utils.MenuType.PULL_REQUEST, "main-menu-only")
+@projectMenu(project, utils.MenuType.PULL_REQUEST, "main-menu-only")
 <div class="page-wrap-outer">
     <div class="project-page-wrap">
         @partial_info(project, pull, "overview")
 
-        <div class="board-body">
-            <div class="author-info right-txt" style="margin-top:20px;">
-                <a href="@routes.UserApp.userInfo(pull.contributor.loginId)" class="usf-group pull-left">
-                    <span class="avatar-wrap smaller">
-                        <img src="@pull.contributor.avatarUrl" width="32" height="32">
-                    </span>
-                    <strong class="name">@pull.contributor.name</strong>
-                    <span class="loginid"> <strong>@{"@"}</strong>@pull.contributor.loginId</span>
-                </a>
-                @partial_branch(pull)
+        <div class="row-fluid">
+            <div class="span9">
+            <div class="board-body">
+                <div class="author-info right-txt" style="margin-top:20px;">
+                    <a href="@routes.UserApp.userInfo(pull.contributor.loginId)" class="usf-group pull-left">
+                        <span class="avatar-wrap smaller">
+                            <img src="@pull.contributor.avatarUrl" width="32" height="32">
+                        </span>
+                        <strong class="name">@pull.contributor.name</strong>
+                        <span class="loginid"> <strong>@{"@"}</strong>@pull.contributor.loginId</span>
+                    </a>
+                    @partial_branch(pull)
+                </div>
+                <div class="content markdown-wrap">@Html(Markdown.render(pull.body, project))</div>
+                <div class="attachments" data-attachments="@toJson(AttachmentApp.getFileList(ResourceType.PULL_REQUEST.toString(), pull.id.toString()))"></div>
             </div>
-            <div class="content markdown-wrap">@Html(Markdown.render(pull.body, project))</div>
-            <div class="attachments" data-attachments="@toJson(AttachmentApp.getFileList(ResourceType.PULL_REQUEST.toString(), pull.id.toString()))"></div>
-        </div>
 
-        <div id="state" class="pullRequest-stateInfo">
-            @partial_state(project, pull, canDeleteBranch, canRestoreBranch)
-        </div>
+            <div id="state" class="pullRequest-stateInfo">
+                @partial_state(project, pull, canDeleteBranch, canRestoreBranch)
+            </div>
+            </div>
 
-        <div class="board-footer board-actrow">
-            <div class="pull-left">
-                @if(isAllowed(UserApp.currentUser(), pull.asResource(), Operation.WATCH)) {
-                    <button id="watch-button" type="button" class="ybtn @if(pull.getWatchers.contains(UserApp.currentUser())) { ybtn-watching }" data-toggle="button" data-watching="@if(pull.getWatchers.contains(UserApp.currentUser())){true}else{false}">
-                    @if(pull.getWatchers.contains(UserApp.currentUser())) {
-                        @Messages("project.unwatch")
-                    } else {
-                        @Messages("project.watch")
+
+            <dlv class="span3 mb20">
+                <div class="issue-info">
+                 @if(project.menuSetting.milestone) {
+                <dl id="milestoneOption" class="issue-option">
+                    <dt>@Messages("milestone")</dt>
+                    <dd>
+                    @defining(Milestone.findOpenMilestones(project.id)) { milestones =>
+                        @if(milestones.isEmpty()) {
+                            <a href="@routes.MilestoneApp.newMilestoneForm(project.owner, project.name)"
+                               class="ybtn ybtn-small ybtn-fullsize" target="_blank">
+                                @Messages("milestone.menu.new")
+                            </a>
+                        } else {
+                                @defining(pull.milestone != null) { hasMilestone =>
+                                    @if(isAllowed(UserApp.currentUser(), pull.asResource(), Operation.UPDATE)) {
+                                    <select id="milestone" name="milestone.id"
+                                            data-toggle="select2" data-format="milestone" data-container-css-class="fullsize">
+                                        <option value="@Milestone.NULL_MILESTONE_ID" @if(!hasMilestone){ selected }>
+                                            @Messages("pullRequest.noMilestone")
+                                        </option>
+                                        <optgroup label="@Messages("milestone.state.open")">
+                                        @for(milestone <- Milestone.findOpenMilestones(project.id)){
+                                            <option value="@milestone.id" data-state="@milestone.state"
+                                            @if(hasMilestone && pull.milestone.id == milestone.id){
+                                                selected
+                                            }>
+                                                @milestone.title
+                                            </option>
+                                        }
+                                        </optgroup>
+                                        <optgroup label="@Messages("milestone.state.closed")">
+                                        @for(milestone <- Milestone.findClosedMilestones(project.id)){
+                                            <option value="@milestone.id" data-state="@milestone.state"
+                                            @if(hasMilestone && pull.milestone.id == milestone.id){
+                                                selected
+                                            }>
+                                                @milestone.title
+                                            </option>
+                                        }
+                                        </optgroup>
+                                    </select>
+                                    } else {
+                                        @if(hasMilestone){
+                                            <a href="@routes.MilestoneApp.milestone(project.owner, project.name, pull.milestone.id)">
+                                                @pull.milestone.title
+                                            </a>
+                                        } else {
+                                            @Messages("pullRequest.noMilestone")
+                                        }
+                                    }
+                                }
+                            }
                     }
-                    </button>
-                }
+                    </dd>
+                </dl>
+            }
+        </form>
             </div>
 
-            <div class="mr5" style="display:inline-block;">
-                @if(isAllowed(UserApp.currentUser(), pull.asResource(), Operation.UPDATE)) {
-                <a href="@routes.PullRequestApp.editPullRequestForm(pull.toProject.owner, pull.toProject.name, pull.number)" class="ybtn">@Messages("button.edit")</a>
-                }
-                @if(pull.isOpen() && isAllowed(UserApp.currentUser(), pull.asResource(), Operation.CLOSE)) {
-                    <a data-request-method="post" href="@routes.PullRequestApp.close(project.owner, project.name, pull.number)" class="ybtn">@Messages("pullRequest.close")</a>
-                }
-                @if(pull.isClosed() && isAllowed(UserApp.currentUser(), pull.asResource(), Operation.REOPEN)) {
-                    <a data-request-method="post" href="@routes.PullRequestApp.open(project.owner, project.name, pull.number)" class="ybtn">@Messages("pullRequest.reopen")</a>
-                }
+        </dlv>
+    </div>
+            <div class="board-footer board-actrow">
+                <div class="pull-left">
+                    @if(isAllowed(UserApp.currentUser(), pull.asResource(), Operation.WATCH)) {
+                        <button id="watch-button" type="button" class="ybtn @if(pull.getWatchers.contains(UserApp.currentUser())) { ybtn-watching }" data-toggle="button" data-watching="@if(pull.getWatchers.contains(UserApp.currentUser())){true}else{false}">
+                        @if(pull.getWatchers.contains(UserApp.currentUser())) {
+                            @Messages("project.unwatch")
+                        } else {
+                            @Messages("project.watch")
+                        }
+                        </button>
+                    }
+                </div>
+
+                <div class="mr5" style="display:inline-block;">
+                    @if(isAllowed(UserApp.currentUser(), pull.asResource(), Operation.UPDATE)) {
+                    <a href="@routes.PullRequestApp.editPullRequestForm(pull.toProject.owner, pull.toProject.name, pull.number)" class="ybtn">@Messages("button.edit")</a>
+                    }
+                    @if(pull.isOpen() && isAllowed(UserApp.currentUser(), pull.asResource(), Operation.CLOSE)) {
+                        <a data-request-method="post" href="@routes.PullRequestApp.close(project.owner, project.name, pull.number)" class="ybtn">@Messages("pullRequest.close")</a>
+                    }
+                    @if(pull.isClosed() && isAllowed(UserApp.currentUser(), pull.asResource(), Operation.REOPEN)) {
+                        <a data-request-method="post" href="@routes.PullRequestApp.open(project.owner, project.name, pull.number)" class="ybtn">@Messages("pullRequest.reopen")</a>
+                    }
+                </div>
+
+                
             </div>
         </div>
-
+           
         <hr class="nm">
 
         <div class="board-comment-wrap">

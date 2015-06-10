@@ -135,7 +135,7 @@ public class PullRequest extends Model implements ResourceConvertible {
     @OneToMany(cascade = CascadeType.ALL)
     @OrderBy("created ASC")
     public List<PullRequestEvent> pullRequestEvents;
-
+    
     public String lastCommitId;
 
     public String mergedCommitIdFrom;
@@ -158,6 +158,9 @@ public class PullRequest extends Model implements ResourceConvertible {
 
     @Transient
     private Repository repository;
+
+    //@ManyToOne 마일스톤과 연결하고 싶은데... 이러면 에러가떠요... 아니면 마일스톤의 onetomany가 안되요.
+    public Milestone milestone;
 
     public static PullRequest createNewPullRequest(Project fromProject, Project toProject, String fromBranch, String toBranch) {
         PullRequest pullRequest = new PullRequest();
@@ -184,6 +187,7 @@ public class PullRequest extends Model implements ResourceConvertible {
                 ", updated=" + updated +
                 ", received=" + received +
                 ", state=" + state +
+                ", milestone=" + milestone +
                 '}';
     }
 
@@ -292,6 +296,14 @@ public class PullRequest extends Model implements ResourceConvertible {
                 .eq("state", State.OPEN)
                 .findRowCount();
     }
+
+    public static int countClosedPullRequests(Project project) {
+        return finder.where()
+                .eq("toProject", project)
+                .eq("state", State.CLOSED)
+                .findRowCount();
+    }
+
 
     public static List<PullRequest> findRelatedPullRequests(Project project, String branch) {
         return finder.where()

@@ -21,7 +21,12 @@
 @(title:String, form: play.data.Form[PullRequest], project:Project,
   fromBranches: List[playRepository.GitBranch], toBranches:List[playRepository.GitBranch],
   pullRequest:models.PullRequest)
-
+@import helper._
+@import scala.collection.mutable.Map
+@import models.enumeration.ResourceType
+@import models.enumeration.Operation
+@import models.enumeration._
+@import utils.AccessControl._
 @import scala.collection.Map
 @import utils.TemplateHelper._
 @import utils.TemplateHelper.Branches._
@@ -91,11 +96,59 @@
                 <div>
                     <input type="text" id="title" name="title" maxlength="255" class="text"
                            value="@pullRequest.title" placeholder="@Messages("title")" data-is-user-has-typed="true">
-                    <div style="position: relative;">
-                        @common.editor("body", pullRequest.body, "data-is-user-has-typed=true", "content-body")
-                    </div>
-                    @common.fileUploader(ResourceType.PULL_REQUEST, pullRequest.id)
-                    @common.markdown(project)
+                            <div class="row-fluid">
+                                <div class="span9">
+                                    <div style="position: relative;">
+                                        @common.editor("body", pullRequest.body, "data-is-user-has-typed=true", "content-body")
+                                    </div>
+                                    @common.fileUploader(ResourceType.PULL_REQUEST, pullRequest.id)
+                                    @common.markdown(project)
+                                </div>
+
+                                    <!-- milestone -->
+                                <dlv class="span3">
+                                    <dl id="milestoneOption" class="PullRequest-option">
+                                        <dt>@Messages("milestone")</dt>
+                                        <dd>
+                                       @defining(pullRequest.milestone != null) { hasMilestone =>
+                                            @if(Milestone.findByProjectId(project.id).isEmpty()) {
+                                                <a href="@routes.MilestoneApp.newMilestoneForm(project.owner, project.name)"
+                                                   class="ybtn ybtn-small ybtn-fullsize" target="_blank">
+                                                    @Messages("milestone.menu.new")
+                                                </a>
+                                            }else {
+                                                <select id="milestoneId" name="milestoneId"
+                                                            data-toggle="select2" data-format="milestone" data-container-css-class="fullsize">
+                                                        <option value="@Milestone.NULL_MILESTONE_ID" @if(!hasMilestone){ selected }>
+                                                            @Messages("pullRequest.noMilestone")
+                                                        </option>
+                                                        <optgroup label="@Messages("milestone.state.open")">
+                                                        @for(milestone <- Milestone.findOpenMilestones(project.id)){
+                                                            <option value="@milestone.id" data-state="@milestone.state"
+                                                            @if(hasMilestone && pullRequest.milestone.id == milestone.id){
+                                                                selected
+                                                            }>
+                                                                @milestone.title
+                                                            </option>
+                                                        }
+                                                        </optgroup>
+                                                        <optgroup label="@Messages("milestone.state.closed")">
+                                                        @for(milestone <- Milestone.findClosedMilestones(project.id)){
+                                                            <option value="@milestone.id" data-state="@milestone.state"
+                                                            @if(hasMilestone && pullRequest.milestone.id == milestone.id){
+                                                                selected
+                                                            }>
+                                                                @milestone.title
+                                                            </option>
+                                                        }
+                                                        </optgroup>
+                                                </select>
+                                            }
+                                        
+                                        </dd>
+                                    </dl>
+                                </dlv>
+                            </div>
 
                     <div class="actions">
                         <button type="submit" class="ybtn ybtn-success">@Messages("button.save")</button>
@@ -145,4 +198,5 @@ $(function(){
     });
 });
 </script>
+}
 }

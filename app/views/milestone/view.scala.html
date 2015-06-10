@@ -18,7 +18,7 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 **@
-@(title: String, milestone: models.Milestone, project: Project, issueState:State)
+@(title: String, milestone: models.Milestone, project: Project, issueState:State, pullRequestState:State)
 @import scala.collection.immutable._
 @import utils.TemplateHelper._
 @import utils.AccessControl._
@@ -34,9 +34,19 @@
     )
 }
 
+@makePullRequestsLink(mId: Long) = @{
+    buildQueryString(routes.PullRequestApp.pullRequests(project.owner, project.name),
+        Map("milestoneId"->mId.toString)
+    )
+}
+
 @getTabLinkByState(state:State) = {
 	@routes.MilestoneApp.milestone(project.owner, project.name, milestone.id)?state=@state.state
 }
+
+
+
+
 
 @projectLayout(title, project, utils.MenuType.MILESTONE) {
 @projectMenu(project, utils.MenuType.MILESTONE, "")
@@ -114,6 +124,62 @@
                         }
                     }
                 </div>
+            </div>
+
+            
+            <div id="PullRequests">
+                <ul class="nav nav-tabs">
+                <li @if(pullRequestState == State.OPEN) { class="active" }>
+                    <a href="@getTabLinkByState(State.OPEN)#pullRequests">
+                        @Messages("pullRequest.state.open")
+                        <span class="num-badge">@PullRequest.countOpenedPullRequests(project)</span>
+                    </a>
+                </li>
+                <li @if(pullRequestState == State.CLOSED) { class="active" }>
+                    <a href="@getTabLinkByState(State.CLOSED)#pullRequests">
+                        @Messages("pullRequest.state.closed")
+                        <span class="num-badge">@PullRequest.countClosedPullRequests(project)</span>
+                    </a>
+                </li>
+                <li @if(pullRequestState == State.ALL) { class="active" }>
+                    <a href="@getTabLinkByState(State.ALL)#pullRequests">
+                        @Messages("pullRequest.state.all")
+                        <span class="num-badge">@(PullRequest.countOpenedPullRequests(project) + PullRequest.countClosedPullRequests(project))</span>
+                    </a>
+                </li>
+                @**
+                @for(state1 <- Array(State.OPEN, State.CLOSED, State.MERGED)) {
+                    <li @if(pullRequestState == state1) { class="active" }>
+                        <a href="@getTabLinkByState(state1)#pullRequests">
+                            @Messages("pullRequest.state." + state1.name.toLowerCase())
+                            <span class="num-badge">@PullRequest.countOpenedPullRequests(project)</span>
+                        </a>
+                    </li>
+                }
+                **@
+                </ul>
+                @**
+                <div class="PullRequests">
+                    <div class="filter-wrap">
+                    @issue.partial_massupdate(project, new SearchCondition())
+                    <div class="pull-right search search-bar">
+                        <input name="filter" class="textbox" type="text" placeholder="@Messages("milestone.searchPlaceholder")" value="" data-toggle="item-search" data-items="issue-item">
+                        <button type="submit" class="search-btn"><i class="yobicon-search"></i></button>
+                    </div>
+                    </div>
+                    @{
+                        pullRequestState match {
+                            case State.OPEN =>
+                                issue.partial_list(project, milestone.sortedByNumberOfOpenIssue(), new SearchCondition(),0,0)
+                            case State.CLOSED =>
+                                issue.partial_list(project, milestone.sortedByNumberOfClosedIssue(), new SearchCondition(),0,0)
+                            case _ =>
+                                issue.partial_list(project, milestone.sortedByNumberOfIssue(), new SearchCondition(),0,0)
+                        }
+                    }
+
+                </div>
+                **@
             </div>
 
         </div>

@@ -222,7 +222,9 @@ public class MilestoneApp extends Controller {
 
         String paramState = request().getQueryString("state");
         State state = State.getValue(paramState);
+        String paramState1 = request().getQueryString("state");
+        State state1 = State.getValue(paramState1);
         UserApp.currentUser().visits(project);
-        return ok(view.render(milestone.title, milestone, project, state));
+        return ok(view.render(milestone.title, milestone, project, state,state1));
     }
 }
