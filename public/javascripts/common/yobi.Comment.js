@@ -45,6 +45,7 @@ yobi.Comment = (function(){
     function _attachEvent() {
         htElement.welContainer.on('click', '[data-toggle="comment-delete"]', _openDeleteModal);
         htElement.welContainer.on('click', '[data-toggle="comment-edit"]', _toggleEditForm);
+        htElement.welContainer.on('click', '[data-toggle="comment-recomment"]', _recommentForm);
         htElement.welContainer.on('click', '.ybtn-cancel', _toggleEditForm);
     }
 
@@ -55,6 +56,12 @@ yobi.Comment = (function(){
         $('#comment-body-' + commentId).toggle();
     }
 
+    function _recommentForm(){
+        var commentId = $(this).data("commentId");
+
+        $('#comment-recommentform-' + commentId).toggle();
+        //$('#comment-body-' + commentId).toggle();
+    }
     /**
      * open delete modal
      */

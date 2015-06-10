@@ -57,6 +57,9 @@
                     @if(isAllowed(UserApp.currentUser(), comment.asResource(), Operation.UPDATE)) {
                         <button type="button" class="btn-transparent mr10" data-toggle="comment-edit" data-comment-id="@comment.id" title="@Messages("common.comment.edit")"><i class="yobicon-edit-2"></i></button>
                     }
+                    @if(isAllowed(UserApp.currentUser(), comment.asResource(), Operation.UPDATE)) {
+                        <button type="button" class="btn-transparent mr10" data-toggle="comment-recomment" data-comment-id="@comment.id" title="@Messages("common.comment.edit")"><i class="yobicon-comments"></i></button>
+                    }
                     @if(isAllowed(UserApp.currentUser(), comment.asResource(), Operation.DELETE)) {
                         <button type="button" class="btn-transparent" data-toggle="comment-delete" data-request-uri="@routes.BoardApp.deleteComment(project.owner, project.name, post.getNumber, comment.id)" title="@Messages("common.comment.delete")"><i class="yobicon-trash"></i></button>
                     }
@@ -64,12 +67,15 @@
             </div>
 
             @common.commentUpdateForm(comment.id, routes.BoardApp.newComment(project.owner, project.name, post.getNumber).toString(), comment.contents)
-
+            
             <div id="comment-body-@comment.id">
                 <div class="comment-body markdown-wrap" data-via-email="@OriginalEmail.exists(comment.asResource)">@Html(Markdown.render(comment.contents, project))</div>
                 <div class="attachments pull-right" data-attachments="@toJson(AttachmentApp.getFileList(ResourceType.NONISSUE_COMMENT.toString(), comment.id.toString()))"></div>
             </div>
+            
         </div>
+            @common.recommentForm(comment.id,post.asResource(), ResourceType.NONISSUE_COMMENT, routes.BoardApp.newComment(project.owner, project.name, post.getNumber).toString())
     </li>
 }
 </ul>
+
