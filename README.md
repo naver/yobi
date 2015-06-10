@@ -230,6 +230,34 @@ Copy the below file and directories to another place.
 	file: yobi.h2.db
 	directory: repo, uploads
 
+### Automatic start Yobi on system startup (tested on Ubuntu 14.04, Yobi 0.8.1)
+
+First, create '/etc/init.d/run.yobi' with below content.
+```
+#! /bin/sh
+export ACTIVATOR_HOME=/home/yobi/activator-1.2.10-minimal
+export YOBI_HOME=$ACTIVATOR_HOME/yobi
+export _JAVA_OPTIONS="-Xmx2048m -Xms1024m"
+
+cd $YOBI_HOME
+sudo ../activator stop 1> /dev/null 2>&1
+sudo rm ./target/universal/stage/RUNNING_PID 1> /dev/null 2>&1
+#sudo ../activator "start -DapplyEvolutions.default=true -Dhttp.port=9000 -Dyobi.home=$YOBI_HOME -Dconfig.file=$YOBI_HOME/conf/application.conf" $_JAVAOPTIONS &i
+sudo screen -dm -S yobi ../activator "start -DapplyEvolutions.default=true -Dhttp.port=9000 -Dyobi.home=$YOBI_HOME -Dconfig.file=$YOBI_HOME/conf/application.conf" $_JAVAOPTIONS &
+```
+
+And type following command to enable auto starting feature.
+```
+sudo update-rc.d run.yobi defaults
+```
+
+Reboot and check the Yobi automatically started.
+
+If you want to remove this feature, type below command.
+```
+sudo update-rc.d -f run.yobi remove
+```
+
 <br/>
 <br/>
 <br/>
@@ -449,3 +477,33 @@ applyEvolutions.default 자바 프로퍼티를 true로 설정합니다.
 
 	file: yobi.h2.db
 	directory: repo, uploads
+
+### 시스템 실행시 요비 자동실행 (Ubuntu 14.04, Yobi 0.8.1 버전에서 테스트 완료)
+
+먼저 '/etc/init.d'에 아래의 내용으로 'run.yobi' 파일을 생성합니다.
+```
+#! /bin/sh
+export ACTIVATOR_HOME=/home/yobi/activator-1.2.10-minimal
+export YOBI_HOME=$ACTIVATOR_HOME/yobi
+export _JAVA_OPTIONS="-Xmx2048m -Xms1024m"
+
+cd $YOBI_HOME
+sudo ../activator stop 1> /dev/null 2>&1
+sudo rm ./target/universal/stage/RUNNING_PID 1> /dev/null 2>&1
+#sudo ../activator "start -DapplyEvolutions.default=true -Dhttp.port=9000 -Dyobi.home=$YOBI_HOME -Dconfig.file=$YOBI_HOME/conf/application.conf" $_JAVAOPTIONS &i
+sudo screen -dm -S yobi ../activator "start -DapplyEvolutions.default=true -Dhttp.port=9000 -Dyobi.home=$YOBI_HOME -Dconfig.file=$YOBI_HOME/conf/application.conf" $_JAVAOPTIONS &
+```
+
+시스템에 자동 실행을 등록하기 위해 다음 명령어를 입력합니다.
+
+```
+sudo update-rc.d run.yobi defaults
+```
+
+재부팅 후 자동실행이 정상적으로 되었는지 테스트합니다.
+
+만약 자동 실행 기능을 제거하시려면 다음 명령어를 입력하시면 됩니다.
+
+```
+sudo update-rc.d -f run.yobi remove
+```
