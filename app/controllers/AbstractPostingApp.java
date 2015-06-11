@@ -67,6 +67,23 @@ public class AbstractPostingApp extends Controller {
         return comment;
     }
 
+    public static Comment saveRecomment(final Comment comment, Runnable containerUpdater, Long parentId) {
+        containerUpdater.run(); // this updates comment.issue or comment.posting;
+
+        if(comment.id != null && AccessControl.isAllowed(UserApp.currentUser(), comment.asResource(), Operation.UPDATE)) {
+            comment.update();
+        } else {
+            comment.setAuthor(UserApp.currentUser());
+            comment.parentId = parentId;
+            comment.save();
+        }
+
+        // Attach all of the files in the current user's temporary storage.
+        attachUploadFilesToPost(comment.asResource());
+
+        return comment;
+    }
+
     protected static Result delete(Model target, Resource resource, Call redirectTo) {
         if (!AccessControl.isAllowed(UserApp.currentUser(), resource, Operation.DELETE)) {
             return forbidden(ErrorViews.Forbidden.render("error.forbidden", resource.getProject()));
