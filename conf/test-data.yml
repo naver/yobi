@@ -56,7 +56,7 @@ projects:
         overview:       Yobi는 소프트웨어 개발에 필요한 기능들을 사용하기 편리하게 웹으로 묶은 협업 개발 플랫폼입니다.
         projectScope:   PUBLIC
         vcs:            GIT
-        siteurl:       http://localhost:9000/projectYobi
+        siteurl:       http://localhost:9000/yobi/projectYobi
         owner:          yobi
         createdDate:           2012-02-01 08:00:00
     - !!models.Project
@@ -64,7 +64,7 @@ projects:
         overview:       Yobi는 소프트웨어 개발에 필요한 기능들을 사용하기 편리하게 웹으로 묶은 협업 개발 플랫폼입니다.
         projectScope:   PUBLIC
         vcs:            GIT
-        siteurl:       http://localhost:9000/projectYobi-1
+        siteurl:       http://localhost:9000/yobi/projectYobi-1
         owner:          yobi
         createdDate:           2013-11-18 11:11:00
         originalProject:       !!models.Project
@@ -74,7 +74,7 @@ projects:
         overview:       Jindo는 NHN에서 제작한 Javascript Library 입니다.
         projectScope:   PRIVATE
         vcs:            Subversion
-        siteurl:       http://localhost:9000/Jindo
+        siteurl:       http://localhost:9000/laziel/Jindo
         owner:          laziel
         createdDate:           2012-01-01 08:00:00
     - !!models.Project
@@ -82,7 +82,7 @@ projects:
         overview:       CUBRID는 엔터프라이즈급 오픈 소스 DBMS로서, 인터넷 서비스에 최적화된 DBMS를 지향하고 있습니다.
         projectScope:   PRIVATE
         vcs:            GIT
-        siteurl:       http://localhost:9000/CUBRID
+        siteurl:       http://localhost:9000/doortts/CUBRID
         owner:          doortts
         createdDate:           2012-08-01 08:00:00
     - !!models.Project
@@ -90,7 +90,7 @@ projects:
         overview:       네이버 앱팩토리 플랫폼에서 제공하는 오픈소셜 API를 직접 실행해 볼 수 있는 애플리케이션입니다.
         projectScope:   PRIVATE
         vcs:            GIT
-        siteurl:       http://localhost:9000/HelloSocialApp
+        siteurl:       http://localhost:9000/yobi/HelloSocialApp
         owner:          yobi
         createdDate:           2012-12-01 08:00:00
     - !!models.Project
@@ -98,7 +98,7 @@ projects:
         overview:       네이버 앱팩토리 플랫폼에서 제공하는 오픈소셜 API를 직접 실행해 볼 수 있는 애플리케이션입니다.
         projectScope:   PRIVATE
         vcs:            GIT
-        siteurl:       http://localhost:9000/HelloSocialApp
+        siteurl:       http://localhost:9000/yobi/HelloSocialApp
         owner:          yobi
         createdDate:           2013-11-18 13:40:00
         originalProject:       !!models.Project
@@ -108,7 +108,7 @@ projects:
         overview:       테스트 애플리케이션
         projectScope:   PUBLIC
         vcs:            GIT
-        siteurl:       http://localhost:9000/Test
+        siteurl:       http://localhost:9000/yobi/Test
         owner:          yobi
         createdDate:           2012-12-01 08:00:00
 # PullRequests
