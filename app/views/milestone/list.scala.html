@@ -119,7 +119,7 @@
                             }
                         }
                         <div class="pull-right">
-                            <strong class="title">@(milestone.getNumClosedIssues +milestone.getNumClosedPullRequests)/ @(milestone.getNumOpenIssues + milestone.getNumClosedIssues + milestone.getNumOpenPullRequests + milestone.getNumClosedPullRequests)</strong>
+                            <strong class="title">@(milestone.getNumClosedIssues + milestone.getNumMergedPullRequests +milestone.getNumClosedPullRequests)/ @(milestone.getNumOpenIssues + milestone.getNumMergedPullRequests + milestone.getNumClosedIssues + milestone.getNumOpenPullRequests + milestone.getNumClosedPullRequests)</strong>
                         </div>
                     </div>
 
@@ -131,7 +131,7 @@
                 </div>
 
                 <div class="completion-rate">
-                    @if(milestone.getNumOpenIssues + milestone.getNumClosedIssues+milestone.getNumOpenPullRequests + milestone.getNumClosedPullRequests > 0) {
+                    @if(milestone.getNumOpenIssues + milestone.getNumClosedIssues + milestone.getNumMergedPullRequests + milestone.getNumOpenPullRequests + milestone.getNumClosedPullRequests > 0) {
                     @milestone.getCompletionRate
                     <i>%</i>
                     } else {

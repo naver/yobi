@@ -98,6 +98,7 @@
             </div>
 
 
+            <div class="row-fluid">
             <div class="span3 mb20">
                 <div class="issue-info">
                  @if(project.menuSetting.milestone) {
@@ -106,15 +107,15 @@
                     <dd>
                         @if(Milestone.findByProjectId(project.id).isEmpty()) {
                             <a href="@routes.MilestoneApp.newMilestoneForm(project.owner, project.name)"
-                               class="ybtn ybtn-small ybtn-fullsize" target="_blank">
+                                                   class="ybtn ybtn-small ybtn-fullsize" target="_blank">
                                 @Messages("milestone.menu.new")
                             </a>
                         } else {
                                 @defining(pull.milestone != null) { hasMilestone =>
                                     @if(isAllowed(UserApp.currentUser(), pull.asResource(), Operation.UPDATE)) {
-                                    <select id="milestone" name="milestone.id"
-                                            data-toggle="select2" data-format="milestone" data-container-css-class="fullsize">
-                                        <option value="@Milestone.NULL_MILESTONE_ID" @if(!hasMilestone){ selected }>
+                                    <select id="milestoneId" name="milestoneId"
+                                                            data-toggle="select2" data-format="milestone" data-container-css-class="fullsize">
+                                                        <option value="@Milestone.NULL_MILESTONE_ID" @if(!hasMilestone){ selected }>
                                             @Messages("pullRequest.noMilestone")
                                         </option>
                                         <optgroup label="@Messages("milestone.state.open")">
@@ -156,7 +157,8 @@
             </div>
             </div>
         </div>
-            
+        </div>
+           
         
            
         <hr class="nm">

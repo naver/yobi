@@ -796,6 +796,9 @@ public class PullRequest extends Model implements ResourceConvertible {
         if (condition.contributorId != null) {
             el.eq("contributor.id", condition.contributorId);
         }
+        if (condition.milestone != null){
+            el.eq("milestone", condition.milestone);
+        }
         if (StringUtils.isNotBlank(condition.filter)) {
             Set<Object> ids = new HashSet<>();
             ids.addAll(el.query().copy().where()

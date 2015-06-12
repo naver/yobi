@@ -111,6 +111,10 @@ public class Milestone extends Model implements ResourceConvertible {
     public int getNumClosedPullRequests() {
         return PullRequest.finder.where().eq("milestone", this).eq("state", State.CLOSED).findRowCount();
     }
+
+    public int getNumMergedPullRequests(){
+        return PullRequest.finder.where().eq("milestone", this).eq("state", State.MERGED).findRowCount();
+    }
     
 
     public List<Issue> sortedByNumberOfIssue(){
@@ -134,6 +138,27 @@ public class Milestone extends Model implements ResourceConvertible {
         return openedIssues;
     }
 
+    public List<PullRequest> OpenPullRequest(){
+        List<PullRequest> openedPullRequests = new ArrayList<>();
+        for(PullRequest pullrequest : pullRequests){
+            if(pullrequest.isOpen()){
+                openedPullRequests.add(pullrequest);
+            }
+        }
+        return openedPullRequests;
+    }
+
+    public List<PullRequest> ClosedPullRequest(){
+        List<PullRequest> closedPullRequests = new ArrayList<>();
+        for(PullRequest pullrequest : pullRequests){
+            if(pullrequest.isClosed()){
+                closedPullRequests.add(pullrequest);
+            }
+        }
+        return closedPullRequests;
+    }
+
+
     public List<Issue> sortedByNumberOfClosedIssue(){
         List<Issue> closedIssues = new ArrayList<>();
         for(Issue issue : sortedByNumberOfIssue()) {
@@ -152,7 +177,7 @@ public class Milestone extends Model implements ResourceConvertible {
     }
 
     public int getCompletionRate() {
-        return (int) (((double) (getNumClosedIssues()+ getNumClosedPullRequests()) / (double) (getNumTotalPullRequests() + getNumTotalIssues())) * 100);
+        return (int) (((double) (getNumClosedIssues()+ getNumClosedPullRequests() + getNumMergedPullRequests()) / (double) (getNumTotalPullRequests() + getNumTotalIssues())) * 100);
     }
  
 

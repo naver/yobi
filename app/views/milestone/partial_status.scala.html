@@ -47,7 +47,7 @@
         </div>
         <div class="progress-info">
             <span class="pull-right">
-                <strong>@(milestone.getNumClosedIssues +milestone.getNumClosedPullRequests)/ @(milestone.getNumOpenIssues + milestone.getNumClosedIssues + milestone.getNumOpenPullRequests + milestone.getNumClosedPullRequests)</strong>
+                <strong>@(milestone.getNumClosedIssues + milestone.getNumMergedPullRequests +milestone.getNumClosedPullRequests)/ @(milestone.getNumOpenIssues + milestone.getNumClosedIssues + milestone.getNumOpenPullRequests + milestone.getNumClosedPullRequests +milestone.getNumMergedPullRequests)</strong>
 
             </span>
         </div>

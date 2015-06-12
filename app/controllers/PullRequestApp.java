@@ -498,7 +498,8 @@ public class PullRequestApp extends Controller {
             return status(REQUEST_ENTITY_TOO_LARGE,
                     ErrorViews.RequestTextEntityTooLarge.render());
         }
-        setMilestone(pullRequestForm, updatedPullRequest);
+        setMilestone(pullRequestForm, pullRequest);
+       
         updatedPullRequest.toProject = toProject;
         updatedPullRequest.fromProject = fromProject;
 
@@ -645,6 +646,7 @@ public class PullRequestApp extends Controller {
             pullRequest.milestone = null;
         }
     }
+    
     static class ValidationResult {
         private Result result;
         private boolean hasError;
@@ -669,6 +671,7 @@ public class PullRequestApp extends Controller {
         public Long contributorId;
         public int pageNum = Constants.DEFAULT_PAGE;
         public Category category;
+        public Milestone milestone;
 
         public SearchCondition setProject(Project project) {
             this.project = project;
@@ -677,6 +680,11 @@ public class PullRequestApp extends Controller {
 
         public SearchCondition setFilter(String filter) {
             this.filter = filter;
+            return this;
+        }
+
+        public SearchCondition setMilestone(Milestone milestone){
+            this.milestone = milestone;
             return this;
         }
 
@@ -704,6 +712,7 @@ public class PullRequestApp extends Controller {
             clone.contributorId = this.contributorId;
             clone.pageNum = this.pageNum;
             clone.category = this.category;
+            clone.milestone = this.milestone;
             return clone;
         }
 
@@ -728,6 +737,7 @@ public class PullRequestApp extends Controller {
     public enum Category {
         OPEN("open", "toProject", "number", State.OPEN),
         CLOSED("closed", "toProject", "received", State.CLOSED, State.MERGED),
+        ALL("all", "toProject", "number", State.CLOSED, State.OPEN, State.MERGED),
         SENT("sent", "fromProject", "created"),
         ACCEPTED("accepted", "fromProject", "created", State.MERGED);
 

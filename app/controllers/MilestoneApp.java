@@ -19,13 +19,15 @@
  * limitations under the License.
  */
 package controllers;
-
+import com.avaje.ebean.Page;
 import controllers.annotation.AnonymousCheck;
 import controllers.annotation.IsAllowed;
 import controllers.annotation.IsCreatable;
 import models.Attachment;
 import models.Milestone;
 import models.Project;
+
+import models.PullRequest;
 import models.enumeration.Direction;
 import models.enumeration.Operation;
 import models.enumeration.ResourceType;
@@ -219,7 +221,6 @@ public class MilestoneApp extends Controller {
     public static Result milestone(String userName, String projectName, Long id) {
         Project project = Project.findByOwnerAndProjectName(userName, projectName);
         Milestone milestone = Milestone.findById(id);
-
         String paramState = request().getQueryString("state");
         State state = State.getValue(paramState);
         String paramState1 = request().getQueryString("state");
