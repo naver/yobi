@@ -159,7 +159,7 @@ public class PullRequest extends Model implements ResourceConvertible {
     @Transient
     private Repository repository;
 
-    //@ManyToOne 마일스톤과 연결하고 싶은데... 이러면 에러가떠요... 아니면 마일스톤의 onetomany가 안되요.
+    @ManyToOne 
     public Milestone milestone;
 
     public static PullRequest createNewPullRequest(Project fromProject, Project toProject, String fromBranch, String toBranch) {

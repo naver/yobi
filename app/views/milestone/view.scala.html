@@ -132,19 +132,19 @@
                 <li @if(pullRequestState == State.OPEN) { class="active" }>
                     <a href="@getTabLinkByState(State.OPEN)#pullRequests">
                         @Messages("pullRequest.state.open")
-                        <span class="num-badge">@PullRequest.countOpenedPullRequests(project)</span>
+                        <span class="num-badge">@milestone.getNumOpenPullRequests</span>
                     </a>
                 </li>
                 <li @if(pullRequestState == State.CLOSED) { class="active" }>
                     <a href="@getTabLinkByState(State.CLOSED)#pullRequests">
                         @Messages("pullRequest.state.closed")
-                        <span class="num-badge">@PullRequest.countClosedPullRequests(project)</span>
+                        <span class="num-badge">@milestone.getNumClosedPullRequests</span>
                     </a>
                 </li>
                 <li @if(pullRequestState == State.ALL) { class="active" }>
                     <a href="@getTabLinkByState(State.ALL)#pullRequests">
                         @Messages("pullRequest.state.all")
-                        <span class="num-badge">@(PullRequest.countOpenedPullRequests(project) + PullRequest.countClosedPullRequests(project))</span>
+                        <span class="num-badge">@(milestone.getNumClosedPullRequests+ milestone.getNumOpenPullRequests)</span>
                     </a>
                 </li>
                 @**
@@ -161,7 +161,6 @@
                 @**
                 <div class="PullRequests">
                     <div class="filter-wrap">
-                    @issue.partial_massupdate(project, new SearchCondition())
                     <div class="pull-right search search-bar">
                         <input name="filter" class="textbox" type="text" placeholder="@Messages("milestone.searchPlaceholder")" value="" data-toggle="item-search" data-items="issue-item">
                         <button type="submit" class="search-btn"><i class="yobicon-search"></i></button>

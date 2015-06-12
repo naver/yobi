@@ -72,11 +72,9 @@ public class Milestone extends Model implements ResourceConvertible {
     @OneToMany(mappedBy = "milestone")
     public Set<Issue> issues;
 
-   // @OneToMany(mappedBy = "milestone")
+    
+    @OneToMany(mappedBy = "milestone")
     public Set<PullRequest> pullRequests;
-
- //   @OneToMany(mappedBy = "milestone")
-  //  public Set<PullRequest> pullrequests;
 
     public void delete() {
         // Set all issues' milestone to null.
@@ -84,6 +82,11 @@ public class Milestone extends Model implements ResourceConvertible {
         for(Issue issue : issues) {
             issue.milestone = null;
             issue.update();
+        }
+
+        for(PullRequest pullrequest : pullRequests){
+            pullrequest.milestone = null;
+            pullrequest.update();
         }
 
         super.delete();
@@ -100,7 +103,7 @@ public class Milestone extends Model implements ResourceConvertible {
     public int getNumOpenIssues() {
         return Issue.finder.where().eq("milestone", this).eq("state", State.OPEN).findRowCount();
     }
-    /**
+    
     public int getNumOpenPullRequests(){
         return PullRequest.finder.where().eq("milestone", this).eq("state", State.OPEN).findRowCount();
     }
@@ -108,7 +111,7 @@ public class Milestone extends Model implements ResourceConvertible {
     public int getNumClosedPullRequests() {
         return PullRequest.finder.where().eq("milestone", this).eq("state", State.CLOSED).findRowCount();
     }
-    **/
+    
 
     public List<Issue> sortedByNumberOfIssue(){
         List <Issue>sortedIssues = new ArrayList<>(this.issues);
@@ -149,13 +152,9 @@ public class Milestone extends Model implements ResourceConvertible {
     }
 
     public int getCompletionRate() {
-        return (int) (((double) getNumClosedIssues() / (double) getNumTotalIssues()) * 100);
-    }
-/**
-    public int getCompletionRate() {
         return (int) (((double) (getNumClosedIssues()+ getNumClosedPullRequests()) / (double) (getNumTotalPullRequests() + getNumTotalIssues())) * 100);
     }
- **/
+ 
 
     public static Milestone findById(Long id) {
         return find.byId(id);

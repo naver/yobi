@@ -252,7 +252,6 @@ public class PullRequestApp extends Controller {
         }
 
         PullRequest pullRequest = form.get();
-
         if (pullRequest.body == null) {
             return status(REQUEST_ENTITY_TOO_LARGE,
                     ErrorViews.RequestTextEntityTooLarge.render());
@@ -499,7 +498,7 @@ public class PullRequestApp extends Controller {
             return status(REQUEST_ENTITY_TOO_LARGE,
                     ErrorViews.RequestTextEntityTooLarge.render());
         }
-
+        setMilestone(pullRequestForm, updatedPullRequest);
         updatedPullRequest.toProject = toProject;
         updatedPullRequest.fromProject = fromProject;
 
