@@ -3,13 +3,14 @@ import java.nio.file.Paths
 
 name := """yobi"""
 
-version := "0.8.2-SNAPSHOT"
+version := "0.9.0-SNAPSHOT"
 
 libraryDependencies ++= Seq(
   // Add your project dependencies here,
   javaCore,
   javaJdbc,
   javaEbean,
+  javaWs,
   cache,
   // Add your project dependencies here,
   "com.h2database" % "h2" % "1.3.176",
@@ -38,7 +39,7 @@ libraryDependencies ++= Seq(
   "commons-io" % "commons-io" % "2.4",
   "org.julienrf" %% "play-jsmessages" % "1.6.2",
   "commons-collections" % "commons-collections" % "3.2.1",
-  "org.jsoup" % "jsoup" % "1.7.2",
+  "org.jsoup" % "jsoup" % "1.8.2",
   "com.googlecode.juniversalchardet" % "juniversalchardet" % "1.0.3",
   "org.mockito" % "mockito-all" % "1.9.0" % "test",
   "com.github.zafarkhaja" % "java-semver" % "0.7.2",
