@@ -151,19 +151,34 @@
             }
           </div>
         </div>
-        <script language="javascript">
-        function ToggleDiffCode(fileId) {
-			var tbody = document.getElementById(fileId);
-			if(tbody.style.display !='none'){
-				tbody.style.display = 'none';
-			} else {
-				tbody.style.display = '';
-			}
-		}        
-        </script>
+        <script type="text/javascript" src="@routes.Assets.at("javascripts/lib/jquery/jquery.cookie.js")"></script>
+        <script type="text/javascript">
+        $(function(){
+            var tbody=document.getElementById('@fileHeader');
+            if($.cookie('@fileHeader')=='folded')
+                tbody.style.display = 'none';
+            else
+                tbody.style.display = '';
+        });
+        function foldFileCode(fileId) {
+            var tbody = document.getElementById(fileId);
+            if($.cookie(fileId) == 'notfolded'){
+                tbody.style.display = 'none';
+                $.cookie(fileId,'folded');
+            } else {
+                if(tbody.style.display != 'none'){
+                    tbody.style.display = 'none';
+                    $.cookie(fileId,'foled');
+                } else {
+                tbody.style.display = '';
+                $.cookie(fileId, 'notfolded');
+				}
+            }
+        }
+		</script>
         <div class="diff-partial-file">
           <span class="filename" >@fileHeader</span>
-		  <button type="button" onclick="ToggleDiffCode('@fileHeader');"><i class="yobicon-minus-circle-alt"></i></button>
+		  <button type="button" onclick="foldFileCode('@fileHeader');"><i class="yobicon-minus-circle-alt"></i></button>
 		</div>
       </div>
       <div class="diff-partial-code" data-hashcode="@diff.hashCode">
