@@ -37,6 +37,7 @@
 
 <ul class="comments">
 @for(comment <-post.comments){
+    @if(comment.parentId == null){ 
     <li class="comment @isAuthorComment(comment.authorLoginId)" id="comment-@comment.id">
         <div class="comment-avatar">
             <a href="@routes.UserApp.userInfo(comment.authorLoginId)" class="avatar-wrap" data-toggle="tooltip" data-placement="top" title="@comment.authorName">
@@ -57,6 +58,9 @@
                     @if(isAllowed(UserApp.currentUser(), comment.asResource(), Operation.UPDATE)) {
                         <button type="button" class="btn-transparent mr10" data-toggle="comment-edit" data-comment-id="@comment.id" title="@Messages("common.comment.edit")"><i class="yobicon-edit-2"></i></button>
                     }
+                    @if(isAllowed(UserApp.currentUser(), comment.asResource(), Operation.READ)) {
+                        <button type="button" class="btn-transparent mr10" data-toggle="comment-recomment" data-comment-id="@comment.id" title="@Messages("common.comment.edit")"><i class="yobicon-comments"></i></button>
+                    }
                     @if(isAllowed(UserApp.currentUser(), comment.asResource(), Operation.DELETE)) {
                         <button type="button" class="btn-transparent" data-toggle="comment-delete" data-request-uri="@routes.BoardApp.deleteComment(project.owner, project.name, post.getNumber, comment.id)" title="@Messages("common.comment.delete")"><i class="yobicon-trash"></i></button>
                     }
@@ -64,12 +68,56 @@
             </div>
 
             @common.commentUpdateForm(comment.id, routes.BoardApp.newComment(project.owner, project.name, post.getNumber).toString(), comment.contents)
-
+            
             <div id="comment-body-@comment.id">
                 <div class="comment-body markdown-wrap" data-via-email="@OriginalEmail.exists(comment.asResource)">@Html(Markdown.render(comment.contents, project))</div>
                 <div class="attachments pull-right" data-attachments="@toJson(AttachmentApp.getFileList(ResourceType.NONISSUE_COMMENT.toString(), comment.id.toString()))"></div>
             </div>
+            
         </div>
+            @common.recommentForm(comment.id,post.asResource(), ResourceType.NONISSUE_COMMENT, routes.BoardApp.newRecomment(project.owner, project.name, post.getNumber,comment.id).toString())
+    
+            <!---  추가 -->
+            @for(recomment <-post.comments){
+                @if(recomment.parentId == comment.id){
+             <li class="comment @isAuthorComment(recomment.authorLoginId)" id="comment-@recomment.id" style="padding-left : 100px;">
+                <div class="comment-avatar">
+                    <a href="@routes.UserApp.userInfo(recomment.authorLoginId)" class="avatar-wrap" data-toggle="tooltip" data-placement="top" title="@recomment.authorName">
+                      <img src="@User.findByLoginId(recomment.authorLoginId).avatarUrl" width="32" height="32" alt="@recomment.authorLoginId">
+                  </a>
+                </div>
+                <div class="media-body" >
+                    <div class="meta-info">
+                        <span class="comment_author pull-left">
+                            <a href="@routes.UserApp.userInfo(recomment.authorLoginId)" data-toggle="tooltip" data-placement="top" title="@recomment.authorName">
+                                <strong>@recomment.authorLoginId </strong>
+                            </a>
+                        </span>
+                        <span class="ago-date">
+                            <a href="#comment-@recomment.id" class="ago" title="@JodaDateUtil.getDateString(recomment.createdDate)">@utils.TemplateHelper.agoOrDateString(recomment.createdDate)</a>
+                        </span>
+                        <span class="act-row pull-right">
+                            @if(isAllowed(UserApp.currentUser(), recomment.asResource(), Operation.UPDATE)) {
+                                <button type="button" class="btn-transparent mr10" data-toggle="comment-edit" data-comment-id="@recomment.id" title="@Messages("common.comment.edit")"><i class="yobicon-edit-2"></i></button>    
+                            }
+                            @if(isAllowed(UserApp.currentUser(), recomment.asResource(), Operation.DELETE)) {
+                                <button type="button" class="btn-transparent" data-toggle="comment-delete" data-request-uri="@routes.BoardApp.deleteComment(project.owner, project.name, post.getNumber, recomment.id)" title="@Messages("common.comment.delete")"><i class="yobicon-trash"></i></button>
+                            }
+                        </span>
+                    </div>
+
+                    @common.commentUpdateForm(recomment.id, routes.BoardApp.newComment(project.owner, project.name, post.getNumber).toString(), recomment.contents)
+            
+                    <div id="comment-body-@comment.id">
+                        <div class="comment-body markdown-wrap" data-via-email="@OriginalEmail.exists(recomment.asResource)">@Html(   Markdown.render(recomment.contents, project))</div>
+                        <div class="attachments pull-right" data-attachments="@toJson(AttachmentApp.getFileList(ResourceType.NONISSUE_COMMENT.toString(), recomment.id.toString()))"></div>
+                    </div>
+                 </div>
+            </li>
+            }
+        }
     </li>
+    }
 }
 </ul>
+

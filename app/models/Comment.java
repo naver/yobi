@@ -50,9 +50,11 @@ abstract public class Comment extends Model implements TimelineItem, ResourceCon
     @Constraints.Required
     public Date createdDate;
 
+    
     public Long authorId;
     public String authorLoginId;
     public String authorName;
+    public Long parentId;
 
     public Comment() {
         createdDate = new Date();
@@ -117,7 +119,6 @@ abstract public class Comment extends Model implements TimelineItem, ResourceCon
         return createdDate;
     }
 
-
     @Override
     public boolean equals(Object obj) {
         if (obj == null) {
@@ -138,6 +139,7 @@ abstract public class Comment extends Model implements TimelineItem, ResourceCon
                 .append(this.authorId, rhs.authorId)
                 .append(this.authorLoginId, rhs.authorLoginId)
                 .append(this.authorName, rhs.authorName)
+                .append(this.parentId, rhs.parentId)
                 .isEquals();
     }
 
@@ -151,6 +153,7 @@ abstract public class Comment extends Model implements TimelineItem, ResourceCon
                 .append(authorId)
                 .append(authorLoginId)
                 .append(authorName)
+                .append(parentId)
                 .toHashCode();
     }
 }
