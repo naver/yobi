@@ -151,15 +151,14 @@
             }
           </div>
         </div>
-        <script type="text/javascript" src="@routes.Assets.at("javascripts/lib/jquery/jquery.cookie.js")"></script>
         <script type="text/javascript">
         $(function(){
-            var tbody = document.getElementById('@fileHeader');
-            if(localStorage.getItem('@fileHeader') == 'folded'){
+            var tbody = document.getElementById('@routes.CodeApp.codeBrowserWithBranch(projectB.owner, projectB.name, diff.commitB, diff.pathB)');
+            if(localStorage.getItem('@routes.CodeApp.codeBrowserWithBranch(projectB.owner, projectB.name, diff.commitB, diff.pathB)') == 'folded'){
                 tbody.style.display = 'none';
             } else {
                 tbody.style.display = '';
-                localStorage.setItem('@fileHeader', 'notfolded');
+                localStorage.setItem('@routes.CodeApp.codeBrowserWithBranch(projectB.owner, projectB.name, diff.commitB, diff.pathB)', 'notfolded');
             }
         });
         function foldFileCode(fileId) {
@@ -175,7 +174,7 @@
         </script>
         <div class="diff-partial-file">
           <span class="filename" >@fileHeader</span>
-          <button type="button" onclick="foldFileCode('@fileHeader');"><i class="yobicon-minus-circle-alt"></i></button>
+          <button type="button" onclick="foldFileCode('@routes.CodeApp.codeBrowserWithBranch(projectB.owner, projectB.name, diff.commitB, diff.pathB)');"><i class="yobicon-minus-circle-alt"></i></button>
         </div>
       </div>
       <div class="diff-partial-code" data-hashcode="@diff.hashCode">
@@ -187,7 +186,7 @@
                data-path-a="@diff.pathA" data-path-b="@diff.pathB"
                data-commit-a="@diff.commitA" data-commit-b="@diff.commitB"
                data-file-path="@StringUtils.defaultIfEmpty(diff.pathB, diff.pathA)">
-        <tbody id="@fileHeader">
+        <tbody id="@routes.CodeApp.codeBrowserWithBranch(projectB.owner, projectB.name, diff.commitB, diff.pathB)">
           @renderedLines
         </tbody>
         </table>
