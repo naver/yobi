@@ -153,30 +153,26 @@
         </div>
         <script type="text/javascript" src="@routes.Assets.at("javascripts/lib/jquery/jquery.cookie.js")"></script>
         <script type="text/javascript">
-        $(function(){
+		$(function(){
             var tbody = document.getElementById('@fileHeader');
-            if($.cookie('@fileHeader') == 'folded'){
+            if(localStorage.getItem('@fileHeader') == 'folded'){
                 tbody.style.display = 'none';
             } else {
                 tbody.style.display = '';
+                localStorage.setItem('@fileHeader', 'notfolded');
             }
         });
         function foldFileCode(fileId) {
             var tbody = document.getElementById(fileId);
-            if($.cookie(fileId) == 'notfolded'){
+            if(localStorage.getItem(fileId) == 'notfolded'){
                 tbody.style.display = 'none';
-                $.cookie(fileId,'folded');
+                localStorage.setItem(fileId,'folded');
             } else {
-                if(tbody.style.display != 'none'){
-                    tbody.style.display = 'none';
-                    $.cookie(fileId,'foled');
-                } else {
-                    tbody.style.display = '';
-                    $.cookie(fileId, 'notfolded');
-                }
+                tbody.style.display = '';
+                localStorage.setItem(fileId, 'notfolded');               
             }
         }
-		</script>
+        </script>
         <div class="diff-partial-file">
           <span class="filename" >@fileHeader</span>
           <button type="button" onclick="foldFileCode('@fileHeader');"><i class="yobicon-minus-circle-alt"></i></button>
