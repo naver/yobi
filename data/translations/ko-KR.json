@@ -1,0 +1,37 @@
+{
+  "gnb_home_label": "홈",
+  "gnb_demo_label": "데모",
+  "gnb_support_label": "서비스지원",
+  "feature_code_storage_label": "코드저장소",
+  "feature_code_storage_message": "Yobi는 Git과 Subversion 저장소를 지원합니다.",
+  "feature_issue_tracker_label": "이슈 트래커",
+  "feature_issue_tracker_message": "사용자 친화적인 UI를 제공하며 이슈 등록과 관리 매우 간편합니다.",
+  "feature_code_review_label": "코드 주고받기",
+  "feature_code_review_message": "프로젝트에서 프로젝트로, 또는 브랜치에서 브랜치로 작업한 코드들을 편하게 주고 받을 수 있습니다.",
+  "feature_dashboard_label": "코드 리뷰",
+  "feature_dashboard_message": "블럭 코멘트, 코드 리뷰 스레드, 커밋별 코멘트, 리뷰어 수 지정 등 팀 개발에서 코드 리뷰를 유연하게 진행할 수 있도록 다양하고 강력한 기능을 제공합니다.",
+  "feature_group_label": "Group",
+  "feature_group_message": "프로젝트 그룹핑하여 보다 체계적으로 관리할 수 있습니다.",
+  "feature_private_project_label": "Private project",
+  "feature_private_project_message": "정보보호가 필요한 기밀 프로젝트는 비공개로 설정하여 보안을 유지할 수 있습니다.",
+  "feature_mention_label": "멘션",
+  "feature_mention_message": "특정 사용자, 프로젝트 멤버 전체 혹은 특정 그룹 등등을 대상으로 멘션이 가능합니다. 이런 스마트한 멘션 기능으로 좀더 빠르고 편리하게 커뮤니케션을 진행 할 수 있습니다.",
+  "feature_alarm_label": "알림 기능",
+  "feature_alarm_message": "기본적인 알림을 비롯하여 메일등을 이용해 변경 사항을 즉각적으로 확인할 수 있습니다.",
+  "user_value_install_message1": "원하는 곳에 쉽고 빠르게<br>설치할 수 있습니다.",
+  "user_value_install_message2": "Yobi는 별다른 서버 설정 없이 쉽게 설치 및 사용이 가능합니다. Java 7 이상과 SMTP 메일 계정만 있다면 Gitlab보다 훨씬 쉽고 빠르게 설치와 실행이 가능합니다.",
+  "user_value_open_source_message1": "안정성이 검증된 무료<br>오픈소스입니다.",
+  "user_value_open_source_message2": "복잡하고 불필요한 기능이 많은 이슈트래커를 사용하고 계시진 않나요?<br>Yobi는 JIRA보다 훨씬 이용이 쉽고 사용자 친화적인 이용환경을 제공합니다.",
+  "user_value_code_review_message1": "쉽고 강력 코드 리뷰 기능이<br>제공됩니다.",
+  "user_value_code_review_message2": "설치와 운영이 복잡한 Gerrit 을 사용할 필요가 없습니다. 블럭 코멘트, 코드 리뷰 스레드, 커밋별 코멘트, 리뷰어 수 지정 등 팀 개발에서 코드 리뷰를 유연하게 진행할 수 있도록 다양하고 강력한 기능을 쉽고 편하게 제공합니다.",
+  "user_value_ui_provide_message1": "사용자 친화적인 UI를<br>제공합니다.",
+  "user_value_ui_provide_message2": "Yobi는 Apache 라이선스 오픈 소스로 원하는 곳 어디에나 설치 가능한 무료 SW입니다. Yobi의 안정성은 이미 수천명의 이용자와 수천개의 SW개발 프로젝트의 개발안정성을 통해 입증되었습니다.",
+  "start_project_message": "지금 바로 프로젝트를 시작해보세요.",
+  "slide_left_btn_label": "왼쪽",
+  "slide_right_btn_label": "오른쪽",
+  "info_yobi_jdk_version_message": "JDK 7(1.7) 버전 이상이 요구됩니다. <a class=\"txt-release\" href=\"https://github.com/naver/yobi/releases\" target=\"_blank\">최신 릴리즈 노트</a>",
+  "meta_tag_keyword_message" : "코드저장소, 이슈 트래커, 코드 주고받기, 코드리뷰, 오픈 소스"
+}
+
+
+

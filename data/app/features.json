@@ -1,0 +1,42 @@
+[
+  {
+    "iconClassName": "ico-storage",
+    "title": "feature_code_storage_label",
+    "text": "feature_code_storage_message"
+  },
+  {
+    "iconClassName": "ico-issue",
+    "title": "feature_issue_tracker_label",
+    "text": "feature_issue_tracker_message"
+  },
+  {
+    "iconClassName": "ico-code",
+    "title": "feature_code_review_label",
+    "text": "feature_code_review_message"
+  },
+  {
+    "iconClassName": "ico-dash",
+    "title": "feature_dashboard_label",
+    "text": "feature_dashboard_message"
+  },
+  {
+    "iconClassName": "ico-group",
+    "title": "feature_group_label",
+    "text": "feature_group_message"
+  },
+  {
+    "iconClassName": "ico-private",
+    "title": "feature_private_project_label",
+    "text": "feature_private_project_message"
+  },
+  {
+    "iconClassName": "ico-mention",
+    "title": "feature_mention_label",
+    "text": "feature_mention_message"
+  },
+  {
+    "iconClassName": "ico-alarm",
+    "title": "feature_alarm_label",
+    "text": "feature_alarm_message"
+  }
+]

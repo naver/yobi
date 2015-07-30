@@ -1,0 +1,22 @@
+[
+  {
+    "iconClassName": "ico-computer",
+    "title": "user_value_install_message1",
+    "text": "user_value_install_message2"
+  },
+  {
+    "iconClassName": "ico-opensource",
+    "title": "user_value_open_source_message1",
+    "text": "user_value_open_source_message2"
+  },
+  {
+    "iconClassName": "ico-codereview",
+    "title": "user_value_code_review_message1",
+    "text": "user_value_code_review_message2"
+  },
+  {
+    "iconClassName": "ico-ui",
+    "title": "user_value_ui_provide_message1",
+    "text": "user_value_ui_provide_message2"
+  }
+]
