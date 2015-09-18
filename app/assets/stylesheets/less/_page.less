@@ -4057,17 +4057,15 @@ label.issue-item-row {
                 }
 
                 .btn-copy-commitId {
-                    display:none;
-                    &.hover { background:#f1f1f1; }
+                    position:absolute; display:block;
+                    top:15px; left:-15px;
+                    color:@secondary;
                 }
 
-                &:hover {
-                    .btn-copy-commitId {
-                        position:absolute; display:block;
-                        top:15px; left:-15px;
-                        color:@secondary;
-                    }
+                .zeroclipboard-is-hover {
+                    background:#f1f1f1;
                 }
+
             }
             .messages { vertical-align:top;}
             .author {

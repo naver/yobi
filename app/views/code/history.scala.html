@@ -235,21 +235,10 @@ $(document).ready(function(){
     $("#history").find(".btn-copy-commitId").each(function(i, el){
         var welBtnCopy = $(el);
 
-        // zclip() works only in visible element
-        welBtnCopy.on("mouseenter", function(){
-            if(!welBtnCopy.data("zclipped")){
-                welBtnCopy.data("zclipped", true);
-
-                $(this).zclip({
-                    "path": "@routes.Assets.at("javascripts/lib/jquery/ZeroClipboard.swf")",
-                    "copy": function(){
-                        return $(this).data("commitid");
-                    },
-                    "afterCopy": function(){
-                        $yobi.notify("@Messages("code.copyCommitId.copied")", 1000);
-                    }
-                });
-            }
+        new ZeroClipboard(welBtnCopy).on("copy", function(event) {
+            event.clipboardData.setData("text/plain", welBtnCopy.data("commitid"));
+        }).on("afterCopy", function(event) {
+            $yobi.notify("@Messages("code.copyCommitId.copied")", 1000);
         });
     });
 
