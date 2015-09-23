@@ -43,7 +43,6 @@
             htVar.nProjectId = htOptions.nProjectId;
             htVar.sRepoURL = htOptions.sRepoURL;
             htVar.sURLProject = htOptions.sURLProject;
-            htVar.sURLZeroClipboard = htOptions.sURLZeroClipboard;
         }
 
         /**
@@ -135,12 +134,10 @@
 
             htElement.welBtnPlusCategory.click(_onClickPlusCategory);
 
-            htElement.welBtnCopy.zclip({
-                "path": htVar.sURLZeroClipboard,
-                "copy": htElement.welInputCloneURL.val(),
-                "afterCopy": function(){
-                    yobi.Common.notify(Messages("code.copyUrl.copied"), 1000);
-                }
+            new ZeroClipboard(htElement.welBtnCopy).on("copy", function(event) {
+                event.clipboardData.setData("text/plain", htElement.welInputCloneURL.val());
+            }).on("aftercopy", function(event) {
+                yobi.Common.notify(Messages("code.copyUrl.copied"), 1000);
             });
 
             htElement.welInputCloneURL.on('click',function(){
