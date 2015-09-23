@@ -1,0 +1,8 @@
+Yobi v0.8.3 Release Notes
+=========================
+
+Fixes since v0.8.2
+------------------
+
+* XSS was possible by using vulnerability of jquery.zclip, which is not
+  maintained any more. (2d226c9)
