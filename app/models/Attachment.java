@@ -20,6 +20,7 @@
  */
 package models;
 
+import errors.AttachmentException;
 import controllers.AttachmentApp;
 import models.enumeration.ResourceType;
 import models.resource.GlobalResource;
@@ -163,7 +164,12 @@ public class Attachment extends Model implements ResourceConvertible {
     public static int moveAll(Resource from, Resource to) {
         List<Attachment> attachments = Attachment.findByContainer(from);
         for (Attachment attachment : attachments) {
-            attachment.moveTo(to);
+            try {
+                attachment.moveTo(to);
+            } catch (Exception e) {
+                attachment.refresh();
+                throw new AttachmentException("Failed to move " + attachment + " to " + to + " while moving " + attachments, e);
+            }
         }
         return attachments.size();
     }

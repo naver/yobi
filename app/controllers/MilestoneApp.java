@@ -111,7 +111,11 @@ public class MilestoneApp extends Controller {
             newMilestone.project = project;
             newMilestone.dueDate = JodaDateUtil.lastSecondOfDay(newMilestone.dueDate);
             Milestone.create(newMilestone);
-            Attachment.moveAll(UserApp.currentUser().asResource(), newMilestone.asResource());
+            try {
+                Attachment.moveAll(UserApp.currentUser().asResource(), newMilestone.asResource());
+            } catch (Exception e) {
+                play.Logger.error("Failed to attach files to " + newMilestone, e);
+            }
             return redirect(routes.MilestoneApp.milestone(userName, projectName, newMilestone.id));
         }
     }
