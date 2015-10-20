@@ -526,6 +526,7 @@ public class Issue extends AbstractPosting implements LabelOwner {
         return finder.where()
                 .eq("project", project)
                 .eq("labels", label)
+                .eq("state", State.OPEN)
                 .findRowCount();
     }
 
@@ -533,6 +534,7 @@ public class Issue extends AbstractPosting implements LabelOwner {
         return finder.where()
                 .eq("project", project)
                 .eq("assignee", assignee)
+                .eq("state", State.OPEN)
                 .findRowCount();
     }
 
@@ -540,6 +542,7 @@ public class Issue extends AbstractPosting implements LabelOwner {
         return finder.where()
                 .eq("project", project)
                 .eq("milestone", milestone)
+                .eq("state", State.OPEN)
                 .findRowCount();
     }
 
