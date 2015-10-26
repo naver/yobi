@@ -151,8 +151,30 @@
             }
           </div>
         </div>
+        <script type="text/javascript">
+        $(function(){
+            var tbody = document.getElementById('@routes.CodeApp.codeBrowserWithBranch(projectB.owner, projectB.name, diff.commitB, diff.pathB)');
+            if(localStorage.getItem('@routes.CodeApp.codeBrowserWithBranch(projectB.owner, projectB.name, diff.commitB, diff.pathB)') == 'folded'){
+                tbody.style.display = 'none';
+            } else {
+                tbody.style.display = '';
+                localStorage.setItem('@routes.CodeApp.codeBrowserWithBranch(projectB.owner, projectB.name, diff.commitB, diff.pathB)', 'notfolded');
+            }
+        });
+        function foldFileCode(fileId) {
+            var tbody = document.getElementById(fileId);
+            if(localStorage.getItem(fileId) == 'notfolded'){
+                tbody.style.display = 'none';
+                localStorage.setItem(fileId,'folded');
+            } else {
+                tbody.style.display = '';
+                localStorage.setItem(fileId, 'notfolded');               
+            }
+        }
+        </script>
         <div class="diff-partial-file">
           <span class="filename" >@fileHeader</span>
+          <button type="button" onclick="foldFileCode('@routes.CodeApp.codeBrowserWithBranch(projectB.owner, projectB.name, diff.commitB, diff.pathB)');"><i class="yobicon-minus-circle-alt"></i></button>
         </div>
       </div>
       <div class="diff-partial-code" data-hashcode="@diff.hashCode">
@@ -164,7 +186,7 @@
                data-path-a="@diff.pathA" data-path-b="@diff.pathB"
                data-commit-a="@diff.commitA" data-commit-b="@diff.commitB"
                data-file-path="@StringUtils.defaultIfEmpty(diff.pathB, diff.pathA)">
-        <tbody>
+        <tbody id="@routes.CodeApp.codeBrowserWithBranch(projectB.owner, projectB.name, diff.commitB, diff.pathB)">
           @renderedLines
         </tbody>
         </table>
