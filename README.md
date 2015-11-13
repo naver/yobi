@@ -225,10 +225,30 @@ See [http://www.playframework.com/documentation/2.3.6/Production](http://www.pla
 
 ### Backup
 
-Copy the below file and directories to another place.
+#### Database
 
-	file: yobi.h2.db
-	directory: repo, uploads
+Backup `yobi.h2.db` file as following the [H2 Database Tutorial].
+
+[H2 Database Tutorial]: http://www.h2database.com/html/tutorial.html#upgrade_backup_restore)
+
+#### Data
+
+Copy the below directories to another place.
+
+* Attachments: uploads
+* Code repositories: repo
+
+### Note
+
+If you are using Yobi 0.8.2 or less, Please update
+`application.update.repositoryUrl` in conf/application.conf file as follows.
+
+    application.update.repositoryUrl = "https://github.com/naver/yobi"
+
+If the value is http://repo.yobi.io/naver/yobi, Software Update may not work
+and the following warning message may be logged.
+
+    [warn] application - Failed to fetch the latest Yobi version to update
 
 <br/>
 <br/>
@@ -445,7 +465,28 @@ applyEvolutions.default 자바 프로퍼티를 true로 설정합니다.
 
 ### 백업하기
 
-특별히 외부 DB를 사용하지 않는다면 아래 내용을 잘 백업해서 보관해 주시면 됩니다.
+#### 데이터베이스 백업
 
-	file: yobi.h2.db
-	directory: repo, uploads
+데이터베이스는 yobi.h2.db 파일로 저장됩니다. [H2 Database 백업 안내]에 따라
+해당 데이터베이스를 백업하여 두시면 됩니다.
+
+[H2 Database 백업 안내]: http://www.h2database.com/html/tutorial.html#upgrade_backup_restore
+
+#### 그 외 데이터 백업
+
+다음 두 디렉토리를 백업하여 두시면 됩니다.
+
+* 첨부파일: uploads
+* 코드 저장소: repo
+
+### 주의
+
+v0.8.2 혹은 그 이전 버전을 사용하신다면 conf/application.conf 설정 파일의
+`application.update.repositoryUrl` 설정값을 다음과 같이 수정하여 주시기 바랍니다.
+
+    application.update.repositoryUrl = "https://github.com/naver/yobi"
+
+이 값이 http://repo.yobi.io/naver/yobi 로 되어있다면 다음과 같은 에러와 함께
+소프트웨어 업데이트 기능이 동작하지 않을 수 있습니다.
+
+    [warn] application - Failed to fetch the latest Yobi version to update
