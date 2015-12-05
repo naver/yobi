@@ -1607,8 +1607,7 @@ public class GitRepository implements PlayRepository {
                     fileDiff.isBinaryA = RawText.isBinary(rawA);
                     if (fileDiff.isBinaryA) {
                         fileDiff.a=null;
-                    }
-                    else {
+                    } else {
                         String str = new String(rawA, FileUtil.detectCharset(rawA));
                         fileDiff.a = new RawText(str.getBytes());
                     }
@@ -1629,8 +1628,7 @@ public class GitRepository implements PlayRepository {
                     fileDiff.isBinaryB = RawText.isBinary(rawB);
                     if (fileDiff.isBinaryB) {
                         fileDiff.b=null;
-                    }
-                    else {
+                    } else {
                         String str = new String(rawB, FileUtil.detectCharset(rawB));
                         fileDiff.b = new RawText(str.getBytes());
                     }
