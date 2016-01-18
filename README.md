@@ -1,4 +1,20 @@
-﻿<a name="english"></a>
+﻿**이 프로젝트는 더 이상 유지보수 되거나 지원이 제공되지 않습니다.** 
+**This project will no longer be maintained or supported.**
+
+===
+```
+안녕하세요, Yobi 개발팀입니다.
+Yobi 프로젝트의 운영이 중단됨을 공지합니다.
+
+yobi.io와 demo.yobi.io 사이트, Google groups는 1월 29일 오후 5시까지 운영됩니다.
+
+그 동안 Yobi에 보여주신 성원과 관심에 감사드립니다.
+```
+이후 Yobi fork version인 [Yona](https://github.com/doortts/yona)가 개인 프로젝트로 운영될 예정이니 참고 부탁드립니다. 
+
+===
+
+<a name="english"></a>
 [[한국어]](#korean)
 Yobi
 =======
@@ -133,13 +149,13 @@ If you want to change port, check your permission to use 80 port. See 'Options' 
 Case1. using git client (recommended)
 In installed directory, just type git update command.
 
-	git pull https://github.com/naver/yobi.git master
+    git pull https://github.com/naver/yobi.git master
 
 Case2. download zip file
 
 In installed directory, download latest release file and unzip it.
 
-	https://github.com/naver/yobi/archive/master.zip
+    https://github.com/naver/yobi/archive/master.zip
 
 **Be careful! Don't overwrite or delete `yobi.h2.db` file, `repo` & `uploads` directory!**
 
@@ -327,7 +343,7 @@ case1. [git 클라이언트](http://git-scm.com)를 이용한 다운로드 (추�
     
 case2. 단순히 최신 안정버전을 내려받고자 할 때는 아래 링크를 이용해서 압축파일을 내려받은 다음 yobi를 폴더이름으로해서 해제합니다.
 
-	git pull https://github.com/naver/yobi.git master
+    git pull https://github.com/naver/yobi.git master
     
 주의! case2의 경우, 업그레이드를 할 때 문제가 생길 수 있습니다.
 
@@ -370,13 +386,13 @@ case2. 단순히 최신 안정버전을 내려받고자 할 때는 아래 링크
 case1. git 클라이언트를 이용 (추천)
 설치된 디렉터리에서, 아래와 같은 git 명령어를 이용합니다
 
-	git pull https://github.com/naver/yobi.git master
+    git pull https://github.com/naver/yobi.git master
 
 case2. 압축파일을 내려받을 경우
 
 설치된 디렉터리에서, 최신 릴리즈의 압축파일을 내려받아 Yobi가 설치된 디렉터리에 압축파일을 풉니다.
 
-	https://github.com/naver/yobi/archive/master.zip
+    https://github.com/naver/yobi/archive/master.zip
 
 **주의사항! `yobi.h2.db` 파일, `repo`와 `uploads` 디렉터리를 삭제하거나 덮어쓰지 않도록 주의하세요!**
 
