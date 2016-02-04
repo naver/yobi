@@ -1,19 +1,12 @@
-﻿**이 프로젝트는 더 이상 유지보수 되거나 지원이 제공되지 않습니다.** 
-**This project will no longer be maintained or supported.**
+## [Deprecated]
+
+**이 프로젝트는 더 이상 유지보수 되거나 지원이 제공되지 않습니다.** <br>
+**새로운 이슈나 pull request를 받지 않습니다.**
+<br><br>
+**This project will no longer be maintained or supported.** <br> 
+**Please do not file issues or pull-requests against this repo.**
 
 ===
-```
-안녕하세요, Yobi 개발팀입니다.
-Yobi 프로젝트의 운영이 중단됨을 공지합니다.
-
-yobi.io와 demo.yobi.io 사이트, Google groups는 1월 29일 오후 5시까지 운영됩니다.
-
-그 동안 Yobi에 보여주신 성원과 관심에 감사드립니다.
-```
-이후 Yobi fork version인 [Yona](https://github.com/doortts/yona)가 개인 프로젝트로 운영될 예정이니 참고 부탁드립니다. 
-
-===
-
 <a name="english"></a>
 [[한국어]](#korean)
 Yobi
