@@ -303,6 +303,49 @@ public class BoardApp extends AbstractPostingApp {
         return redirect(RouteUtil.getUrl(savedComment));
     }
 
+/**
+     * @see controllers.AbstractPostingApp#saveComment(models.Comment, play.data.Form, play.mvc.Call, Runnable)
+     */
+    @Transactional
+    @IsAllowed(value = Operation.READ, resourceType = ResourceType.BOARD_POST)
+    @With(NullProjectCheckAction.class)
+    public static Result newRecomment(String owner, String projectName, Long number, Long parentId) throws IOException {
+        System.out.println("rerererererecomment");
+        Project project = Project.findByOwnerAndProjectName(owner, projectName);
+        final Posting posting = Posting.findByNumber(project, number);
+        Form<PostingComment> commentForm = new Form<>(PostingComment.class)
+                .bindFromRequest();
+        if (commentForm.hasErrors()) {
+            return badRequest(ErrorViews.BadRequest.render("error.validation", project, MenuType.BOARD));
+        }
+
+        if (!AccessControl.isResourceCreatable(
+                    UserApp.currentUser(), posting.asResource(), ResourceType.NONISSUE_COMMENT)) {
+            return forbidden(ErrorViews.Forbidden.render("error.forbidden", project));
+        }
+
+        final PostingComment comment = commentForm.get();
+        PostingComment existingComment = PostingComment.find.where().eq("id", comment.id).findUnique();
+
+        if (commentForm.hasErrors()) {
+            flash(Constants.WARNING, "common.comment.empty");
+            return redirect(routes.BoardApp.post(project.owner, project.name, number));
+        }
+
+        Comment savedComment;
+        if (existingComment != null) {
+            existingComment.contents = comment.contents;
+            
+            savedComment = saveRecomment(existingComment, getContainerUpdater(posting, comment),parentId);
+            //savedComment = saveComment(existingComment, getContainerUpdater(posting, comment));
+            NotificationEvent.afterCommentUpdated(savedComment);
+        } else {
+            savedComment = saveRecomment(comment, getContainerUpdater(posting, comment), parentId);
+            NotificationEvent.afterNewComment(savedComment);
+        }
+
+        return redirect(RouteUtil.getUrl(savedComment));
+    }
     private static Runnable getContainerUpdater(final Posting posting, final PostingComment comment) {
         return new Runnable() {
             @Override
@@ -324,3 +367,4 @@ public class BoardApp extends AbstractPostingApp {
         return delete(comment, comment.asResource(), redirectTo);
     }
 }
+

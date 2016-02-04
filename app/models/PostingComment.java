@@ -45,7 +45,7 @@ public class PostingComment extends Comment {
     public AbstractPosting getParent() {
         return posting;
     }
-
+    
     /**
      * @see Comment#asResource()
      */
