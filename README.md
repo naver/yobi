@@ -5,6 +5,8 @@
 <br><br>
 **This project will no longer be maintained or supported.** <br> 
 **Please do not file issues or pull-requests against this repo.**
+<br><br>
+Yobi fork version인 [Yona](https://github.com/yona-projects/yona)가 개인 프로젝트로 이어서 운영되고 있으니 참고 부탁드립니다. 
 
 ===
 <a name="english"></a>
