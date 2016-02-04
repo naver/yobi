@@ -28,7 +28,7 @@
     @defining(fieldText(file, "type")) { fileType =>
     <div id="cb-@listPath@fileName" class="row-fluid listitem" data-path="@getDataPath(listPath, fileName)">
         <div class="span6 filename">
-            <a href="@getCorrectedPath(filePath, fileName)@if(fileType.eq(" folder")){#cb-@listPath@fileName}"
+            <a onclick="location.href='@getCorrectedPath(filePath, fileName)@if(fileType.eq(" folder")){#cb-@listPath@fileName}'"
                 class="@getFileClass(file)" title="@fileName" @if(fileType.eq("folder")){data-type="folder"}
                 data-targetPath="@getDataPath(listPath, fileName)">
                 <span class="dynatree-icon vmiddle"></span>@fileName
