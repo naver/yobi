@@ -21,6 +21,7 @@
 package models;
 
 import controllers.AttachmentApp;
+import errors.AttachmentException;
 import models.enumeration.ResourceType;
 import models.resource.GlobalResource;
 import models.resource.Resource;
@@ -33,7 +34,6 @@ import play.db.ebean.Model;
 import play.libs.Akka;
 import scala.concurrent.duration.Duration;
 import utils.AttachmentCache;
-import utils.Config;
 import utils.FileUtil;
 import utils.JodaDateUtil;
 
@@ -42,7 +42,6 @@ import javax.persistence.*;
 import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.NotDirectoryException;
-import java.nio.file.Paths;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Arrays;
@@ -163,7 +162,12 @@ public class Attachment extends Model implements ResourceConvertible {
     public static int moveAll(Resource from, Resource to) {
         List<Attachment> attachments = Attachment.findByContainer(from);
         for (Attachment attachment : attachments) {
-            attachment.moveTo(to);
+            try {
+                attachment.moveTo(to);
+            } catch (Exception e) {
+                attachment.refresh();
+                throw new AttachmentException("Failed to move " + attachment + " to " + to + " while moving " + attachments, e);
+            }
         }
         return attachments.size();
     }
@@ -327,7 +331,7 @@ public class Attachment extends Model implements ResourceConvertible {
         // most of pages) are blocked.
         if (!exists(this.hash)) {
             try {
-                Files.delete(Paths.get(uploadDirectory, this.hash));
+                Files.delete(getFile().toPath());
             } catch (Exception e) {
                 play.Logger.error("Failed to delete: " + this, e);
             }
