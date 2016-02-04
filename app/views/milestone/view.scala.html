@@ -18,11 +18,13 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 **@
-@(title: String, milestone: models.Milestone, project: Project, issueState:State)
+@(title: String, milestone: models.Milestone, project: Project, issueState:State, pullRequestState:State)
 @import scala.collection.immutable._
 @import utils.TemplateHelper._
 @import utils.AccessControl._
 @import models.support.SearchCondition
+@import controllers.PullRequestApp.{ SearchCondition => PullSearchCondition };
+@import controllers.PullRequestApp.Category;
 @import play.libs.Json.toJson
 @import utils.Markdown
 
@@ -34,9 +36,19 @@
     )
 }
 
-@getTabLinkByState(state:State) = {
-	@routes.MilestoneApp.milestone(project.owner, project.name, milestone.id)?state=@state.state
+@makePullRequestsLink(mId: Long) = @{
+    buildQueryString(routes.PullRequestApp.pullRequests(project.owner, project.name),
+        Map("milestoneId"->mId.toString)
+    )
 }
+
+@getTabLinkByState(state:State) = {
+    @routes.MilestoneApp.milestone(project.owner, project.name, milestone.id)?state=@state.state
+}
+
+
+
+
 
 @projectLayout(title, project, utils.MenuType.MILESTONE) {
 @projectMenu(project, utils.MenuType.MILESTONE, "")
@@ -114,6 +126,55 @@
                         }
                     }
                 </div>
+            </div>
+
+            
+            <div id="PullRequests">
+                <ul class="nav nav-tabs">
+                <li @if(pullRequestState == State.OPEN) { class="active" }>
+                    <a href="@getTabLinkByState(State.OPEN)#pullRequests">
+                        @Messages("pullRequest.state.open")
+                        <span class="num-badge">@milestone.getNumOpenPullRequests</span>
+                    </a>
+                </li>
+                <li @if(pullRequestState == State.CLOSED) { class="active" }>
+                    <a href="@getTabLinkByState(State.CLOSED)#pullRequests">
+                        @Messages("pullRequest.state.closed")
+                        <span class="num-badge">@(milestone.getNumClosedPullRequests+milestone.getNumMergedPullRequests)</span>
+                    </a>
+                </li>
+                <li @if(pullRequestState == State.ALL) { class="active" }>
+                    <a href="@getTabLinkByState(State.ALL)#pullRequests">
+                        @Messages("pullRequest.state.all")
+                        <span class="num-badge">@(milestone.getNumClosedPullRequests+ milestone.getNumOpenPullRequests+milestone.getNumMergedPullRequests)</span>
+                    </a>
+                </li>
+                @**
+                @for(state1 <- Array(State.OPEN, State.CLOSED, State.MERGED)) {
+                    <li @if(pullRequestState == state1) { class="active" }>
+                        <a href="@getTabLinkByState(state1)#pullRequests">
+                            @Messages("pullRequest.state." + state1.name.toLowerCase())
+                            <span class="num-badge">@PullRequest.countOpenedPullRequests(project)</span>
+                        </a>
+                    </li>
+                }
+                **@
+                </ul>
+                
+                <div class="PullRequests">
+                    @{
+                        pullRequestState match {
+                            case State.OPEN =>
+                                git.partial_list(project, PullRequest.findPagingList(new PullSearchCondition().setMilestone(milestone).setCategory(Category.OPEN)))
+                            case State.CLOSED =>
+                                git.partial_list(project, PullRequest.findPagingList(new PullSearchCondition().setMilestone(milestone).setCategory(Category.CLOSED)))
+                            case _ =>
+                                git.partial_list(project, PullRequest.findPagingList(new PullSearchCondition().setMilestone(milestone).setCategory(Category.ALL)));
+                        }
+                    }
+
+                </div>
+                
             </div>
 
         </div>

@@ -54,6 +54,13 @@
                     <span class="infos-item" title="@JodaDateUtil.getDateString(req.created)">
                         @agoOrDateString(req.created)
                     </span>
+                    @if(req.milestone != null ) {
+                        <span class="infos-item mileston-tag">
+                            <a href="@routes.MilestoneApp.milestone(req.toProject.owner, req.toProject.name, req.milestone.id)" data-toggle="tooltip" data-placement="top" title="@Messages("milestone")">
+                                @req.milestone.title
+                            </a>
+                        </span>
+                        }
                     @if(!req.commentThreads.isEmpty){
                         @defining(req.countCommentThreadsByState(CommentThread.ThreadState.CLOSED)){ countClosed =>
 

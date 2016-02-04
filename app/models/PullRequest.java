@@ -135,7 +135,7 @@ public class PullRequest extends Model implements ResourceConvertible {
     @OneToMany(cascade = CascadeType.ALL)
     @OrderBy("created ASC")
     public List<PullRequestEvent> pullRequestEvents;
-
+    
     public String lastCommitId;
 
     public String mergedCommitIdFrom;
@@ -158,6 +158,9 @@ public class PullRequest extends Model implements ResourceConvertible {
 
     @Transient
     private Repository repository;
+
+    @ManyToOne 
+    public Milestone milestone;
 
     public static PullRequest createNewPullRequest(Project fromProject, Project toProject, String fromBranch, String toBranch) {
         PullRequest pullRequest = new PullRequest();
@@ -184,6 +187,7 @@ public class PullRequest extends Model implements ResourceConvertible {
                 ", updated=" + updated +
                 ", received=" + received +
                 ", state=" + state +
+                ", milestone=" + milestone +
                 '}';
     }
 
@@ -292,6 +296,14 @@ public class PullRequest extends Model implements ResourceConvertible {
                 .eq("state", State.OPEN)
                 .findRowCount();
     }
+
+    public static int countClosedPullRequests(Project project) {
+        return finder.where()
+                .eq("toProject", project)
+                .eq("state", State.CLOSED)
+                .findRowCount();
+    }
+
 
     public static List<PullRequest> findRelatedPullRequests(Project project, String branch) {
         return finder.where()
@@ -783,6 +795,9 @@ public class PullRequest extends Model implements ResourceConvertible {
         }
         if (condition.contributorId != null) {
             el.eq("contributor.id", condition.contributorId);
+        }
+        if (condition.milestone != null){
+            el.eq("milestone", condition.milestone);
         }
         if (StringUtils.isNotBlank(condition.filter)) {
             Set<Object> ids = new HashSet<>();
