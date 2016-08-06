@@ -53,6 +53,12 @@ public class SiteApp extends Controller {
     private static final int ISSUE_COUNT_PER_PAGE = 30;
 
     /**
+     * Sends a mail
+     * This method is used when a user sends a mail from the send mail page. 
+     * It gets an email address, recipient, title, content and assign them to {@code email}.
+     * The method sends the email and assign its result to {@code email}
+     * And it sets an error message and checks whether it sent the email or not through {@code writeMail()}, and then moves to the send mail page.
+     *
      * @return the result
      * @throws EmailException the email exception
      * @see {@link SiteApp#writeMail(String, boolean)}
@@ -75,6 +81,17 @@ public class SiteApp extends Controller {
         return writeMail(errorMessage, sended);
     }
 
+    /**
+     * Moves to the send mail page.
+     * This method is used when an administrator sends an email.
+     * This method gets SMTP settings from {@code application.conf}.
+     * It finds an item that hasn’t been set from {@code requiredItems} and saves it in {@code notConfiguredItems} and sends it to a page.
+     * The mail sender consists of {@code smtp.user} and {@code smtp.domain}.
+     *
+     * @param errorMessage  mail sending error message
+     * @param sended whether a mail has been sent or not
+     * @return the result
+     */
     public static Result writeMail(String errorMessage, boolean sended) {
 
         Configuration config = play.Play.application().configuration();
@@ -91,11 +108,22 @@ public class SiteApp extends Controller {
         return ok(mail.render("title.sendMail", notConfiguredItems, sender, errorMessage, sended));
     }
 
+    /**
+     * Moves to the send mass mail page.
+     * This method is used when a user sends mass mail.
+     *
+     * @return the result
+     */
     public static Result massMail() {
         return ok(massMail.render("title.massMail"));
     }
 
     /**
+     * Displays the list of all users.
+     * This method is used when an administrator manages users.
+     * It finds the list of members of the site by {@code loginId} and returns the list in {@link Page} format.
+     * It refers its paging size to {@link User#USER_COUNT_PER_PAGE}
+     *
      * @param pageNum pager number
      * @param loginId loginId
      * @return the result
@@ -109,6 +137,10 @@ public class SiteApp extends Controller {
     }
 
     /**
+     * Displays the list of entire posts.
+     * This method is used in the administration page to manage posts.
+     * It sorts the list of posts in descending order of date and gets the list corresponding to {@code pageNum}.
+     *
      * @param pageNum page number
      * @return the result
      */
@@ -118,6 +150,10 @@ public class SiteApp extends Controller {
     }
 
     /**
+     * Displays the list of all issues grouped by state.
+     * This method is used when managing issues in the administration page.
+     * It sorts the list of issues in descending order of date and gets the list corresponding to {@code pageNum}.
+     *
      * @param pageNum page number
      * @return the result
      */
@@ -129,6 +165,9 @@ public class SiteApp extends Controller {
     }
 
     /**
+     * Deletes users
+     * This method is used when a user needs to be deleted in the administration page.
+     *
      * @param userId the user id
      * @return the result
      * @see {@link Project#isOnlyManager(Long)}
@@ -155,6 +194,10 @@ public class SiteApp extends Controller {
     }
 
     /**
+     * Gets the list of projects.
+     * This method is used when setting projects in the administration page.
+     * It gets the list of projects whose project name matches {@code project name}.
+     *
      * @param projectName the project name
      * @param pageNum page number
      * @return the result
@@ -166,6 +209,11 @@ public class SiteApp extends Controller {
     }
 
     /**
+     * Deletes projects.
+     * This method is used when deleting projects at the project settings in the administration page.
+     * It checks if the session {@code loginId} matches that of the site administrator and if it matches the administrator, it deletes the project. 
+     * If the id isn’t belong to the administrator, it returns a warning message and redirects to the project settings. 
+     *
      * @param projectId the project id
      * @return the result
      */
@@ -180,6 +228,12 @@ public class SiteApp extends Controller {
     }
 
     /**
+     * Unlocks accounts
+     * This method is used when unlocking the accounts of the administrator page.
+     * If the {@code loginId} matches that of the site administrator and it isn’t {@code anonymous}, this method unlocks the account and redirects to the administrator page. 
+     * If the session {@code loginId} matches the site administrator and {@code loginId} to be deleted is an anonymous user, it returns a warning message and redirects to the administrator page. 
+     * If the session {@code loginId} is not the site administrator, it returns a warning message and redirects to the main page of Yobi.
+     *
      * @param loginId the login id
      * @return the result
      */
@@ -205,6 +259,17 @@ public class SiteApp extends Controller {
         return redirect(routes.Application.index());
     }
 
+    /**
+     * Returns mass mail lists in JSON format.
+     * This method is used when sending mass mails from the administrator page. 
+     * If {@code currentUser} is not the site administrator, it returns a warning message and Forbidden response.
+     * If the request content-type is not application/json, it returns {@link Http.Status#NOT_ACCEPTABLE}.
+     * If {@code projects} is null, it returns an empty json object.
+     * If it is the request to send to all, it returns the list of all users in json.
+     * If the target is a member of a specific project, it returns the members of projects in json.
+     *
+     * @return the result
+     */
     public static Result mailList() {
         Set<String> emails = new HashSet<>();
         Map<String, String[]> projects = request().body().asFormUrlEncoded();
