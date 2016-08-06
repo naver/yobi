@@ -64,7 +64,7 @@
 }
 
 @renderRawFile(klass: String, path: String, rawText: RawText, side: CodeRange.Side, prefix: String, comments: Map[String, List[_ <: CodeCommentThread]]) = {
-    @defining(new StringBuilder) { builder =>
+    @defining(new StringBuilder) { builder =>        
         @for(i <- 0 until rawText.size) @{
             builder.append("<tr class='")
             builder.append(klass)
@@ -79,16 +79,17 @@
             builder.append(i + 1)
             builder.append("'></div><span class='hidden'>")
             builder.append(i + 1)
-            builder.append("</span></td><td class='code'><pre class='diff-partial-codeline'>")
+            builder.append("</span></td><td class='code'><pre class='diff-partial-codeline ")
+            builder.append(path.split('.').last)
+            builder.append("'>")            
             builder.append(prefix)
-            builder.append(escapeHtml(rawText.getString(i)))
+            builder.append(escapeHtml(rawText.getString(i)))       
             if ((i + 1 == rawText.size) && rawText.isMissingNewlineAtEnd) {
                 builder.append(noNewlineAtEof)
-            }
+            } 
             builder.append("</pre></td></tr>")
             builder.append(partial_diff_comment_on_line(threadsOrEmpty(comments, threadKey(path, side, i + 1))).toString.trim)
         }
-
         @Html(builder.toString)
     }
 }
@@ -241,3 +242,15 @@
     }
   }
 }
+
+<link rel="stylesheet" type="text/css" href="@routes.Assets.at("javascripts/lib/highlight/highlight/styles/default.css")" />
+<script type="text/javascript" src="@routes.Assets.at("javascripts/lib/highlight/highlight.pack.js")"></script>
+<script>hljs.initHighlightingOnLoad();</script>
+<script type="text/javascript">
+    $(document).ready(function(){
+    var aCodes = document.getElementsByTagName('pre');
+    for (var i=0; i < aCodes.length; i++) {
+        hljs.highlightBlock(aCodes[i]);
+    }
+  });
+</script>
