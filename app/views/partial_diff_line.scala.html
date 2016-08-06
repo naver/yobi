@@ -32,7 +32,10 @@
         <div class="line-number" data-line-num="@Option(numB).getOrElse("")"></div>
         <span class="hidden">@Option(numB).getOrElse("")</span>
     </td>
+    <td class='prefix'>
+        @prefix
+    </td>
     <td class="code">
-        <pre class="diff-partial-codeline">@prefix@content</pre> @if(isEndOfLineMissing){@Html(noNewlineAtEof)}
+        <pre class="diff-partial-codeline">@content</pre> @if(isEndOfLineMissing){@Html(noNewlineAtEof)}
     </td>
 </tr>
