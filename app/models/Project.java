@@ -149,7 +149,7 @@ public class Project extends Model implements LabelOwner {
      * @see {@link RoleType#SITEMANAGER}
      */
     public static Long create(Project newProject) {
-        newProject.siteurl = "http://localhost:9000/" + newProject.name;
+        newProject.siteurl = "http://localhost:9000/" + newProject.owner + "/" + newProject.name;
         newProject.createdDate = new Date();
         newProject.save();
         ProjectUser.assignRole(User.SITE_MANAGER_ID, newProject.id,
